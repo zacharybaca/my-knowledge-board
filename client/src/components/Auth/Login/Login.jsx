@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
-import Toast from '../../../components/Toast.jsx';
+import Toast from '../../Layout/Toast/Toast.jsx';
 import '../auth-forms.css';
 
 const Login = () => {
