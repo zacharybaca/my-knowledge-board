@@ -40,7 +40,7 @@ const NavBar = () => {
       <div className="nav-container">
         <Link to="/" className="nav-brand-wrapper" onClick={closeMenu}>
           <div className="nav-logo">
-            Knowledge<span className="my-logo-accent">Base</span>
+            My<span className="my-logo-accent">KnowledgeBoard</span>
           </div>
           <span className="nav-tagline">Knowledge Within Reach</span>
         </Link>
