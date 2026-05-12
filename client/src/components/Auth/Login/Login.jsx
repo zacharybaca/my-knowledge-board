@@ -1,34 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
+import Toast from '../../../components/Toast.jsx';
 import '../auth-forms.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // New state to control the Toast (message and type)
   const [toastConfig, setToastConfig] = useState(null);
 
   const { fetcher } = useFetcher();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1. Check for messages passed from the NavBar (like Logout)
   useEffect(() => {
     if (location.state?.message) {
       setToastConfig({
         message: location.state.message,
         type: 'success',
       });
-      // Clear the history state so the toast doesn't pop up again on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setToastConfig(null); // Clear any existing toasts before trying again
+    setToastConfig(null);
 
     const response = await fetcher('/api/auth/login', {
       method: 'POST',
@@ -39,7 +36,6 @@ const Login = () => {
       const origin = location.state?.from?.pathname || '/';
       navigate(origin);
     } else {
-      // 2. Replace the alert() with a professional Error Toast
       setToastConfig({
         message: response.error || 'Login failed. Check your credentials.',
         type: 'error',
@@ -49,7 +45,6 @@ const Login = () => {
 
   return (
     <div className="auth-page-container">
-      {/* 3. Conditionally render the Toast */}
       {toastConfig && (
         <Toast
           message={toastConfig.message}
@@ -72,7 +67,6 @@ const Login = () => {
           </div>
 
           <div className="auth-form-group">
-            {/* NEW: Flex container to align the label and the forgot password link */}
             <div
               style={{
                 display: 'flex',
@@ -104,6 +98,21 @@ const Login = () => {
             Login
           </button>
         </form>
+
+        <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <p style={{ margin: 0 }}>
+            Need an employee account?{' '}
+            <Link to="/register" className="auth-link">
+              Sign Up
+            </Link>
+          </p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+            New organization?{' '}
+            <Link to="/register-company" className="auth-link">
+              Register Company
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
