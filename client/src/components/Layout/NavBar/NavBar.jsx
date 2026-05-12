@@ -38,8 +38,11 @@ const NavBar = () => {
   return (
     <nav className="main-nav">
       <div className="nav-container">
-        <Link to="/" className="nav-logo" onClick={closeMenu}>
-          Knowledge<span className="my-logo-accent">Base</span>
+        <Link to="/" className="nav-brand-wrapper" onClick={closeMenu}>
+          <div className="nav-logo">
+            Knowledge<span className="my-logo-accent">Base</span>
+          </div>
+          <span className="nav-tagline">Knowledge Within Reach</span>
         </Link>
 
         <ul className="nav-links">
