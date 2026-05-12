@@ -110,8 +110,5 @@ const forgotPassword = asyncHandler(async (req, res) => {
 export {
   registerUser,
   loginUser,
-  logoutUser,
-  isUserAdmin,
   forgotPassword,
-  resetPassword,
 };
