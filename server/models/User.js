@@ -5,14 +5,16 @@ import crypto from "crypto";
 
 const userSchema = mongoose.Schema(
   {
-    name: { type: String, required: true },
-    username: { type: String, required: true, unique: true },
+    companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    role: { type: String, enum: ['Employee', 'Manager', 'Admin'], default: 'Employee' },
+    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     avatar: { type: String },
-    // UPDATE 1: Renamed to match the controller
     avatarPublicId: { type: String, default: "" },
-    savedCompanies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Company" }],
+    favoriteArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
     isAdmin: { type: Boolean, default: false },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
@@ -75,7 +77,7 @@ userSchema.pre(
       const Review = mongoose.model("Review");
       const deletedReviews = await Review.deleteMany({ author: userId });
       console.log(
-        `✅ Cascade delete: Removed ${deletedReviews.deletedCount} reviews for user ${this.username}`,
+        `✅ Cascade delete: Removed ${deletedReviews.deletedCount} reviews for user ${this.firstName} ${this.lastName}`,
       );
 
       // 3. NEW: Cleanup Pending Company Submissions
@@ -85,7 +87,7 @@ userSchema.pre(
         isApproved: false, // Only delete if it hasn't been approved yet
       });
       console.log(
-        `✅ Cascade delete: Removed ${deletedCompanies.deletedCount} pending companies for user ${this.username}`,
+        `✅ Cascade delete: Removed ${deletedCompanies.deletedCount} pending companies for user ${this.firstName} ${this.lastName}`,
       );
 
       next();
