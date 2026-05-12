@@ -116,15 +116,49 @@
   background-color: #059669;
 }
 
+.auth-link {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Update the existing .auth-footer */
 .auth-footer {
   margin-top: 20px;
   text-align: center;
   font-size: 0.9rem;
   color: whitesmoke;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.auth-link {
+.auth-footer p {
+  margin: 0;
+}
+
+/* NEW: Flex container for the password label and forgot password link */
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* Override default label margin within this specific row */
+.auth-label-row label {
+  margin-bottom: 0;
+}
+
+/* NEW: Specific styling for secondary links like Forgot Password */
+.auth-secondary-link {
+  font-size: 0.85rem;
   color: #10b981;
   text-decoration: none;
-  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.auth-secondary-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
