@@ -7,14 +7,11 @@ const NavBar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // State and Ref for the dropdown menu
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Click-outside listener
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If the dropdown is open AND the click happened outside our ref, close it
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
@@ -28,30 +25,31 @@ const NavBar = () => {
 
   const handleLogout = async (e) => {
     e.preventDefault();
+    // Clears local session-specific storage if applicable
     localStorage.removeItem('user-wallpaper');
+
     await logout();
-    setIsDropdownOpen(false); // Close menu on logout
+    setIsDropdownOpen(false);
     navigate('/login', { state: { message: 'Successfully logged out.' } });
   };
 
-  // Helper to close menu when a link is clicked
   const closeMenu = () => setIsDropdownOpen(false);
 
   return (
     <nav className="main-nav">
       <div className="nav-container">
-        <Link to="/" className="nav-logo">
-          My<span className="my-logo-accent">Knowledge Board</span>
+        <Link to="/" className="nav-logo" onClick={closeMenu}>
+          Knowledge<span className="my-logo-accent">Base</span>
         </Link>
 
         <ul className="nav-links">
           <li>
-            <Link to="/" className="nav-item">
-              Browse Companies
+            <Link to="/articles" className="nav-item">
+              Browse Articles
             </Link>
           </li>
 
-          {!user && (
+          {!user ? (
             <>
               <li>
                 <Link to="/register" className="nav-item">
@@ -64,82 +62,76 @@ const NavBar = () => {
                 </Link>
               </li>
             </>
-          )}
-
-          {user && (
-            // The Dropdown Container
+          ) : (
             <li className="user-menu-container" ref={dropdownRef}>
               <button
                 className="dropdown-toggle"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-haspopup="true"
+                aria-expanded={isDropdownOpen}
               >
-                {/* NEW: Dynamic Avatar Rendering */}
                 {user.avatar ? (
                   <img
                     src={user.avatar}
-                    alt={`${user.username}'s avatar`}
+                    alt={`${user.firstName}'s avatar`}
                     className="nav-avatar"
                   />
                 ) : (
                   <div className="nav-avatar-fallback">
-                    {user.username
-                      ? user.username.charAt(0).toUpperCase()
-                      : '?'}
+                    {user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
                   </div>
                 )}
 
                 <span className="nav-username">
-                  {user.name || user.username}
+                  {user.firstName} {user.lastName}
                 </span>
                 <span className={`chevron ${isDropdownOpen ? 'open' : ''}`}>
                   ▼
                 </span>
               </button>
 
-              {/* The Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="dropdown-menu">
                   <div className="dropdown-header">
-                    Signed in as <strong>{user.username}</strong>
+                    Signed in as <br />
+                    <strong>{user.email}</strong>
                   </div>
 
                   <div className="dropdown-divider"></div>
 
-                  <Link
-                    to="/register-company"
-                    className="dropdown-item"
-                    onClick={closeMenu}
-                  >
-                    Register Company
-                  </Link>
-                  <Link
-                    to="/my-submissions"
-                    className="dropdown-item"
-                    onClick={closeMenu}
-                  >
-                    My Submissions
+                  <Link to="/dashboard" className="dropdown-item" onClick={closeMenu}>
+                    User Dashboard
                   </Link>
 
-                  <Link
-                    to="/settings"
-                    className="dropdown-item"
-                    onClick={closeMenu}
-                  >
-                    Profile Settings
+                  <Link to="/submit-article" className="dropdown-item" onClick={closeMenu}>
+                    Submit Article
                   </Link>
 
-                  {/* Optional: Only show Admin Dashboard link if user is an admin */}
+                  <Link to="/favorites" className="dropdown-item" onClick={closeMenu}>
+                    Favorite Articles
+                  </Link>
+
+                  {/* Show Manager/Admin options based on Role */}
+                  {(user.role === 'Manager' || user.role === 'Admin') && (
+                    <>
+                      <div className="dropdown-divider"></div>
+                      <Link to="/approvals" className="dropdown-item" onClick={closeMenu}>
+                        Review Submissions
+                      </Link>
+                    </>
+                  )}
+
                   {user.isAdmin && (
-                    <Link
-                      to="/admin/dashboard"
-                      className="dropdown-item"
-                      onClick={closeMenu}
-                    >
-                      Admin Dashboard
+                    <Link to="/admin/dashboard" className="dropdown-item" onClick={closeMenu}>
+                      Admin Panel
                     </Link>
                   )}
 
                   <div className="dropdown-divider"></div>
+
+                  <Link to="/settings" className="dropdown-item" onClick={closeMenu}>
+                    Profile Settings
+                  </Link>
 
                   <button
                     onClick={handleLogout}
