@@ -53,20 +53,28 @@ leoProfanity.add([
 ]);
 
 export const moderateContent = asyncHandler(async (req, res, next) => {
-  const textToModerate =
-    req.body.body || req.body.comment || req.body.content || req.body.text;
+  // Expanded to include 'title' and 'content' for Knowledge Base Articles
+  const fieldsToMatch = [
+    req.body.title,
+    req.body.content,
+    req.body.body,
+    req.body.comment,
+    req.body.text
+  ];
 
-  if (!textToModerate) {
+  // Filter out undefined/null fields and join them into one string for checking
+  const contentToScan = fieldsToMatch.filter(Boolean).join(" ");
+
+  if (!contentToScan) {
     return next();
   }
 
-  // Evaluates text against the local dictionary synchronously
-  const isFlagged = leoProfanity.check(textToModerate);
+  const isFlagged = leoProfanity.check(contentToScan);
 
   if (isFlagged) {
     res.status(400);
     throw new Error(
-      "Content rejected. Violates community guidelines regarding profanity.",
+      "Content rejected. Your submission contains language that violates company guidelines."
     );
   }
 
