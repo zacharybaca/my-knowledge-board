@@ -67,22 +67,9 @@ const Login = () => {
           </div>
 
           <div className="auth-form-group">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
+            <div className="auth-label-row">
               <label>Password</label>
-              <Link
-                to="/forgot-password"
-                style={{
-                  fontSize: '0.85rem',
-                  color: '#10b981',
-                  textDecoration: 'none',
-                }}
-              >
+              <Link to="/forgot-password" className="auth-secondary-link">
                 Forgot Password?
               </Link>
             </div>
@@ -99,14 +86,14 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ margin: 0 }}>
+        <div className="auth-footer">
+          <p>
             Need an employee account?{' '}
             <Link to="/register" className="auth-link">
               Sign Up
             </Link>
           </p>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+          <p>
             New organization?{' '}
             <Link to="/register-company" className="auth-link">
               Register Company
