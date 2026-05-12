@@ -42,16 +42,17 @@ export const AuthProvider = ({ children }) => {
    * Triggers the backend logout and resets local user state.
    */
   const logout = async () => {
-    try {
-      const response = await fetcher('/api/auth/logout', { method: 'POST' });
+  try {
+    // Calls the backend logout function to clear the JWT cookie
+    await fetcher('/api/auth/logout', { method: 'POST' });
 
-      if (response.success) {
-        setUser(null); // This will automatically set isUserAdmin to false
-      }
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
+    // Clear local state
+    setUser(null);
+    localStorage.removeItem('userInfo');
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+};
 
   // Run the auth check once when the provider mounts
   useEffect(() => {
