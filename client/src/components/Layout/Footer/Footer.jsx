@@ -10,7 +10,7 @@ const Footer = () => {
       <div className="footer-container">
         <div className="footer-brand">
           <Link to="/" className="footer-logo">
-            Job<span className="logo-accent">Jury</span>
+            My<span className="logo-accent">Knowledge Board</span>
           </Link>
           <p className="footer-tagline">
             Empowering employees through transparent workplace verdicts.
@@ -32,7 +32,7 @@ const Footer = () => {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {currentYear} Job Jury. All rights reserved.</p>
+        <p>&copy; {currentYear} My Knowledge Board. All rights reserved.</p>
         <div className="footer-legal">
           <span>Built with the MERN Stack</span>
         </div>
