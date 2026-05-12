@@ -10,10 +10,10 @@ const Footer = () => {
       <div className="footer-container">
         <div className="footer-brand">
           <Link to="/" className="footer-logo">
-            My<span className="logo-accent">Knowledge Board</span>
+            My<span className="logo-accent">KnowledgeBoard</span>
           </Link>
           <p className="footer-tagline">
-            Empowering employees through transparent workplace verdicts.
+            Knowledge. Within Reach. Access company policies, process guides, and essential documentation all in one place.
           </p>
         </div>
 

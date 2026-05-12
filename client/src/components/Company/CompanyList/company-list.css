@@ -1,0 +1,117 @@
+/* company-list.css */
+
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+/* Individual Card Styling */
+.company-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.company-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
+  border-color: #10b981;
+}
+
+.company-card-icon {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.company-card-content h3 {
+  font-size: 1.25rem;
+  color: #0f172a;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.company-status {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+/* Call to Action Link */
+.company-card-action {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: gap 0.2s ease;
+}
+
+.company-card-action:hover {
+  gap: 12px;
+}
+
+/* States: Loading & Empty */
+.company-list-loading,
+.company-list-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(16, 185, 129, 0.1);
+  border-radius: 50%;
+  border-top-color: #10b981;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.company-list-empty svg {
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.register-inline-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.register-inline-link:hover {
+  border-color: #10b981;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Grid Adjustments */
+@media (max-width: 640px) {
+  .company-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
-import Toast from '../../../components/Toast.jsx';
-import '../auth-forms.css';
+import Toast from '../../Layout/Toast/Toast.jsx';
+import '../../Auth/auth-forms.css';
 
 const CompanyRegistration = () => {
   const [formData, setFormData] = useState({
