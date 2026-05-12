@@ -68,6 +68,47 @@
   color: #10b981; /* Jury Emerald */
 }
 
+/* Container to stack Logo and Tagline */
+.nav-brand-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.nav-brand-wrapper:hover {
+  transform: translateY(-1px);
+}
+
+/* Primary Logo Text */
+.nav-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1; /* Prevents large gaps between logo and tagline */
+  letter-spacing: -0.5px;
+}
+
+.nav-logo .my-logo-accent {
+  color: #10b981; /* Jury Emerald */
+}
+
+/* The Tagline */
+.nav-tagline {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #94a3b8; /* Muted slate for hierarchy */
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-top: 4px;
+  transition: color 0.2s ease;
+}
+
+.nav-brand-wrapper:hover .nav-tagline {
+  color: #cbd5e1; /* Lightens tagline slightly on hover */
+}
+
 /* =========================================
    2. USER DROPDOWN MENU & AVATAR
    ========================================= */
