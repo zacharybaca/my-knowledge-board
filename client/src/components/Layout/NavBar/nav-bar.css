@@ -18,6 +18,17 @@
   align-items: center; /* Vertically centers everything */
 }
 
+.nav-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.nav-logo .my-logo-accent {
+  color: #10b981;
+}
+
 /* Taming the Giant SVG Logo */
 .nav-logo-link {
   display: flex;
