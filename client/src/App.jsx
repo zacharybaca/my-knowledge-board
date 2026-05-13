@@ -6,6 +6,8 @@ import Register from './components/Auth/Register/Register';
 import CompanyRegistration from './components/Company/CompanyRegistration/CompanyRegistration';
 import Home from './components/Pages/Home';
 import VerifyWorkspace from './components/Auth/VerifyWorkspace/VerifyWorkspace';
+import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/EmployeeDashboard';
+import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
 import "./App.css";
 
 const Layout = () => {
@@ -29,6 +31,8 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="register-company" element={<CompanyRegistration />} />
         <Route path="verify-workspace/:token" element={<VerifyWorkspace />} />
+        <Route path="employee-dashboard" element={<EmployeeDashboard />} />
+        <Route path="manager-dashboard" element={<ManagerDashboard />} />
         <Route path="*" element={<div className="page-content"><h2>404: Page Not Found</h2></div>} />
       </Route>
     </Routes>
