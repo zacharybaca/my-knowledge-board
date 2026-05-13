@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../hooks/useAuth.js';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
+import { MailCheck } from 'lucide-react';
 import '../../Auth/auth-forms.css';
 
 const CompanyRegistration = () => {
@@ -16,10 +15,9 @@ const CompanyRegistration = () => {
   });
   const [toastConfig, setToastConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const { fetcher } = useFetcher();
-  const { login } = useAuth(); // Assume login updates local auth state
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,14 +38,30 @@ const CompanyRegistration = () => {
     });
 
     if (response.success) {
-      // Update auth context with the returned user data
-      login(response.data);
-      navigate('/dashboard');
+      setIsSuccess(true);
     } else {
       setToastConfig({ type: 'error', message: response.error || 'Registration failed.' });
       setIsSubmitting(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="auth-page-container">
+        <div className="auth-card success-state" style={{ maxWidth: '500px', textAlign: 'center' }}>
+          <MailCheck size={64} color="#10b981" style={{ margin: '0 auto 20px' }} />
+          <h2 className="auth-title">Check Your Email</h2>
+          <p className="auth-footer" style={{ marginTop: '10px' }}>
+            We sent a verification link to <strong>{formData.email}</strong>.
+            Please click the link to activate your workspace and log in.
+          </p>
+          <small style={{ color: '#64748b', display: 'block', marginTop: '20px' }}>
+            You can safely close this tab. The link will expire in 24 hours.
+          </small>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page-container">
@@ -87,11 +101,13 @@ const CompanyRegistration = () => {
               value={formData.emailDomain}
               onChange={handleChange}
               required
+              pattern="^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+              title="Must be a valid domain format (e.g., acmecorp.com)"
               placeholder="e.g., acmecorp.com"
             />
           </div>
 
-          <hr style={{ margin: '20px 0', borderColor: '#334155' }} />
+          <hr style={{ margin: '20px 0', borderColor: '#e2e8f0' }} />
 
           {/* Admin User Details */}
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -136,6 +152,7 @@ const CompanyRegistration = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              minLength="6"
             />
           </div>
 
