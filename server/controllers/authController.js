@@ -120,9 +120,50 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 });
 
-export {
-  registerUser,
-  loginUser,
-  logoutUser,
-  forgotPassword,
-};
+// @desc    Verify user email and activate workspace
+// @route   GET /api/auth/verify/:token
+// @access  Public
+const verifyWorkspace = asyncHandler(async (req, res) => {
+  // Hash the token from the URL to compare with the DB
+  const verifyTokenHash = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    verificationToken: verifyTokenHash,
+    verificationExpire: { $gt: Date.now() }, // Ensure it hasn't expired
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid or expired verification token");
+  }
+
+  // 1. Activate the User
+  user.isVerified = true;
+  user.verificationToken = undefined;
+  user.verificationExpire = undefined;
+  await user.save();
+
+  // 2. Activate the Company
+  const company = await Company.findById(user.companyId);
+  company.status = 'Active';
+  company.isActive = true;
+  await company.save();
+
+  // 3. Log them in automatically
+  generateToken(res, user._id);
+
+  res.status(200).json({
+    _id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+    companyId: user.companyId,
+    message: "Workspace activated successfully!"
+  });
+});
+
+export { registerUser, loginUser, logoutUser, forgotPassword, verifyWorkspace }; 
