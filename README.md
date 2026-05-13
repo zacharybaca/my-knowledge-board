@@ -1,90 +1,143 @@
-# 🚀 MERN Stack Boilerplate (Vite + Express)
+# KnowledgeBase
 
-A production-ready **MERN (MongoDB, Express, React, Node.js)** starter template designed for scalability and developer experience.
+## Knowledge Within Reach
 
-It features a **Monorepo structure** with a unified "One-Command" startup, pre-configured **CORS & Proxy** for seamless client-server communication, and a robust **Error Handling** architecture.
+A multi-tenant organizational knowledge board built on the MERN stack. Enables employees to submit, search, and bookmark company-specific process guides and policies, managed through a hierarchical approval workflow.
 
-![MERN Architecture](https://upload.wikimedia.org/wikipedia/commons/9/94/MERN-logo.png)
+- --
 
----
+## Core Features
 
-## ✨ Key Features
+* **Multi-Tenant Architecture:** Isolated organizational environments governed by `companyId` scoping and email domain verification.
+* **Role-Based Access Control (RBAC):** Distinct permission tiers for Employees, Managers, and Admins.
+* **Approval Workflow:** State-driven content lifecycle management (Draft, Pending, Approved, Rejected) with manager feedback integration.
+* **Asset Management:** Integrated Cloudinary pipeline for user avatar processing and automated cascading cleanup.
+* **Contextual Discovery:** MongoDB `$text` indexing for high-relevancy search across organizational documentation.
 
-### 🏗 Architecture
+- --
 
-- **Monorepo Setup:** Distinct `client` and `server` directories for clean separation of concerns.
-- **Concurrent Execution:** Boot both frontend and backend with a single command (`npm run dev`).
-- **MVC Backend:** Organized server structure (Models, Views/Routes, Controllers).
-- **Graceful Shutdown:** Handles `SIGINT` to close database connections cleanly.
+## Technical Stack
 
-### ⚡️ Frontend (Client)
+| Domain | Technology |
+| :--- | :--- |
+| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React |
+| **Backend** | Node.js, Express, Mongoose, JSON Web Tokens (JWT), bcryptjs |
+| **Database** | MongoDB |
+| **Services** | Cloudinary (Image Hosting) |
 
-- **Vite:** Lightning-fast HMR (Hot Module Replacement) and bundling.
-- **Axios Instance:** Centralized API configuration with `withCredentials: true` for secure cookie handling.
-- **Proxy Configured:** Zero CORS issues during development (`/api` requests are automatically proxied).
-- **Linting & Formatting:** ESLint + Prettier + Husky (pre-commit hooks) pre-installed.
+- --
 
-### 🛡 Backend (Server)
+## Environment Configuration
 
-- **Security First:** Configured `cors` to allow credentials from specific origins.
-- **Robust Error Handling:** Dedicated middleware to catch async errors and return standardized JSON responses.
-- **Database:** Mongoose setup with "Fail Fast" connection logic.
+    Create a `.env` file in the `server` directory with the following variables:
 
----
+    ```env
+    PORT=5000
+    MONGO_URI=your_mongodb_connection_string
+    JWT_SECRET=your_jwt_secret_key
+    FRONTEND_URL=http://localhost:5173
+    CLIENT_URL=http://localhost:5173
 
-## 🚀 Getting Started
+    # Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME=your_cloud_name
+    CLOUDINARY_API_KEY=your_api_key
+    CLOUDINARY_API_SECRET=your_api_secret
+    ```
 
-### 1. Prerequisites
+## Installation & Execution
 
-- Node.js (v18+ recommended)
-- MongoDB (Running locally or via Atlas URI)
+    1. Install Dependencies (Root, Client, and Server):
 
-### 2. Installation
+      ``` bash
+      npm run install-all
+      ```
+    2. Initialize Development Servers (Concurrent execution):
 
-Run the automated script to install dependencies for **Root**, **Client**, and **Server** simultaneously:
+        ```bash
+        npm run dev
+        ```
 
-```bash
-npm run install-all
-```
+        *   Frontend: `http://localhost:5173`
+        *   Backend: `http://localhost:5000`
+    - --
 
-## Environment Setup
+## System Architecture
 
-Create a .env file in the server directory:
+### Database Models
 
-```bash
-npm run dev
-```
+        * *1. User Model**
+        | Field | Type | Constraints | Description |
+        | :--- | :--- | :--- | :--- |
+        | `companyId` | ObjectId | required, ref: 'Company' | Maps user to specific tenant |
+        | `firstName` | String | required | User's given name |
+        | `lastName` | String | required | User's family name |
+        | `email` | String | required, unique | Auth and domain verification |
+        | `password` | String | required | Hashed via bcrypt pre-save |
+        | `role` | String | enum: ['Employee', 'Manager', 'Admin'] | Defines RBAC permissions |
+        | `managerId` | ObjectId | default: null, ref: 'User' | Hierarchical reporting structure |
+        | `avatar` | String | optional | Cloudinary secure URL |
+        | `avatarPublicId` | String | default: "" | Cloudinary asset ID for cleanup |
+        | `favoriteArticles` | [ObjectId] | ref: 'Article' | Array of bookmarked articles |
+        | `isAdmin` | Boolean | default: false | System-level admin override |
+        | `resetPasswordToken`| String | optional | Hashed token for password recovery |
+        | `resetPasswordExpire`| Date | optional | Token validity window |
 
-Frontend: [http://localhost:5173](http://localhost:5173)
+        * *2. Company Model**
+        | Field | Type | Constraints | Description |
+        | :--- | :--- | :--- | :--- |
+        | `name` | String | required, unique, trim | Display name of the organization |
+        | `emailDomain` | String | required, unique, lowercase | RegEx validated domain |
+        | `isActive` | Boolean | default: true | Soft-disable toggle for tenant |
+        | `createdBy` | ObjectId | ref: 'User' | User who registered the workspace |
 
-Backend: [http://localhost:5000](http://localhost:5000)
+        * *3. Article Model**
+        | Field | Type | Constraints | Description |
+        | :--- | :--- | :--- | :--- |
+        | `companyId` | ObjectId | required, ref: 'Company' | Scopes article to tenant |
+        | `authorId` | ObjectId | required, ref: 'User' | Article creator |
+        | `title` | String | required, text index | Article heading |
+        | `content` | String | required, text index | HTML/Markdown payload |
+        | `tags` | [String] | text index | Categorization terms |
+        | `status` | String | enum: ['Draft', 'Pending', 'Approved', 'Rejected'] | Content lifecycle state |
+        | `approverId` | ObjectId | default: null, ref: 'User' | Manager executing final review |
+        | `rejectionReason` | String | default: null | Feedback payload for rejected status |
+        | `viewCount` | Number | default: 0 | Increments on GET request |
 
-## 📂 Project Structure
+        - --
 
-```text
-react-starter-template/
-├── client/                 # React (Vite) Frontend
-│   ├── src/
-│   │   ├── api/            # Centralized Axios instance
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Route views
-│   │   └── App.jsx
-│   └── vite.config.js      # Proxy configuration
-├── server/                 # Express Backend
-│   ├── config/             # DB Connection logic
-│   ├── controllers/        # Request logic
-│   ├── models/             # Mongoose Schemas
-│   ├── routes/             # API Endpoints
-│   ├── middleware/         # Error & Auth Middleware
-│   ├── app.js              # App Factory
-│   └── server.js           # Server Entry Point
-└── package.json            # Root scripts
+### API Routes
 
-## 🛠 Tech Stack
+        * *Authentication Routes (`/api/auth`)**
+        | Method | Endpoint | Controller | Access |
+        | :--- | :--- | :--- | :--- |
+        | `POST` | `/register` | `registerUser` | Public |
+        | `POST` | `/login` | `loginUser` | Public |
+        | `POST` | `/logout` | `logoutUser` | Public |
+        | `POST` | `/forgotpassword` | `forgotPassword` | Public |
 
-| Domain   | Technology                           |
-|----------|--------------------------------------|
-| Frontend | React 19, Vite, Axios, React Router v7 |
-| Backend  | Node.js, Express, Mongoose          |
-| Database | MongoDB                             |
-| Tooling  | ESLint, Prettier, Concurrently, Nodemon |
+        * *Company Routes (`/api/companies`)**
+        | Method | Endpoint | Controller | Access |
+        | :--- | :--- | :--- | :--- |
+        | `GET` | `/` | `getCompanies` | Public |
+        | `POST` | `/register` | `registerCompany` | Public |
+
+        * *User Routes (`/api/users`)**
+        | Method | Endpoint | Controller | Access |
+        | :--- | :--- | :--- | :--- |
+        | `GET` | `/profile` | `getUserProfile` | Private |
+        | `PUT` | `/profile` | `updateUserProfile` | Private |
+        | `DELETE` | `/profile` | `deleteUser` | Private |
+        | `GET` | `/directory` | `getCompanyDirectory` | Private |
+        | `GET` | `/managers` | `getCompanyManagers` | Private |
+        | `PATCH` | `/favorites/:articleId` | `toggleFavoriteArticle` | Private |
+
+        * *Article Routes (`/api/articles`)**
+        | Method | Endpoint | Controller | Access |
+        | :--- | :--- | :--- | :--- |
+        | `POST` | `/` | `createArticle` | Private |
+        | `GET` | `/` | `getArticles` | Private |
+        | `GET` | `/:id` | `getArticleById` | Private |
+        | `PUT` | `/:id` | `updateArticle` | Private (Author) |
+        | `PATCH` | `/:id/status` | `approveRejectArticle` | Private (Manager) |
+        | `GET` | `/my-articles` | `getUserArticles` | Private |
+        | `GET` | `/pending` | `getPendingArticles` | Private (Manager) |
