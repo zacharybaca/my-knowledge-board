@@ -6,10 +6,8 @@ export const AppProvider = ({ children }) => {
   return (
     <FetcherProvider>
       <AuthProvider>
-        <CompanyProvider>
-          {children}
-        </CompanyProvider>
+        <CompanyProvider>{children}</CompanyProvider>
       </AuthProvider>
     </FetcherProvider>
-  )
-}
+  );
+};

@@ -39,7 +39,10 @@ const CompanyList = () => {
             <h3>{company.name}</h3>
             <p className="company-status">Active Partner</p>
           </div>
-          <Link to={`/register?companyId=${company._id}`} className="company-card-action">
+          <Link
+            to={`/register?companyId=${company._id}`}
+            className="company-card-action"
+          >
             <span>Join</span>
             <ArrowRight size={16} />
           </Link>

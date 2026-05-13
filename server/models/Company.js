@@ -20,21 +20,21 @@ const companySchema = new mongoose.Schema(
       ],
     },
     status: {
-    type: String,
-    enum: ['Pending', 'Active', 'Suspended'],
-    default: 'Pending',
-  },
-  // Update isActive to derive from status or keep it as a secondary toggle
-  isActive: {
-    type: Boolean,
-    default: false, // Changed from true
-  },
+      type: String,
+      enum: ["Pending", "Active", "Suspended"],
+      default: "Pending",
+    },
+    // Update isActive to derive from status or keep it as a secondary toggle
+    isActive: {
+      type: Boolean,
+      default: false, // Changed from true
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Company = mongoose.model("Company", companySchema);

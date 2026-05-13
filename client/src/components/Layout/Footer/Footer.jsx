@@ -13,7 +13,8 @@ const Footer = () => {
             My<span className="logo-accent">KnowledgeBoard</span>
           </Link>
           <p className="footer-tagline">
-            Knowledge. Within Reach. Access company policies, process guides, and essential documentation all in one place.
+            Knowledge. Within Reach. Access company policies, process guides,
+            and essential documentation all in one place.
           </p>
         </div>
 

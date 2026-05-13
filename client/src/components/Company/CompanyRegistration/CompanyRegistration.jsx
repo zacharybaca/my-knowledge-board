@@ -11,7 +11,7 @@ const CompanyRegistration = () => {
     firstName: '',
     lastName: '',
     email: '',
-    password: ''
+    password: '',
   });
   const [toastConfig, setToastConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +40,10 @@ const CompanyRegistration = () => {
     if (response.success) {
       setIsSuccess(true);
     } else {
-      setToastConfig({ type: 'error', message: response.error || 'Registration failed.' });
+      setToastConfig({
+        type: 'error',
+        message: response.error || 'Registration failed.',
+      });
       setIsSubmitting(false);
     }
   };
@@ -48,14 +51,23 @@ const CompanyRegistration = () => {
   if (isSuccess) {
     return (
       <div className="auth-page-container">
-        <div className="auth-card success-state" style={{ maxWidth: '500px', textAlign: 'center' }}>
-          <MailCheck size={64} color="#10b981" style={{ margin: '0 auto 20px' }} />
+        <div
+          className="auth-card success-state"
+          style={{ maxWidth: '500px', textAlign: 'center' }}
+        >
+          <MailCheck
+            size={64}
+            color="#10b981"
+            style={{ margin: '0 auto 20px' }}
+          />
           <h2 className="auth-title">Check Your Email</h2>
           <p className="auth-footer" style={{ marginTop: '10px' }}>
             We sent a verification link to <strong>{formData.email}</strong>.
             Please click the link to activate your workspace and log in.
           </p>
-          <small style={{ color: '#64748b', display: 'block', marginTop: '20px' }}>
+          <small
+            style={{ color: '#64748b', display: 'block', marginTop: '20px' }}
+          >
             You can safely close this tab. The link will expire in 24 hours.
           </small>
         </div>
@@ -75,7 +87,10 @@ const CompanyRegistration = () => {
 
       <div className="auth-card" style={{ maxWidth: '500px' }}>
         <h2 className="auth-title">Register Workspace</h2>
-        <p className="auth-footer" style={{ marginTop: 0, marginBottom: '20px' }}>
+        <p
+          className="auth-footer"
+          style={{ marginTop: 0, marginBottom: '20px' }}
+        >
           Create your organization and admin account.
         </p>
 

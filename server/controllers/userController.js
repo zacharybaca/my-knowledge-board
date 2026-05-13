@@ -94,7 +94,7 @@ const getCompanyDirectory = asyncHandler(async (req, res) => {
 const getCompanyManagers = asyncHandler(async (req, res) => {
   const managers = await User.find({
     companyId: req.user.companyId,
-    role: "Manager"
+    role: "Manager",
   }).select("firstName lastName _id");
 
   res.json(managers);
@@ -125,7 +125,7 @@ const toggleFavoriteArticle = asyncHandler(async (req, res) => {
   await user.save();
   res.json({
     message: index === -1 ? "Added to favorites" : "Removed from favorites",
-    favoriteArticles: user.favoriteArticles
+    favoriteArticles: user.favoriteArticles,
   });
 });
 

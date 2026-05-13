@@ -11,7 +11,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    companyId: ''
+    companyId: '',
   });
   const [companies, setCompanies] = useState([]);
   const { fetcher } = useFetcher();
@@ -40,7 +40,7 @@ const Register = () => {
           setCompanies(data);
         }
       } catch (error) {
-        console.error("Failed to fetch companies", error);
+        console.error('Failed to fetch companies', error);
       }
     };
     fetchCompanies();
@@ -60,7 +60,7 @@ const Register = () => {
       lastName: formData.lastName,
       email: formData.email,
       password: formData.password,
-      companyId: formData.companyId
+      companyId: formData.companyId,
     };
 
     const response = await fetcher('/api/auth/register', {
@@ -89,7 +89,6 @@ const Register = () => {
       <div className="auth-card">
         <h2 className="auth-title">Create Employee Account</h2>
         <form onSubmit={handleSubmit}>
-
           <div className="auth-form-row">
             <div className="auth-form-group half-width">
               <label>First Name</label>
@@ -136,8 +135,10 @@ const Register = () => {
               }
               required
             >
-              <option value="" disabled>Select your company</option>
-              {companies.map(company => (
+              <option value="" disabled>
+                Select your company
+              </option>
+              {companies.map((company) => (
                 <option key={company._id} value={company._id}>
                   {company.name}
                 </option>

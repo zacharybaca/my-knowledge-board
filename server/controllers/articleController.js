@@ -15,7 +15,7 @@ const createArticle = asyncHandler(async (req, res) => {
     title,
     content,
     tags,
-    status: status || 'Draft'
+    status: status || "Draft",
   });
 
   res.status(201).json(article);
@@ -32,7 +32,7 @@ const getArticles = asyncHandler(async (req, res) => {
   // Base query: Only show approved articles for the user's company
   let query = {
     companyId: req.user.companyId,
-    status: 'Approved'
+    status: "Approved",
   };
 
   // If search keyword exists, use MongoDB text index
@@ -63,8 +63,10 @@ const getArticleById = asyncHandler(async (req, res) => {
     .populate("approverId", "firstName lastName");
 
   // Security check: Ensure article belongs to user's company
-  if (article && article.companyId.toString() === req.user.companyId.toString()) {
-
+  if (
+    article &&
+    article.companyId.toString() === req.user.companyId.toString()
+  ) {
     // Increment view count
     article.viewCount += 1;
     await article.save();
@@ -90,8 +92,8 @@ const updateArticle = asyncHandler(async (req, res) => {
   }
 
   // Reset status to 'Pending' if an author edits a 'Rejected' article
-  if (article.status === 'Rejected') {
-    article.status = 'Pending';
+  if (article.status === "Rejected") {
+    article.status = "Pending";
   }
 
   article.title = req.body.title || article.title;
@@ -112,7 +114,10 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   const { status, rejectionReason } = req.body;
   const article = await Article.findById(req.params.id);
 
-  if (!article || article.companyId.toString() !== req.user.companyId.toString()) {
+  if (
+    !article ||
+    article.companyId.toString() !== req.user.companyId.toString()
+  ) {
     res.status(404);
     throw new Error("Article not found");
   }
@@ -120,7 +125,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   article.status = status; // 'Approved' or 'Rejected'
   article.approverId = req.user._id;
 
-  if (status === 'Rejected') {
+  if (status === "Rejected") {
     article.rejectionReason = rejectionReason;
   } else {
     article.rejectionReason = null;
@@ -136,8 +141,9 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getUserArticles = asyncHandler(async (req, res) => {
-  const articles = await Article.find({ authorId: req.user._id })
-    .sort({ updatedAt: -1 });
+  const articles = await Article.find({ authorId: req.user._id }).sort({
+    updatedAt: -1,
+  });
   res.json(articles);
 });
 
@@ -149,7 +155,7 @@ const getUserArticles = asyncHandler(async (req, res) => {
 const getPendingArticles = asyncHandler(async (req, res) => {
   const articles = await Article.find({
     companyId: req.user.companyId,
-    status: 'Pending'
+    status: "Pending",
   }).populate("authorId", "firstName lastName");
 
   res.json(articles);
@@ -162,5 +168,5 @@ export {
   updateArticle,
   approveRejectArticle,
   getUserArticles,
-  getPendingArticles
+  getPendingArticles,
 };

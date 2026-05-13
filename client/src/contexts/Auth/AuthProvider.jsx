@@ -13,8 +13,8 @@ export const AuthProvider = ({ children }) => {
    * whenever the 'user' object changes (e.g., after login or checkUserAuth).
    */
   const isUserAdmin = useMemo(() => {
-  return user?.isAdmin || user?.role === 'Admin' || user?.role === 'Manager';
-}, [user]);
+    return user?.isAdmin || user?.role === 'Admin' || user?.role === 'Manager';
+  }, [user]);
 
   /**
    * Validates the session with the backend on mount.
@@ -42,17 +42,17 @@ export const AuthProvider = ({ children }) => {
    * Triggers the backend logout and resets local user state.
    */
   const logout = async () => {
-  try {
-    // Calls the backend logout function to clear the JWT cookie
-    await fetcher('/api/auth/logout', { method: 'POST' });
+    try {
+      // Calls the backend logout function to clear the JWT cookie
+      await fetcher('/api/auth/logout', { method: 'POST' });
 
-    // Clear local state
-    setUser(null);
-    localStorage.removeItem('userInfo');
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
-};
+      // Clear local state
+      setUser(null);
+      localStorage.removeItem('userInfo');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   // Run the auth check once when the provider mounts
   useEffect(() => {

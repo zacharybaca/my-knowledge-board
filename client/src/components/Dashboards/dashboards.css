@@ -82,7 +82,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .metric-icon {
@@ -94,8 +94,14 @@
   justify-content: center;
 }
 
-.pending-icon { background: #fef3c7; color: #d97706; }
-.active-icon { background: #d1fae5; color: #059669; }
+.pending-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+.active-icon {
+  background: #d1fae5;
+  color: #059669;
+}
 
 .metric-data h3 {
   font-size: 1.75rem;
@@ -121,7 +127,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .card-header {
@@ -192,7 +198,9 @@
   align-items: center;
 }
 
-.block { display: block; }
+.block {
+  display: block;
+}
 
 .article-title {
   color: #0f172a;
@@ -215,10 +223,22 @@
   text-transform: uppercase;
 }
 
-.status-draft { background: #f1f5f9; color: #475569; }
-.status-pending { background: #fef3c7; color: #d97706; }
-.status-approved { background: #d1fae5; color: #059669; }
-.status-rejected { background: #fee2e2; color: #dc2626; }
+.status-draft {
+  background: #f1f5f9;
+  color: #475569;
+}
+.status-pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+.status-approved {
+  background: #d1fae5;
+  color: #059669;
+}
+.status-rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
 
 .action-btn {
   background: #0f172a;
@@ -237,5 +257,7 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,23 +1,30 @@
 import Company from "../models/Company.js";
 import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
 import asyncHandler from "express-async-handler";
 import sendEmail from "../utils/sendEmail.js";
 
 // @desc    Register a new company and initial Admin user
 // @route   POST /api/companies/register
 const registerCompany = asyncHandler(async (req, res) => {
-  const { companyName, emailDomain, firstName, lastName, email, password } = req.body;
+  const { companyName, emailDomain, firstName, lastName, email, password } =
+    req.body;
 
   // 1. Organization Name Verification (Blocklist)
-  const reservedNames = ['admin', 'system', 'support', 'billing', 'knowledgebase', 'root'];
+  const reservedNames = [
+    "admin",
+    "system",
+    "support",
+    "billing",
+    "knowledgebase",
+    "root",
+  ];
   if (reservedNames.includes(companyName.toLowerCase().trim())) {
     res.status(400);
     throw new Error("This organization name is reserved and cannot be used.");
   }
 
   const companyExists = await Company.findOne({
-    $or: [{ name: companyName }, { emailDomain }]
+    $or: [{ name: companyName }, { emailDomain }],
   });
 
   if (companyExists) {
@@ -26,10 +33,12 @@ const registerCompany = asyncHandler(async (req, res) => {
   }
 
   // 2. Admin Email Verification (Domain Match)
-  const providedEmailDomain = email.split('@')[1];
+  const providedEmailDomain = email.split("@")[1];
   if (providedEmailDomain !== emailDomain) {
     res.status(400);
-    throw new Error(`Admin email must match the registered domain: ${emailDomain}`);
+    throw new Error(
+      `Admin email must match the registered domain: ${emailDomain}`,
+    );
   }
 
   const userExists = await User.findOne({ email });
@@ -42,8 +51,8 @@ const registerCompany = asyncHandler(async (req, res) => {
   const company = await Company.create({
     name: companyName,
     emailDomain,
-    status: 'Pending',
-    isActive: false
+    status: "Pending",
+    isActive: false,
   });
 
   // 4. Create Pending Admin User
@@ -53,9 +62,9 @@ const registerCompany = asyncHandler(async (req, res) => {
     email,
     password,
     companyId: company._id,
-    role: 'Admin',
+    role: "Admin",
     isAdmin: true,
-    isVerified: false
+    isVerified: false,
   });
 
   company.createdBy = adminUser._id;
@@ -68,26 +77,22 @@ const registerCompany = asyncHandler(async (req, res) => {
   // Create verification URL (pointing to your React frontend)
   const verifyUrl = `${process.env.CLIENT_URL}/verify-workspace/${verifyToken}`;
 
-  const message = `
-    Welcome to KnowledgeBase!
-    Please verify your admin account and activate your workspace by clicking the link below:
-    \n\n ${verifyUrl}
-    \n\n This link will expire in 24 hours.
-  `;
-
   try {
     await sendEmail({
       email: adminUser.email,
-      subject: "Verify Your Workspace",
-      message: message,
+      templateId: "d-50a1f9504c1444b09b0211bf7189b254",
+      dynamicTemplateData: {
+        url: verifyUrl,
+        workspaceName: company.name,
+      },
     });
 
     // NOTE: We do NOT generate a JWT login token here anymore.
     res.status(201).json({
       success: true,
-      message: "Registration received. Please check your email to activate your workspace."
+      message:
+        "Registration received. Please check your email to activate your workspace.",
     });
-
   } catch (error) {
     // Rollback if email fails
     await User.findByIdAndDelete(adminUser._id);
@@ -100,7 +105,7 @@ const registerCompany = asyncHandler(async (req, res) => {
 // @desc    Get all companies (for registration dropdown)
 // @route   GET /api/companies
 const getCompanies = asyncHandler(async (req, res) => {
-  const companies = await Company.find({ isActive: true }).select('name _id');
+  const companies = await Company.find({ isActive: true }).select("name _id");
   res.status(200).json(companies);
 });
 

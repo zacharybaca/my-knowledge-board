@@ -7,4 +7,4 @@ export const useCompany = () => {
     throw new Error('useCompany must be used within a CompanyProvider');
   }
   return context;
-}
+};

@@ -7,8 +7,13 @@ const Home = () => {
     <div className="home-page">
       <section className="hero-section">
         <div className="container">
-          <h1>My<span className="hero-accent">KnowledgeBoard</span></h1>
-          <p>Access company policies, process guides, and essential documentation all in one place.</p>
+          <h1>
+            My<span className="hero-accent">KnowledgeBoard</span>
+          </h1>
+          <p>
+            Access company policies, process guides, and essential documentation
+            all in one place.
+          </p>
         </div>
       </section>
 

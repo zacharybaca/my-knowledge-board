@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet } from 'react-router-dom';
 import NavBar from './components/Layout/NavBar/NavBar';
 import Footer from './components/Layout/Footer/Footer';
 import Login from './components/Auth/Login/Login';
@@ -9,7 +9,7 @@ import VerifyWorkspace from './components/Auth/VerifyWorkspace/VerifyWorkspace';
 import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/EmployeeDashboard';
 import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
 import { useAuth } from './hooks/useAuth';
-import "./App.css";
+import './App.css';
 
 const Layout = () => {
   return (
@@ -34,9 +34,20 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="register-company" element={<CompanyRegistration />} />
         <Route path="verify-workspace/:token" element={<VerifyWorkspace />} />
-        {user && !isUserAdmin && <Route path="employee-dashboard" element={<EmployeeDashboard />} />}
-        {user && isUserAdmin && <Route path="manager-dashboard" element={<ManagerDashboard />} />}
-        <Route path="*" element={<div className="page-content"><h2>404: Page Not Found</h2></div>} />
+        {user && !isUserAdmin && (
+          <Route path="employee-dashboard" element={<EmployeeDashboard />} />
+        )}
+        {user && isUserAdmin && (
+          <Route path="manager-dashboard" element={<ManagerDashboard />} />
+        )}
+        <Route
+          path="*"
+          element={
+            <div className="page-content">
+              <h2>404: Page Not Found</h2>
+            </div>
+          }
+        />
       </Route>
     </Routes>
   );

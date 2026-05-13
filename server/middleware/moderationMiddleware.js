@@ -59,7 +59,7 @@ export const moderateContent = asyncHandler(async (req, res, next) => {
     req.body.content,
     req.body.body,
     req.body.comment,
-    req.body.text
+    req.body.text,
   ];
 
   // Filter out undefined/null fields and join them into one string for checking
@@ -74,7 +74,7 @@ export const moderateContent = asyncHandler(async (req, res, next) => {
   if (isFlagged) {
     res.status(400);
     throw new Error(
-      "Content rejected. Your submission contains language that violates company guidelines."
+      "Content rejected. Your submission contains language that violates company guidelines.",
     );
   }
 

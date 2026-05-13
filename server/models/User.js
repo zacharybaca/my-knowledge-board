@@ -5,23 +5,37 @@ import crypto from "crypto";
 
 const userSchema = mongoose.Schema(
   {
-    companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['Employee', 'Manager', 'Admin'], default: 'Employee' },
-    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    role: {
+      type: String,
+      enum: ["Employee", "Manager", "Admin"],
+      default: "Employee",
+    },
+    managerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     avatar: { type: String },
     avatarPublicId: { type: String, default: "" },
-    favoriteArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
+    favoriteArticles: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Article" },
+    ],
     isAdmin: { type: Boolean, default: false },
     isVerified: {
-    type: Boolean,
-    default: false
-  },
-  verificationToken: String,
-  verificationExpire: Date,
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: String,
+    verificationExpire: Date,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

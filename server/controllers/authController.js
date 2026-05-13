@@ -20,7 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Selected company does not exist");
   }
 
-  const emailDomain = email.split('@')[1];
+  const emailDomain = email.split("@")[1];
   if (company.emailDomain !== emailDomain) {
     res.status(400);
     throw new Error(`Email must belong to the domain: ${company.emailDomain}`);
@@ -31,7 +31,7 @@ const registerUser = asyncHandler(async (req, res) => {
     lastName,
     email,
     password,
-    companyId
+    companyId,
   });
 
   if (user) {
@@ -42,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      companyId: user.companyId
+      companyId: user.companyId,
     });
   } else {
     res.status(400);
@@ -62,7 +62,7 @@ const loginUser = asyncHandler(async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      companyId: user.companyId
+      companyId: user.companyId,
     });
   } else {
     res.status(401);
@@ -148,7 +148,7 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
 
   // 2. Activate the Company
   const company = await Company.findById(user.companyId);
-  company.status = 'Active';
+  company.status = "Active";
   company.isActive = true;
   await company.save();
 
@@ -162,8 +162,8 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
     email: user.email,
     role: user.role,
     companyId: user.companyId,
-    message: "Workspace activated successfully!"
+    message: "Workspace activated successfully!",
   });
 });
 
-export { registerUser, loginUser, logoutUser, forgotPassword, verifyWorkspace }; 
+export { registerUser, loginUser, logoutUser, forgotPassword, verifyWorkspace };
