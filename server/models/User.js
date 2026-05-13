@@ -37,6 +37,19 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
+userSchema.methods.getVerificationToken = function () {
+  const token = crypto.randomBytes(20).toString("hex");
+
+  this.verificationToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  this.verificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+  return token;
+};
+
 // Method to compare passwords
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
