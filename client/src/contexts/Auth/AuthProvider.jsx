@@ -13,8 +13,8 @@ export const AuthProvider = ({ children }) => {
    * whenever the 'user' object changes (e.g., after login or checkUserAuth).
    */
   const isUserAdmin = useMemo(() => {
-    return user?.isAdmin || user?.role === 'admin';
-  }, [user]);
+  return user?.isAdmin || user?.role === 'Admin' || user?.role === 'Manager';
+}, [user]);
 
   /**
    * Validates the session with the backend on mount.
