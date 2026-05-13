@@ -8,6 +8,7 @@ import Home from './components/Pages/Home';
 import VerifyWorkspace from './components/Auth/VerifyWorkspace/VerifyWorkspace';
 import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/EmployeeDashboard';
 import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
+import { useAuth } from './hooks/useAuth';
 import "./App.css";
 
 const Layout = () => {
@@ -23,6 +24,8 @@ const Layout = () => {
 };
 
 function App() {
+  const { isUserAdmin, user } = useAuth();
+
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
@@ -31,8 +34,8 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="register-company" element={<CompanyRegistration />} />
         <Route path="verify-workspace/:token" element={<VerifyWorkspace />} />
-        <Route path="employee-dashboard" element={<EmployeeDashboard />} />
-        <Route path="manager-dashboard" element={<ManagerDashboard />} />
+        {user && !isUserAdmin && <Route path="employee-dashboard" element={<EmployeeDashboard />} />}
+        {user && isUserAdmin && <Route path="manager-dashboard" element={<ManagerDashboard />} />}
         <Route path="*" element={<div className="page-content"><h2>404: Page Not Found</h2></div>} />
       </Route>
     </Routes>
