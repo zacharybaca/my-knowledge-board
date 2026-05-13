@@ -4,8 +4,6 @@
 
 A multi-tenant organizational knowledge board built on the MERN stack. Enables employees to submit, search, and bookmark company-specific process guides and policies, managed through a hierarchical approval workflow.
 
-- --
-
 ## Core Features
 
 * **Multi-Tenant Architecture:** Isolated organizational environments governed by `companyId` scoping and email domain verification.
@@ -14,7 +12,7 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 * **Asset Management:** Integrated Cloudinary pipeline for user avatar processing and automated cascading cleanup.
 * **Contextual Discovery:** MongoDB `$text` indexing for high-relevancy search across organizational documentation.
 
-- --
+* --
 
 ## Technical Stack
 
@@ -31,31 +29,26 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 
     Create a `.env` file in the `server` directory with the following variables:
 
-    ```env
-    PORT=5000
-    MONGO_URI=your_mongodb_connection_string
-    JWT_SECRET=your_jwt_secret_key
-    FRONTEND_URL=http://localhost:5173
-    CLIENT_URL=http://localhost:5173
+        PORT=5000
+        MONGO_URI=your_mongodb_connection_string
+        JWT_SECRET=your_jwt_secret_key
+        FRONTEND_URL=http://localhost:5173
+        CLIENT_URL=http://localhost:5173
 
-    # Cloudinary Configuration
-    CLOUDINARY_CLOUD_NAME=your_cloud_name
-    CLOUDINARY_API_KEY=your_api_key
-    CLOUDINARY_API_SECRET=your_api_secret
-    ```
+        # Cloudinary Configuration
+        CLOUDINARY_CLOUD_NAME=your_cloud_name
+        CLOUDINARY_API_KEY=your_api_key
+        CLOUDINARY_API_SECRET=your_api_secret
 
 ## Installation & Execution
 
     1. Install Dependencies (Root, Client, and Server):
 
-      ``` bash
-      npm run install-all
-      ```
+        npm run install-all
+
     2. Initialize Development Servers (Concurrent execution):
 
-        ```bash
         npm run dev
-        ```
 
         *   Frontend: `http://localhost:5173`
         *   Backend: `http://localhost:5000`
@@ -141,3 +134,106 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
         | `PATCH` | `/:id/status` | `approveRejectArticle` | Private (Manager) |
         | `GET` | `/my-articles` | `getUserArticles` | Private |
         | `GET` | `/pending` | `getPendingArticles` | Private (Manager) |
+
+## Frontend Architecture
+
+The client application is built with React and Vite, utilizing a feature-based directory structure for modularity and scalability.
+
+### Directory Hierarchy
+
+    client/
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   │   ├── Article/
+    │   │   │   ├── ApprovalQueue/
+    │   │   │   ├── ArticleCard/
+    │   │   │   ├── ArticleEditor/
+    │   │   │   └── ArticleView/
+    │   │   ├── Auth/
+    │   │   │   ├── Login/
+    │   │   │   ├── Register/
+    │   │   │   ├── VerifyWorkspace/
+    │   │   │   └── auth-forms.css
+    │   │   ├── Company/
+    │   │   │   ├── CompanyList/
+    │   │   │   └── CompanyRegistration/
+    │   │   ├── Dashboards/
+    │   │   │   ├── EmployeeDashboard/
+    │   │   │   └── ManagerDashboard/
+    │   │   ├── Layout/
+    │   │   │   ├── Footer/
+    │   │   │   ├── Header/
+    │   │   │   ├── NavBar/
+    │   │   │   ├── SideBar/
+    │   │   │   └── Toast/
+    │   │   ├── Pages/
+    │   │   │   ├── Home.jsx
+    │   │   │   └── home.css
+    │   │   ├── Search/
+    │   │   │   ├── SearchBar/
+    │   │   │   ├── SearchResults/
+    │   │   │   └── TagFilter/
+    │   │   └── Utility/
+    │   │       ├── AdminRoute/
+    │   │       ├── ProtectedRoute/
+    │   │       └── SearchBar/
+    │   ├── contexts/
+    │   │   ├── Auth/
+    │   │   ├── Companies/
+    │   │   ├── Fetcher/
+    │   │   └── AppProvider.jsx
+    │   ├── hooks/
+    │   │   ├── useAuth.js
+    │   │   ├── useCompany.js
+    │   │   └── useFetcher.js
+    │   ├── App.css
+    │   ├── App.jsx
+    │   ├── index.css
+    │   └── main.jsx
+    └── .env
+
+### Component Breakdown
+
+* Article: Manages the core knowledge base content lifecycle. Includes the editor interface, standardized card displays, detailed viewing, and the manager-specific approval queue interface.
+* Auth: Handles system access and onboarding. Includes standard login, employee registration, and the secure workspace verification flow.
+* Company: Interfaces for the multi-tenant architecture. Displays active participating organizations and handles the creation of new tenant workspaces.
+* Dashboards: Role-specific landing areas providing contextual data and actions based on whether the authenticated user is an Employee or a Manager.
+* Layout: The persistent UI shell. Contains navigation bars, footers, sidebars, and the global notification system (Toast).
+* Pages: Top-level route views, such as the public-facing Home page.
+* Search: Components interfacing with the backend MongoDB text-indexing to provide high-relevancy document discovery and tag-based filtering.
+* Utility: Higher-order components and wrappers, primarily used for Role-Based Access Control (RBAC) to restrict access to protected and admin-only routes.
+
+### State Management & Data Fetching
+
+* Contexts (AppProvider.jsx): Global state is segmented by domain (Auth, Companies, Fetcher) and nested hierarchically within a primary provider to ensure correct dependency resolution (e.g., Company state relying on Auth state).
+* Custom Hooks:
+  * useAuth: Exposes login, logout, and current user data.
+  * useCompany: Exposes current tenant data.
+  * useFetcher: A centralized utility for executing API requests with intercepted credentials and error handling.
+
+### System Integration Requirements
+
+#### Environment Variables
+
+The frontend requires the following variable in the client-side .env file to communicate with the Express backend:
+
+    VITE_API_URL=http://localhost:5000
+
+The backend requires a .env file in the server directory with the following variables:
+
+    PORT=5000
+    MONGO_URI=your_mongodb_connection_string
+    JWT_SECRET=your_jwt_secret_key
+    FRONTEND_URL=http://localhost:5173
+    CLIENT_URL=http://localhost:5173
+
+    # Email Provider Configuration (e.g., SendGrid)
+    SENDGRID_API_KEY=your_api_key
+    FROM_NAME="KnowledgeBase Support"
+    FROM_EMAIL=no-reply@yourverifieddomain.com
+
+    # Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME=your_cloud_name
+    CLOUDINARY_API_KEY=your_api_key
+    CLOUDINARY_API_SECRET=your_api_secret
