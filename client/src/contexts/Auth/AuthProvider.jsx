@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     setLoading(true); // Ensure loading is true while checking
     try {
-      const response = await fetcher('/api/users/me');
+      const response = await fetcher('/api/users/profile');
 
       // Based on your controller structure: response.data.user
       if (response.success && response.data?.user) {
