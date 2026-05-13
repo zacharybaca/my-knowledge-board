@@ -162,3 +162,35 @@
   opacity: 0.8;
   text-decoration: underline;
 }
+
+/* Success State Container for Company Registration */
+.success-state {
+  padding: 40px 20px;
+}
+
+/* Verification Page Specifics */
+.verify-page .auth-card {
+  padding: 50px 30px;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.verify-state {
+  animation: fadeIn 0.4s ease-in;
+}
+
+.verify-state .spinner {
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
