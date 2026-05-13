@@ -8,7 +8,7 @@ import '../../Auth/auth-forms.css';
 const VerifyWorkspace = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { setUser } = useAuth();
   const { fetcher } = useFetcher();
 
   const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
@@ -27,7 +27,7 @@ const VerifyWorkspace = () => {
 
       if (response.success) {
         setStatus('success');
-        login(response.data);
+        setUser(response.data.user);
 
         // Brief pause so user sees success state before redirect
         setTimeout(() => {
@@ -40,7 +40,7 @@ const VerifyWorkspace = () => {
     };
 
     verifyToken();
-  }, [token, fetcher, login, navigate]);
+  }, [token, fetcher, setUser, navigate]);
 
   return (
     <div className="auth-page-container verify-page">
