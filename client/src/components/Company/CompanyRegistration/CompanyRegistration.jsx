@@ -101,7 +101,7 @@ const CompanyRegistration = () => {
               value={formData.emailDomain}
               onChange={handleChange}
               required
-              pattern="^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+              pattern="[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
               title="Must be a valid domain format (e.g., acmecorp.com)"
               placeholder="e.g., acmecorp.com"
             />
