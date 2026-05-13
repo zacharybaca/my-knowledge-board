@@ -19,10 +19,16 @@ const companySchema = new mongoose.Schema(
         "Please add a valid email domain",
       ],
     },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    status: {
+    type: String,
+    enum: ['Pending', 'Active', 'Suspended'],
+    default: 'Pending',
+  },
+  // Update isActive to derive from status or keep it as a secondary toggle
+  isActive: {
+    type: Boolean,
+    default: false, // Changed from true
+  },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
