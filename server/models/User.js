@@ -16,6 +16,12 @@ const userSchema = mongoose.Schema(
     avatarPublicId: { type: String, default: "" },
     favoriteArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
     isAdmin: { type: Boolean, default: false },
+    isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  verificationExpire: Date,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
