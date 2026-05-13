@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth.js';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
 import '../../Auth/auth-forms.css';
 
 const CompanyRegistration = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    companyName: '',
     emailDomain: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: ''
   });
   const [toastConfig, setToastConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const { fetcher } = useFetcher();
+  const { login } = useAuth(); // Assume login updates local auth state
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,13 +40,13 @@ const CompanyRegistration = () => {
     });
 
     if (response.success) {
-      setToastConfig({ type: 'success', message: 'Company registered successfully.' });
-      setFormData({ name: '', emailDomain: '' });
+      // Update auth context with the returned user data
+      login(response.data);
+      navigate('/dashboard');
     } else {
-      setToastConfig({ type: 'error', message: response.error || 'Failed to register company.' });
+      setToastConfig({ type: 'error', message: response.error || 'Registration failed.' });
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   return (
@@ -50,19 +59,20 @@ const CompanyRegistration = () => {
         />
       )}
 
-      <div className="auth-card">
-        <h2 className="auth-title">Register Company</h2>
+      <div className="auth-card" style={{ maxWidth: '500px' }}>
+        <h2 className="auth-title">Register Workspace</h2>
         <p className="auth-footer" style={{ marginTop: 0, marginBottom: '20px' }}>
-          Set up a new workspace for your organization.
+          Create your organization and admin account.
         </p>
 
         <form onSubmit={handleSubmit}>
+          {/* Company Details */}
           <div className="auth-form-group">
-            <label>Company Name</label>
+            <label>Organization Name</label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="companyName"
+              value={formData.companyName}
               onChange={handleChange}
               required
               placeholder="e.g., Acme Corporation"
@@ -79,9 +89,54 @@ const CompanyRegistration = () => {
               required
               placeholder="e.g., acmecorp.com"
             />
-            <small style={{ color: '#888888', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-              Used to automatically verify employee signups.
-            </small>
+          </div>
+
+          <hr style={{ margin: '20px 0', borderColor: '#334155' }} />
+
+          {/* Admin User Details */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="auth-form-group" style={{ flex: 1 }}>
+              <label>First Name</label>
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="auth-form-group" style={{ flex: 1 }}>
+              <label>Last Name</label>
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="auth-form-group">
+            <label>Admin Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="auth-form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <button
@@ -89,7 +144,7 @@ const CompanyRegistration = () => {
             className="auth-submit-btn"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Registering...' : 'Register Company'}
+            {isSubmitting ? 'Configuring Workspace...' : 'Create Workspace'}
           </button>
         </form>
       </div>
