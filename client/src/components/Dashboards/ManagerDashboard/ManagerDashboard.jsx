@@ -1,1 +1,117 @@
-import './manager-dashboard.css';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
+import { useFetcher } from '../../../hooks/useFetcher';
+import { ClipboardCheck, FileText, Activity } from 'lucide-react';
+import '../dashboards.css';
+
+const ManagerDashboard = () => {
+  const { user } = useAuth();
+  const { fetcher } = useFetcher();
+
+  const [pendingArticles, setPendingArticles] = useState([]);
+  const [myArticles, setMyArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const [pendingRes, personalRes] = await Promise.all([
+        fetcher('/api/articles/pending'),
+        fetcher('/api/articles/my-articles')
+      ]);
+
+      if (pendingRes.success) setPendingArticles(pendingRes.data);
+      if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+
+      setIsLoading(false);
+    };
+
+    fetchDashboardData();
+  }, [fetcher]);
+
+  if (isLoading) return <div className="dashboard-loading"><div className="spinner"></div></div>;
+
+  return (
+    <div className="dashboard-container">
+      <header className="dashboard-header">
+        <div>
+          <h1>Manager Overview</h1>
+          <p>Review pending submissions and manage your content.</p>
+        </div>
+      </header>
+
+      <div className="dashboard-metrics">
+        <div className="metric-card">
+          <div className="metric-icon pending-icon"><ClipboardCheck size={24} /></div>
+          <div className="metric-data">
+            <h3>{pendingArticles.length}</h3>
+            <p>Pending Approvals</p>
+          </div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-icon active-icon"><FileText size={24} /></div>
+          <div className="metric-data">
+            <h3>{myArticles.length}</h3>
+            <p>Your Submissions</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+        <section className="dashboard-card approval-queue">
+          <div className="card-header">
+            <ClipboardCheck size={20} className="card-icon" />
+            <h2>Approval Queue</h2>
+          </div>
+          <div className="card-content">
+            {pendingArticles.length === 0 ? (
+              <p className="empty-state">No articles currently pending review.</p>
+            ) : (
+              <ul className="article-list">
+                {pendingArticles.map(article => (
+                  <li key={article._id}>
+                    <Link to={`/queue/${article._id}`} className="article-link flex-between">
+                      <div>
+                        <span className="article-title block">{article.title}</span>
+                        <span className="article-meta">Submitted by {article.authorId?.firstName} {article.authorId?.lastName}</span>
+                      </div>
+                      <span className="action-btn">Review</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        <section className="dashboard-card">
+          <div className="card-header">
+            <FileText size={20} className="card-icon" />
+            <h2>My Submissions</h2>
+            <Link to="/articles/new" className="action-link">Write Article</Link>
+          </div>
+          <div className="card-content">
+            {myArticles.length === 0 ? (
+              <p className="empty-state">You haven't submitted any articles.</p>
+            ) : (
+              <ul className="article-list">
+                {myArticles.map(article => (
+                  <li key={article._id}>
+                    <Link to={`/articles/${article._id}`} className="article-link flex-between">
+                      <span className="article-title">{article.title}</span>
+                      <span className={`status-badge status-${article.status.toLowerCase()}`}>
+                        {article.status}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default ManagerDashboard;
