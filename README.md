@@ -1,6 +1,14 @@
-# KnowledgeBase
 
-## Knowledge Within Reach
+<div align="center">
+  <img src="./client/public/logo.svg" alt="MyKnowledgeBoard Logo" width="150" />
+
+  <br />
+
+  <em>
+    <span style="color: #10b981;">Knowledge.</span>
+    <span style="color: #0f172a;">Within Reach.</span>
+  </em>
+</div>
 
 A multi-tenant organizational knowledge board built on the MERN stack. Enables employees to submit, search, and bookmark company-specific process guides and policies, managed through a hierarchical approval workflow.
 
