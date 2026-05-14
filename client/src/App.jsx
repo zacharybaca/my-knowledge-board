@@ -11,7 +11,7 @@ import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDa
 import ArticleEditor from './components/Article/ArticleEditor/ArticleEditor';
 // Import these when you create them
 import ArticleView from './components/Article/ArticleView/ArticleView';
-// import ArticleReview from './components/Article/ArticleReview/ArticleReview';
+import ArticleReview from './components/Article/ArticleReview/ArticleReview';
 // import SearchResults from './components/Pages/SearchResults/SearchResults';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
@@ -55,7 +55,7 @@ function App() {
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
 
           {/* Future Route for Manager Approval Queue */}
-          {/* <Route path="queue/:id" element={<ArticleReview />} /> */}
+          <Route path="queue/:id" element={<ArticleReview />} />
         </Route>
 
         <Route
