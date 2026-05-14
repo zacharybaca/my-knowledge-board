@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useFetcher } from '../../../hooks/useFetcher.js';
 import '../auth-forms.css';
 import Toast from '../../Layout/Toast/Toast.jsx';
 
@@ -13,12 +12,15 @@ const Register = () => {
     confirmPassword: '',
     companyId: '',
   });
+
+  const [avatar, setAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [companies, setCompanies] = useState([]);
-  const { fetcher } = useFetcher();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastConfig, setToastConfig] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [toastConfig, setToastConfig] = useState(null);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -33,7 +35,6 @@ const Register = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        // Fallback to standard fetch if your custom useFetcher is strictly for POST/mutations
         const res = await fetch('/api/companies');
         const data = await res.json();
         if (res.ok) {
@@ -46,34 +47,63 @@ const Register = () => {
     fetchCompanies();
   }, []);
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatar(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setToastConfig(null);
+    setIsSubmitting(true);
 
     if (formData.password !== formData.confirmPassword) {
       setToastConfig({ message: 'Passwords do not match', type: 'error' });
+      setIsSubmitting(false);
       return;
     }
 
-    const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      password: formData.password,
-      companyId: formData.companyId,
-    };
+    // Utilize FormData for multipart file transmission
+    const payload = new FormData();
+    payload.append('firstName', formData.firstName);
+    payload.append('lastName', formData.lastName);
+    payload.append('email', formData.email);
+    payload.append('password', formData.password);
+    payload.append('companyId', formData.companyId);
 
-    const response = await fetcher('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    if (avatar) {
+      payload.append('avatar', avatar);
+    }
 
-    if (response.success) {
-      navigate('/login', {
-        state: { message: 'Registration successful! Please log in.' },
+    try {
+      // Bypassing useFetcher to allow the browser to auto-set boundary headers
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        body: payload,
       });
-    } else {
-      setToastConfig({ message: response.error, type: 'error' });
+
+      const responseData = await res.json();
+
+      if (res.ok) {
+        navigate('/login', {
+          state: { message: 'Registration successful! Please log in.' },
+        });
+      } else {
+        setToastConfig({
+          message: responseData.message || 'Registration failed',
+          type: 'error',
+        });
+      }
+    } catch (error) {
+      setToastConfig({
+        message: 'Server error during registration.',
+        type: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,6 +119,33 @@ const Register = () => {
       <div className="auth-card">
         <h2 className="auth-title">Create Employee Account</h2>
         <form onSubmit={handleSubmit}>
+          {/* Avatar Upload Section */}
+          <div className="auth-avatar-upload">
+            <div className="avatar-preview-container">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar Preview"
+                  className="avatar-preview"
+                />
+              ) : (
+                <div className="avatar-placeholder">Initials</div>
+              )}
+            </div>
+            <div className="avatar-input-group">
+              <label htmlFor="avatarUpload" className="avatar-upload-btn">
+                Choose Profile Picture
+              </label>
+              <input
+                id="avatarUpload"
+                type="file"
+                accept="image/jpeg, image/png, image/webp"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+
           <div className="auth-form-row">
             <div className="auth-form-group half-width">
               <label>First Name</label>
@@ -170,8 +227,12 @@ const Register = () => {
             />
           </div>
 
-          <button type="submit" className="auth-submit-btn">
-            Create Account
+          <button
+            type="submit"
+            className="auth-submit-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
         <p className="auth-footer">

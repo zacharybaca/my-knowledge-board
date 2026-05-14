@@ -4,6 +4,8 @@ import generateToken from "../utils/generateToken.js";
 import asyncHandler from "express-async-handler";
 import crypto from "crypto";
 
+// @desc    Register new user
+// @route   POST /api/auth/register
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password, companyId } = req.body;
 
@@ -13,17 +15,13 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
-  // Optional: Validate that the email domain matches the company's registered domain
-  const company = await Company.findById(companyId);
-  if (!company) {
-    res.status(400);
-    throw new Error("Selected company does not exist");
-  }
+  let avatarUrl = "";
+  let avatarPublicId = "";
 
-  const emailDomain = email.split("@")[1];
-  if (company.emailDomain !== emailDomain) {
-    res.status(400);
-    throw new Error(`Email must belong to the domain: ${company.emailDomain}`);
+  // multer-storage-cloudinary attaches the secure URL to path and public ID to filename
+  if (req.file) {
+    avatarUrl = req.file.path;
+    avatarPublicId = req.file.filename;
   }
 
   const user = await User.create({
@@ -32,17 +30,21 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     companyId,
+    avatar: avatarUrl,
+    avatarPublicId,
   });
 
   if (user) {
-    generateToken(res, user._id);
     res.status(201).json({
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId,
+      success: true,
+      data: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
     });
   } else {
     res.status(400);

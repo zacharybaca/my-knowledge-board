@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useFetcher } from '../../../hooks/useFetcher.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
 import { MailCheck } from 'lucide-react';
 import '../../Auth/auth-forms.css';
@@ -13,11 +12,11 @@ const CompanyRegistration = () => {
     email: '',
     password: '',
   });
+  const [companyImage, setCompanyImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [toastConfig, setToastConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const { fetcher } = useFetcher();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,22 +26,52 @@ const CompanyRegistration = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCompanyImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setToastConfig(null);
 
-    const response = await fetcher('/api/companies/register', {
-      method: 'POST',
-      body: JSON.stringify(formData),
-    });
+    const payload = new FormData();
+    payload.append('companyName', formData.companyName);
+    payload.append('emailDomain', formData.emailDomain);
+    payload.append('firstName', formData.firstName);
+    payload.append('lastName', formData.lastName);
+    payload.append('email', formData.email);
+    payload.append('password', formData.password);
 
-    if (response.success) {
-      setIsSuccess(true);
-    } else {
+    if (companyImage) {
+      payload.append('companyImage', companyImage);
+    }
+
+    try {
+      const res = await fetch('/api/companies/register', {
+        method: 'POST',
+        body: payload,
+      });
+
+      const responseData = await res.json();
+
+      if (res.ok) {
+        setIsSuccess(true);
+      } else {
+        setToastConfig({
+          type: 'error',
+          message: responseData.message || 'Registration failed.',
+        });
+        setIsSubmitting(false);
+      }
+    } catch (error) {
       setToastConfig({
         type: 'error',
-        message: response.error || 'Registration failed.',
+        message: 'Server error during registration.',
       });
       setIsSubmitting(false);
     }
@@ -95,6 +124,33 @@ const CompanyRegistration = () => {
         </p>
 
         <form onSubmit={handleSubmit}>
+          {/* Company Image Upload Section */}
+          <div className="auth-avatar-upload">
+            <div className="avatar-preview-container">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Company Preview"
+                  className="avatar-preview"
+                />
+              ) : (
+                <div className="avatar-placeholder">Logo</div>
+              )}
+            </div>
+            <div className="avatar-input-group">
+              <label htmlFor="companyImageUpload" className="avatar-upload-btn">
+                Choose Company Logo
+              </label>
+              <input
+                id="companyImageUpload"
+                type="file"
+                accept="image/jpeg, image/png, image/webp"
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+
           {/* Company Details */}
           <div className="auth-form-group">
             <label>Organization Name</label>

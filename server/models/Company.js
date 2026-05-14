@@ -19,6 +19,13 @@ const companySchema = new mongoose.Schema(
         "Please add a valid email domain",
       ],
     },
+    imageUrl: {
+      type: String,
+    },
+    // Essential for Cloudinary cleanup
+    imagePublicId: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ["Pending", "Active", "Suspended"],
@@ -35,6 +42,32 @@ const companySchema = new mongoose.Schema(
     },
   },
   { timestamps: true },
+);
+
+companySchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      const companyId = this._id;
+
+      // 1. Cleanup Cloudinary Image
+      if (this.imagePublicId) {
+        await cloudinary.uploader.destroy(this.imagePublicId);
+        console.log(`✅ Cloudinary image removed: ${this.imagePublicId}`);
+      }
+
+      // 2. Delete Associated Users
+      await mongoose.model("User").deleteMany({ company: companyId });
+      console.log(`✅ Associated users deleted for company ID: ${companyId}`);
+
+      next();
+    } catch (error) {
+      console.error("❌ Middleware Cleanup Error:", error);
+      // We call next() anyway so the primary record is still deleted
+      next();
+    }
+  },
 );
 
 const Company = mongoose.model("Company", companySchema);

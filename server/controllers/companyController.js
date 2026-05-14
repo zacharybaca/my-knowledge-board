@@ -47,10 +47,21 @@ const registerCompany = asyncHandler(async (req, res) => {
     throw new Error("Admin email is already in use");
   }
 
+  // Extract Cloudinary data if image was uploaded
+  let imageUrl = "";
+  let imagePublicId = "";
+
+  if (req.file) {
+    imageUrl = req.file.path;
+    imagePublicId = req.file.filename;
+  }
+
   // 3. Create Pending Company
   const company = await Company.create({
     name: companyName,
     emailDomain,
+    imageUrl,
+    imagePublicId,
     status: "Pending",
     isActive: false,
   });
@@ -74,7 +85,6 @@ const registerCompany = asyncHandler(async (req, res) => {
   const verifyToken = adminUser.getVerificationToken();
   await adminUser.save({ validateBeforeSave: false });
 
-  // Create verification URL (pointing to your React frontend)
   const verifyUrl = `${process.env.CLIENT_URL}/verify-workspace/${verifyToken}`;
 
   try {
@@ -87,14 +97,12 @@ const registerCompany = asyncHandler(async (req, res) => {
       },
     });
 
-    // NOTE: We do NOT generate a JWT login token here anymore.
     res.status(201).json({
       success: true,
       message:
         "Registration received. Please check your email to activate your workspace.",
     });
   } catch (error) {
-    // Rollback if email fails
     await User.findByIdAndDelete(adminUser._id);
     await Company.findByIdAndDelete(company._id);
     res.status(500);

@@ -6,10 +6,11 @@ import {
   forgotPassword,
   verifyWorkspace,
 } from "../controllers/authController.js";
+import { upload } from "../middleware/cloudinary.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
+router.post("/register", upload.single("avatar"), registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 router.post("/forgotpassword", forgotPassword);
