@@ -12,7 +12,7 @@ import ArticleEditor from './components/Article/ArticleEditor/ArticleEditor';
 // Import these when you create them
 import ArticleView from './components/Article/ArticleView/ArticleView';
 import ArticleReview from './components/Article/ArticleReview/ArticleReview';
-// import SearchResults from './components/Pages/SearchResults/SearchResults';
+import SearchResults from './components/Search/SearchResults/SearchResults';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import './App.css';
@@ -48,7 +48,7 @@ function App() {
 
           {/* Future Routes needed for full dashboard functionality */}
            <Route path="articles/:id" element={<ArticleView />} />
-          {/* <Route path="search" element={<SearchResults />} /> */}
+           <Route path="search" element={<SearchResults />} />
         </Route>
 
         <Route element={<AdminRoute />}>
