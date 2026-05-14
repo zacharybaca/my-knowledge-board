@@ -8,6 +8,11 @@ import Home from './components/Pages/Home';
 import VerifyWorkspace from './components/Auth/VerifyWorkspace/VerifyWorkspace';
 import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/EmployeeDashboard';
 import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
+import ArticleEditor from './components/Article/ArticleEditor/ArticleEditor';
+// Import these when you create them
+// import ArticleViewer from './components/Article/ArticleViewer/ArticleViewer';
+// import ArticleReview from './components/Article/ArticleReview/ArticleReview';
+// import SearchResults from './components/Pages/SearchResults/SearchResults';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import './App.css';
@@ -25,7 +30,6 @@ const Layout = () => {
 };
 
 function App() {
-
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
@@ -37,10 +41,21 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="employee-dashboard" element={<EmployeeDashboard />} />
+
+          {/* Article Routing */}
+          <Route path="articles/new" element={<ArticleEditor />} />
+          <Route path="articles/:id/edit" element={<ArticleEditor />} />
+
+          {/* Future Routes needed for full dashboard functionality */}
+          {/* <Route path="articles/:id" element={<ArticleViewer />} /> */}
+          {/* <Route path="search" element={<SearchResults />} /> */}
         </Route>
 
         <Route element={<AdminRoute />}>
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
+
+          {/* Future Route for Manager Approval Queue */}
+          {/* <Route path="queue/:id" element={<ArticleReview />} /> */}
         </Route>
 
         <Route
