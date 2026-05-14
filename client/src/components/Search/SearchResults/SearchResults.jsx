@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import SearchBar from '../SearchBar/SearchBar.jsx';
 import ArticleCard from '../../Article/ArticleCard/ArticleCard.jsx';
+import TagFilter from '../TagFilter/TagFilter.jsx';
 import { SearchX, BookOpen } from 'lucide-react';
 import './search-results.css';
 
@@ -75,6 +76,8 @@ const SearchResults = () => {
         setFilterTag={setFilterTag}
         availableTags={availableTags}
       />
+
+      <TagFilter availableTags={availableTags} selectedTag={filterTag} onSelectTag={setFilterTag}/>
 
       {error && (
         <div className="search-status-message error">
