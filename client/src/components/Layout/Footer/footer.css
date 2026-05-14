@@ -109,3 +109,11 @@
     gap: 10px;
   }
 }
+
+.word-color {
+  color: #10b981; /* Emerald */
+}
+
+.other-word-color {
+  color: whitesmoke;
+}
