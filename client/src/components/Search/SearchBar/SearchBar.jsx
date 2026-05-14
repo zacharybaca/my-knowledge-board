@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Search, X } from 'lucide-react';
 import './search-bar.css';
 
-const SearchBar = ({ setSearchTerm, setFilterIndustry, industries }) => {
+const SearchBar = ({ setSearchTerm, setFilterTag, availableTags = [] }) => {
   const [displayValue, setDisplayValue] = useState('');
 
   useEffect(() => {
@@ -11,28 +12,38 @@ const SearchBar = ({ setSearchTerm, setFilterIndustry, industries }) => {
     return () => clearTimeout(handler);
   }, [displayValue, setSearchTerm]);
 
+  const handleClear = () => {
+    setDisplayValue('');
+    setSearchTerm('');
+  };
+
   return (
     <div className="search-filter-wrapper">
       <div className="search-container">
         <input
           type="text"
           className="search-input"
-          placeholder="Search employer..."
+          placeholder="Search articles, guides, or policies..."
           value={displayValue}
           onChange={(e) => setDisplayValue(e.target.value)}
         />
-        <span className="search-icon">🔍</span>
+        {displayValue && (
+          <button className="clear-search" onClick={handleClear} aria-label="Clear search">
+            <X size={18} />
+          </button>
+        )}
+        <Search className="search-icon" size={20} />
       </div>
 
       <div className="filter-container">
         <select
-          className="industry-select"
-          onChange={(e) => setFilterIndustry(e.target.value)}
+          className="tag-select"
+          onChange={(e) => setFilterTag(e.target.value)}
         >
-          <option value="">All Industries</option>
-          {industries.map((ind) => (
-            <option key={ind} value={ind}>
-              {ind}
+          <option value="">All Tags</option>
+          {availableTags.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
             </option>
           ))}
         </select>
