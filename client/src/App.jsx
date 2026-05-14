@@ -10,7 +10,7 @@ import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/Employe
 import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
 import ArticleEditor from './components/Article/ArticleEditor/ArticleEditor';
 // Import these when you create them
-// import ArticleViewer from './components/Article/ArticleViewer/ArticleViewer';
+import ArticleView from './components/Article/ArticleView/ArticleView';
 // import ArticleReview from './components/Article/ArticleReview/ArticleReview';
 // import SearchResults from './components/Pages/SearchResults/SearchResults';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
@@ -47,7 +47,7 @@ function App() {
           <Route path="articles/:id/edit" element={<ArticleEditor />} />
 
           {/* Future Routes needed for full dashboard functionality */}
-          {/* <Route path="articles/:id" element={<ArticleViewer />} /> */}
+           <Route path="articles/:id" element={<ArticleView />} />
           {/* <Route path="search" element={<SearchResults />} /> */}
         </Route>
 
