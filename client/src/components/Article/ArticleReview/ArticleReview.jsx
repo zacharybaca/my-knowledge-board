@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import './article-review.css';
-import '../ArticleView/ArticleView.css'; // Reusing base viewing styles
 
 const ArticleReview = () => {
   const { id } = useParams();
