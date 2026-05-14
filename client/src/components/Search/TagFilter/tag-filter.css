@@ -1,1 +1,59 @@
-/* CSS Ruleset for TagFilter */
+.tag-filter-wrapper {
+  margin-bottom: 30px;
+  background: #f8fafc;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.tag-filter-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.tag-filter-icon {
+  color: #94a3b8;
+}
+
+.tag-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-filter-btn {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 9999px; /* Fully rounded pills */
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.tag-filter-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* Active State matches your primary Emerald Green theme */
+.tag-filter-btn.active {
+  background-color: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.tag-filter-btn.active:hover {
+  background-color: #059669;
+  border-color: #059669;
+}
