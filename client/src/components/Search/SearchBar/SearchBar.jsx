@@ -34,20 +34,6 @@ const SearchBar = ({ setSearchTerm, setFilterTag, availableTags = [] }) => {
         )}
         <Search className="search-icon" size={20} />
       </div>
-
-      <div className="filter-container">
-        <select
-          className="tag-select"
-          onChange={(e) => setFilterTag(e.target.value)}
-        >
-          <option value="">All Tags</option>
-          {availableTags.map((tag) => (
-            <option key={tag} value={tag}>
-              {tag}
-            </option>
-          ))}
-        </select>
-      </div>
     </div>
   );
 };
