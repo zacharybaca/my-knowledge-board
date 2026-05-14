@@ -8,7 +8,8 @@ import Home from './components/Pages/Home';
 import VerifyWorkspace from './components/Auth/VerifyWorkspace/VerifyWorkspace';
 import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/EmployeeDashboard';
 import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
-import { useAuth } from './hooks/useAuth';
+import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
+import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import './App.css';
 
 const Layout = () => {
@@ -24,7 +25,6 @@ const Layout = () => {
 };
 
 function App() {
-  const { isUserAdmin, user } = useAuth();
 
   return (
     <Routes>
@@ -34,12 +34,15 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="register-company" element={<CompanyRegistration />} />
         <Route path="verify-workspace/:token" element={<VerifyWorkspace />} />
-        {user && !isUserAdmin && (
+
+        <Route element={<ProtectedRoute />}>
           <Route path="employee-dashboard" element={<EmployeeDashboard />} />
-        )}
-        {user && isUserAdmin && (
+        </Route>
+
+        <Route element={<AdminRoute />}>
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
-        )}
+        </Route>
+
         <Route
           path="*"
           element={
