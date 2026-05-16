@@ -20,13 +20,14 @@ export const AuthProvider = ({ children }) => {
    * Validates the session with the backend on mount.
    */
   const checkUserAuth = async () => {
-    setLoading(true); // Ensure loading is true while checking
+    setLoading(true);
     try {
       const response = await fetcher('/api/users/profile');
 
-      // Based on your controller structure: response.data.user
-      if (response.success && response.data?.user) {
-        setUser(response.data.user);
+      // Update depending on your exact backend payload structure
+      if (response.success && response.data) {
+        // If data is the user object itself
+        setUser(response.data.user || response.data);
       } else {
         setUser(null);
       }

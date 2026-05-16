@@ -10,12 +10,10 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
   // 1. Wait for the AuthProvider to finish its check-auth API call
+
+  // 1. Wait for the fetcher to complete
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-xl font-semibold text-jury-navy">
-        Gathering the Jury's findings...
-      </div>
-    );
+    return <div className="spinner"></div>; // Or a dedicated loading component
   }
 
   // 2. If no user is found after loading, redirect to login

@@ -8,6 +8,8 @@ import {
   deleteUser,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
+// Inject Cloudinary multer middleware. Adjust path if your configuration file differs.
+import { upload } from "../middleware/cloudinary.js";
 
 const router = express.Router();
 
@@ -20,7 +22,7 @@ const router = express.Router();
 router
   .route("/profile")
   .get(protect, getUserProfile)
-  .put(protect, updateUserProfile)
+  .put(protect, upload.single("avatar"), updateUserProfile)
   .delete(protect, deleteUser);
 
 /**

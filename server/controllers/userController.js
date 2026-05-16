@@ -38,22 +38,16 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       user.password = req.body.password;
     }
 
-    // Handle Cloudinary Avatar Upload
-    if (req.body.avatar && req.body.avatar !== user.avatar) {
-      // Delete old asset if it exists
+    // Handle Cloudinary Avatar Upload via multer middleware
+    if (req.file) {
+      // Delete old asset from Cloudinary if it exists
       if (user.avatarPublicId) {
         await cloudinary.uploader.destroy(user.avatarPublicId);
       }
 
-      const result = await cloudinary.uploader.upload(req.body.avatar, {
-        folder: "knowledge_base_avatars",
-        width: 150,
-        height: 150,
-        crop: "fill",
-      });
-
-      user.avatar = result.secure_url;
-      user.avatarPublicId = result.public_id;
+      // Assign new Cloudinary data from the req.file object
+      user.avatar = req.file.path;
+      user.avatarPublicId = req.file.filename;
     }
 
     const updatedUser = await user.save();

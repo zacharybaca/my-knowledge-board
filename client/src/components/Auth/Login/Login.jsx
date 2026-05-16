@@ -1,31 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth.js';
 import { useFetcher } from '../../../hooks/useFetcher.js';
-import Toast from '../../Layout/Toast/Toast.jsx';
 import '../auth-forms.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [toastConfig, setToastConfig] = useState(null);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
+  const { setUser } = useAuth();
   const { fetcher } = useFetcher();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
-    if (location.state?.message) {
-      setToastConfig({
-        message: location.state.message,
-        type: 'success',
-      });
-      window.history.replaceState({}, document.title);
-    }
-  }, [location]);
-
-  const handleSubmit = async (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setToastConfig(null);
+    setIsLoading(true);
+    setError('');
 
     const response = await fetcher('/api/auth/login', {
       method: 'POST',
@@ -33,71 +25,69 @@ const Login = () => {
     });
 
     if (response.success) {
-      const origin = location.state?.from?.pathname || '/';
-      navigate(origin);
+      setUser(response.data);
+
+      if (response.data.role === 'Admin' || response.data.role === 'Manager') {
+        navigate('/manager-dashboard');
+      } else {
+        navigate('/employee-dashboard');
+      }
     } else {
-      setToastConfig({
-        message: response.error || 'Login failed. Check your credentials.',
-        type: 'error',
-      });
+      setError(
+        response.error || 'Login failed. Please check your credentials.'
+      );
     }
+
+    setIsLoading(false);
   };
 
   return (
-    <div className="auth-page-container">
-      {toastConfig && (
-        <Toast
-          message={toastConfig.message}
-          type={toastConfig.type}
-          onClose={() => setToastConfig(null)}
-        />
-      )}
-
+    <div className="auth-container">
       <div className="auth-card">
-        <h2 className="auth-title">Welcome Back</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="auth-form-group">
-            <label>Email Address</label>
+        <h2>Welcome Back</h2>
+        <p>Log in to access your knowledge board.</p>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleLoginSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
+              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          <div className="auth-form-group">
-            <div className="auth-label-row">
-              <label>Password</label>
-              <Link to="/forgot-password" className="auth-secondary-link">
-                Forgot Password?
-              </Link>
-            </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
             <input
               type="password"
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          <button type="submit" className="auth-submit-btn">
-            Login
+          <button
+            type="submit"
+            className="auth-submit-btn"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>
-            Need an employee account?{' '}
-            <Link to="/register" className="auth-link">
-              Sign Up
-            </Link>
+            Don't have an account? <Link to="/register">Register here</Link>
           </p>
           <p>
             New organization?{' '}
-            <Link to="/register-company" className="auth-link">
-              Register Company
-            </Link>
+            <Link to="/register-company">Register Workspace</Link>
           </p>
         </div>
       </div>

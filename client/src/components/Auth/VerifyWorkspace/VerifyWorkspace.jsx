@@ -1,97 +1,78 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth.js';
 import { useFetcher } from '../../../hooks/useFetcher.js';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import '../../Auth/auth-forms.css';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import '../auth-forms.css';
 
 const VerifyWorkspace = () => {
   const { token } = useParams();
-  const navigate = useNavigate();
   const { setUser } = useAuth();
   const { fetcher } = useFetcher();
+  const navigate = useNavigate();
 
-  const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
-  const [errorMessage, setErrorMessage] = useState('');
-  const hasFetched = useRef(false);
+  const [status, setStatus] = useState('verifying');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // Prevent strict mode double-firing from causing invalid token errors
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-
     const verifyToken = async () => {
-      const response = await fetcher(`/api/auth/verify/${token}`, {
-        method: 'GET',
-      });
+      try {
+        const response = await fetcher(`/api/auth/verify/${token}`);
 
-      if (response.success) {
-        setStatus('success');
-        setUser(response.data.user);
+        if (response.success) {
+          setStatus('success');
+          setUser(response.data);
 
-        // Brief pause so user sees success state before redirect
-        setTimeout(() => {
-          navigate('/'); // Redirect to home/dashboard
-        }, 2000);
-      } else {
+          setTimeout(() => {
+            navigate('/manager-dashboard');
+          }, 2000);
+        } else {
+          setStatus('error');
+          setMessage(
+            response.error || 'Verification failed. The link may have expired.'
+          );
+        }
+      } catch (err) {
         setStatus('error');
-        setErrorMessage(
-          response.error ||
-            'Verification failed. The token may be expired or invalid.'
-        );
+        setMessage('A network error occurred during verification.');
       }
     };
 
-    verifyToken();
+    if (token) {
+      verifyToken();
+    }
   }, [token, fetcher, setUser, navigate]);
 
   return (
-    <div className="auth-page-container verify-page">
-      <div
-        className="auth-card"
-        style={{ maxWidth: '400px', textAlign: 'center' }}
-      >
-        {status === 'loading' && (
+    <div className="auth-container">
+      <div className="auth-card verify-card">
+        {status === 'verifying' && (
           <div className="verify-state">
-            <Loader2 className="spinner" size={48} color="#0f172a" />
-            <h2 className="auth-title">Verifying Workspace...</h2>
-            <p className="auth-footer">
-              Please wait while we activate your account.
+            <div className="spinner"></div>
+            <h2>Verifying Workspace...</h2>
+            <p>
+              Please wait while we activate your account and configure your
+              environment.
             </p>
           </div>
         )}
 
         {status === 'success' && (
           <div className="verify-state success">
-            <CheckCircle
-              size={48}
-              color="#10b981"
-              style={{ margin: '0 auto 16px' }}
-            />
-            <h2 className="auth-title">Workspace Activated!</h2>
-            <p className="auth-footer">Redirecting you to your dashboard...</p>
+            <CheckCircle size={48} className="success-icon" />
+            <h2>Workspace Activated!</h2>
+            <p>
+              Your account has been verified. Redirecting to your dashboard...
+            </p>
           </div>
         )}
 
         {status === 'error' && (
           <div className="verify-state error">
-            <XCircle
-              size={48}
-              color="#ef4444"
-              style={{ margin: '0 auto 16px' }}
-            />
-            <h2 className="auth-title">Verification Failed</h2>
-            <p
-              className="auth-footer"
-              style={{ color: '#ef4444', marginBottom: '20px' }}
-            >
-              {errorMessage}
-            </p>
-            <Link
-              to="/register-company"
-              className="auth-submit-btn"
-              style={{ textDecoration: 'none', display: 'inline-block' }}
-            >
+            <AlertCircle size={48} className="error-icon" />
+            <h2>Verification Failed</h2>
+            <p>{message}</p>
+            <Link to="/register-company" className="auth-submit-btn">
               Return to Registration
             </Link>
           </div>
