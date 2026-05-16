@@ -58,7 +58,9 @@ const ArticleView = () => {
       <article className="article-wrapper">
         <header className="article-header">
           <div className="article-meta-top">
-            <span className={`status-badge status-${article.status.toLowerCase()}`}>
+            <span
+              className={`status-badge status-${article.status.toLowerCase()}`}
+            >
               {article.status}
             </span>
           </div>
@@ -68,7 +70,9 @@ const ArticleView = () => {
           <div className="article-meta-bottom">
             <div className="meta-item">
               <User size={16} />
-              <span>{article.authorId?.firstName} {article.authorId?.lastName}</span>
+              <span>
+                {article.authorId?.firstName} {article.authorId?.lastName}
+              </span>
             </div>
             <div className="meta-item">
               <Clock size={16} />
@@ -84,7 +88,9 @@ const ArticleView = () => {
             <div className="article-tags">
               <Tag size={16} className="tag-icon" />
               {article.tags.map((tag, index) => (
-                <span key={index} className="tag-pill">{tag}</span>
+                <span key={index} className="tag-pill">
+                  {tag}
+                </span>
               ))}
             </div>
           )}

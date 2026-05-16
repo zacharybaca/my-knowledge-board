@@ -17,13 +17,9 @@ const router = express.Router();
 router.get("/my-articles", protect, getUserArticles);
 router.get("/pending", protect, manager, getPendingArticles);
 
-router.route("/")
-  .get(protect, getArticles)
-  .post(protect, createArticle);
+router.route("/").get(protect, getArticles).post(protect, createArticle);
 
-router.route("/:id")
-  .get(protect, getArticleById)
-  .put(protect, updateArticle);
+router.route("/:id").get(protect, getArticleById).put(protect, updateArticle);
 
 router.patch("/:id/status", protect, manager, approveRejectArticle);
 

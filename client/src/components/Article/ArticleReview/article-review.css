@@ -59,7 +59,8 @@
   gap: 12px;
 }
 
-.btn-reject, .btn-approve {
+.btn-reject,
+.btn-approve {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -90,7 +91,8 @@
   background-color: #059669;
 }
 
-.btn-approve:disabled, .btn-reject:disabled {
+.btn-approve:disabled,
+.btn-reject:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -117,7 +119,9 @@
   padding: 30px;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .reject-modal h2 {

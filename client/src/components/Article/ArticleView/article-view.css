@@ -51,10 +51,22 @@
   letter-spacing: 0.05em;
 }
 
-.status-approved { background-color: #d1fae5; color: #065f46; }
-.status-draft { background-color: #f1f5f9; color: #475569; }
-.status-pending { background-color: #fef3c7; color: #92400e; }
-.status-rejected { background-color: #fee2e2; color: #991b1b; }
+.status-approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.status-draft {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
 
 .article-title {
   color: #0f172a;
@@ -117,10 +129,18 @@
   font-weight: 600;
 }
 
-.article-body h2 { font-size: 1.75rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;}
-.article-body h3 { font-size: 1.5rem; }
+.article-body h2 {
+  font-size: 1.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+.article-body h3 {
+  font-size: 1.5rem;
+}
 
-.article-body p { margin-bottom: 1.2em; }
+.article-body p {
+  margin-bottom: 1.2em;
+}
 
 .article-body a {
   color: #10b981;

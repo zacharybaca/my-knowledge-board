@@ -28,7 +28,11 @@ const SearchBar = ({ setSearchTerm, setFilterTag, availableTags = [] }) => {
           onChange={(e) => setDisplayValue(e.target.value)}
         />
         {displayValue && (
-          <button className="clear-search" onClick={handleClear} aria-label="Clear search">
+          <button
+            className="clear-search"
+            onClick={handleClear}
+            aria-label="Clear search"
+          >
             <X size={18} />
           </button>
         )}

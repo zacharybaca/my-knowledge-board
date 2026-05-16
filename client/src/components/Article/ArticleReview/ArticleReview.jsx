@@ -44,7 +44,7 @@ const ArticleReview = () => {
 
     const response = await fetcher(`/api/articles/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (response.success) {
@@ -63,7 +63,11 @@ const ArticleReview = () => {
   };
 
   if (isLoading) {
-    return <div className="article-view-loading"><div className="spinner"></div></div>;
+    return (
+      <div className="article-view-loading">
+        <div className="spinner"></div>
+      </div>
+    );
   }
 
   if (error || !article) {
@@ -80,7 +84,6 @@ const ArticleReview = () => {
 
   return (
     <div className="article-review-container">
-
       {/* Fixed Action Bar at Top */}
       <div className="review-action-bar">
         <div className="action-bar-left">
@@ -116,8 +119,13 @@ const ArticleReview = () => {
           <header className="article-header">
             <h1 className="article-title">{article.title}</h1>
             <div className="article-meta-bottom">
-              <span>Author: {article.authorId?.firstName} {article.authorId?.lastName}</span>
-              <span>Submitted: {new Date(article.createdAt).toLocaleDateString()}</span>
+              <span>
+                Author: {article.authorId?.firstName}{' '}
+                {article.authorId?.lastName}
+              </span>
+              <span>
+                Submitted: {new Date(article.createdAt).toLocaleDateString()}
+              </span>
             </div>
           </header>
 
@@ -133,7 +141,10 @@ const ArticleReview = () => {
         <div className="modal-overlay">
           <div className="reject-modal">
             <h2>Reject Submission</h2>
-            <p>Please provide a reason for rejecting this article. This feedback will be sent directly to the author so they can make corrections.</p>
+            <p>
+              Please provide a reason for rejecting this article. This feedback
+              will be sent directly to the author so they can make corrections.
+            </p>
 
             <form onSubmit={handleRejectSubmit}>
               <textarea
@@ -164,7 +175,6 @@ const ArticleReview = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

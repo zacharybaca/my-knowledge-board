@@ -32,7 +32,10 @@ const Logo = () => {
       </svg>
       <span className="brand-text">
         My<span className="brand-accent">KnowledgeBoard</span>
-        <p className="brand-tagline"><span className="word-color">Knowledge</span>. <span className="alt-word-color">Within Reach.</span></p>
+        <p className="brand-tagline">
+          <span className="word-color">Knowledge</span>.{' '}
+          <span className="alt-word-color">Within Reach.</span>
+        </p>
       </span>
     </Link>
   );

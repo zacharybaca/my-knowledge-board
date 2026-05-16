@@ -47,8 +47,8 @@ function App() {
           <Route path="articles/:id/edit" element={<ArticleEditor />} />
 
           {/* Future Routes needed for full dashboard functionality */}
-           <Route path="articles/:id" element={<ArticleView />} />
-           <Route path="search" element={<SearchResults />} />
+          <Route path="articles/:id" element={<ArticleView />} />
+          <Route path="search" element={<SearchResults />} />
         </Route>
 
         <Route element={<AdminRoute />}>

@@ -26,9 +26,9 @@ const SearchResults = () => {
       if (response.success) {
         // Extract unique tags from all approved articles
         const tags = new Set();
-        response.data.forEach(article => {
+        response.data.forEach((article) => {
           if (article.tags) {
-            article.tags.forEach(tag => tags.add(tag));
+            article.tags.forEach((tag) => tags.add(tag));
           }
         });
         setAvailableTags(Array.from(tags).sort());
@@ -68,7 +68,10 @@ const SearchResults = () => {
     <div className="search-page-container">
       <div className="search-header-section">
         <h1>Knowledge Base</h1>
-        <p>Search across organizational policies, process guides, and technical documentation.</p>
+        <p>
+          Search across organizational policies, process guides, and technical
+          documentation.
+        </p>
       </div>
 
       <SearchBar
@@ -77,7 +80,11 @@ const SearchResults = () => {
         availableTags={availableTags}
       />
 
-      <TagFilter availableTags={availableTags} selectedTag={filterTag} onSelectTag={setFilterTag}/>
+      <TagFilter
+        availableTags={availableTags}
+        selectedTag={filterTag}
+        onSelectTag={setFilterTag}
+      />
 
       {error && (
         <div className="search-status-message error">
@@ -106,7 +113,10 @@ const SearchResults = () => {
         <div className="search-empty-state">
           <SearchX size={48} className="empty-icon" />
           <h3>No articles found</h3>
-          <p>We couldn't find any documentation matching "{searchTerm}". Try adjusting your keywords or clearing the tag filter.</p>
+          <p>
+            We couldn't find any documentation matching "{searchTerm}". Try
+            adjusting your keywords or clearing the tag filter.
+          </p>
         </div>
       )}
     </div>

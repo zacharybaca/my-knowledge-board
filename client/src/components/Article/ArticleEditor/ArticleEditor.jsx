@@ -14,7 +14,7 @@ const ArticleEditor = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    tags: ''
+    tags: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!id);
@@ -28,7 +28,7 @@ const ArticleEditor = () => {
           setFormData({
             title: response.data.title,
             content: response.data.content,
-            tags: response.data.tags.join(', ')
+            tags: response.data.tags.join(', '),
           });
         } else {
           setToastConfig({ type: 'error', message: 'Failed to load article.' });
@@ -41,11 +41,11 @@ const ArticleEditor = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEditorChange = (content) => {
-    setFormData(prev => ({ ...prev, content }));
+    setFormData((prev) => ({ ...prev, content }));
   };
 
   const handleSubmit = async (e) => {
@@ -56,7 +56,10 @@ const ArticleEditor = () => {
     const payload = {
       title: formData.title,
       content: formData.content,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+      tags: formData.tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
     };
 
     const endpoint = id ? `/api/articles/${id}` : '/api/articles';
@@ -64,18 +67,26 @@ const ArticleEditor = () => {
 
     const response = await fetcher(endpoint, {
       method,
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (response.success) {
       navigate('/dashboard');
     } else {
-      setToastConfig({ type: 'error', message: response.error || 'Failed to save article.' });
+      setToastConfig({
+        type: 'error',
+        message: response.error || 'Failed to save article.',
+      });
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) return <div className="editor-loading"><div className="spinner"></div></div>;
+  if (isLoading)
+    return (
+      <div className="editor-loading">
+        <div className="spinner"></div>
+      </div>
+    );
 
   return (
     <div className="editor-page-container">
@@ -121,24 +132,41 @@ const ArticleEditor = () => {
           <label>Content</label>
           <Editor
             apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
-            onInit={(evt, editor) => editorRef.current = editor}
+            onInit={(evt, editor) => (editorRef.current = editor)}
             value={formData.content}
             onEditorChange={handleEditorChange}
             init={{
               height: 500,
               menubar: true,
               plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                'advlist',
+                'autolink',
+                'lists',
+                'link',
+                'image',
+                'charmap',
+                'preview',
+                'anchor',
+                'searchreplace',
+                'visualblocks',
+                'code',
+                'fullscreen',
+                'insertdatetime',
+                'media',
+                'table',
+                'code',
+                'help',
+                'wordcount',
               ],
-              toolbar: 'undo redo | blocks | ' +
+              toolbar:
+                'undo redo | blocks | ' +
                 'bold italic forecolor | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
                 'removeformat | help',
-              content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px }',
+              content_style:
+                'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px }',
               branding: false,
-              promotion: false
+              promotion: false,
             }}
           />
         </div>

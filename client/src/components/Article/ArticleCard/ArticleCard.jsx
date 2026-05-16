@@ -11,7 +11,9 @@ const ArticleCard = ({ article, linkTo }) => {
     <Link to={destination} className="article-card-link">
       <div className="article-card">
         <div className="article-card-header">
-          <span className={`status-badge status-${article.status.toLowerCase()}`}>
+          <span
+            className={`status-badge status-${article.status.toLowerCase()}`}
+          >
             {article.status}
           </span>
           <div className="article-card-views">

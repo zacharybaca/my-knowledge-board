@@ -13,11 +13,12 @@ const Footer = () => {
             My<span className="logo-accent">KnowledgeBoard</span>
           </Link>
           <p className="footer-tagline">
-            <span className="word-color">Knowledge</span>. <span className="other-word-color">Within Reach</span>.
+            <span className="word-color">Knowledge</span>.{' '}
+            <span className="other-word-color">Within Reach</span>.
           </p>
           <p className="footer-tagline">
-            Access company policies, process guides,
-            and essential documentation all in one place.
+            Access company policies, process guides, and essential documentation
+            all in one place.
           </p>
         </div>
 

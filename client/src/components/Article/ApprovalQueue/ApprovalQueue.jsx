@@ -62,7 +62,9 @@ const ApprovalQueue = () => {
       <div className="queue-header">
         <div>
           <h2>Needs Review</h2>
-          <p className="queue-subtitle">Articles submitted by employees awaiting manager approval.</p>
+          <p className="queue-subtitle">
+            Articles submitted by employees awaiting manager approval.
+          </p>
         </div>
         <span className="queue-count-badge">
           {pendingArticles.length} Pending
