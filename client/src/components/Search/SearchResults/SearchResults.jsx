@@ -3,7 +3,7 @@ import { useFetcher } from '../../../hooks/useFetcher.js';
 import SearchBar from '../SearchBar/SearchBar.jsx';
 import ArticleCard from '../../Article/ArticleCard/ArticleCard.jsx';
 import TagFilter from '../TagFilter/TagFilter.jsx';
-import { SearchX, BookOpen } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 import './search-results.css';
 
 const SearchResults = () => {
