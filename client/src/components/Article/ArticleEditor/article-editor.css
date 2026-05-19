@@ -1,3 +1,5 @@
+/* client/src/components/Article/ArticleEditor/article-editor.css */
+
 .editor-page-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -36,7 +38,9 @@
   font-size: 0.95rem;
 }
 
-.form-group input[type='text'] {
+/* Updated selector to include select element */
+.form-group input[type='text'],
+.form-group select {
   width: 100%;
   padding: 12px;
   border: 1px solid #cbd5e1;
@@ -46,9 +50,13 @@
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
+  background-color: #ffffff;
+  font-family: inherit;
 }
 
-.form-group input[type='text']:focus {
+/* Updated selector to include select focus state */
+.form-group input[type='text']:focus,
+.form-group select:focus {
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
