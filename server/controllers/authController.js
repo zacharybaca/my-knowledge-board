@@ -70,6 +70,7 @@ const loginUser = asyncHandler(async (req, res) => {
       role: user.role,
       companyId: user.companyId,
       department: user.department,
+      avatar: user.avatar, // Added
     });
   } else {
     res.status(401);
@@ -168,6 +169,7 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
     role: user.role,
     companyId: user.companyId,
     department: user.department,
+    avatar: user.avatar, // Added
     message: "Workspace activated successfully!",
   });
 });
