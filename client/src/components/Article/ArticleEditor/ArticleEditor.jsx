@@ -11,11 +11,11 @@ const ArticleEditor = () => {
   const { fetcher } = useFetcher();
   const editorRef = useRef(null);
 
-  // 1. Explicitly check that an ID exists AND that it isn't the string "new"
   const isEditing = Boolean(id && id !== 'new');
 
   const [formData, setFormData] = useState({
     title: '',
+    department: '',
     content: '',
     tags: '',
   });
@@ -30,8 +30,8 @@ const ArticleEditor = () => {
         if (response.success) {
           setFormData({
             title: response.data.title || '',
+            department: response.data.department || '',
             content: response.data.content || '',
-            // Safely handle tags array if it exists
             tags: response.data.tags ? response.data.tags.join(', ') : '',
           });
         } else {
@@ -41,8 +41,6 @@ const ArticleEditor = () => {
       };
       fetchArticle();
     }
-    // 2. CRITICAL FIX: 'fetcher' is intentionally removed from the dependency array
-    // to prevent an infinite API calling loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEditing]);
 
@@ -62,6 +60,7 @@ const ArticleEditor = () => {
 
     const payload = {
       title: formData.title,
+      department: formData.department,
       content: formData.content,
       tags: formData.tags
         .split(',')
@@ -69,7 +68,6 @@ const ArticleEditor = () => {
         .filter(Boolean),
     };
 
-    // 3. Use the safe isEditing flag to determine the endpoint and method
     const endpoint = isEditing ? `/api/articles/${id}` : '/api/articles';
     const method = isEditing ? 'PUT' : 'POST';
 
@@ -79,7 +77,6 @@ const ArticleEditor = () => {
     });
 
     if (response.success) {
-      // You can change this to navigate(-1) if you prefer to go back to the previous page
       navigate('/employee-dashboard');
     } else {
       setToastConfig({
@@ -123,6 +120,30 @@ const ArticleEditor = () => {
             required
             placeholder="e.g., Q3 Password Rotation Policy"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="department">Department</label>
+          <select
+            id="department"
+            name="department"
+            value={formData.department}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Department...</option>
+            <option value="Customer Service">Customer Service & Billing</option>
+            <option value="Tech Support">Tech Support</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="Sales">Sales</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Product">Product</option>
+            <option value="Finance">Finance</option>
+            <option value="Legal">Legal</option>
+            <option value="Operations">Operations</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
 
         <div className="form-group">
