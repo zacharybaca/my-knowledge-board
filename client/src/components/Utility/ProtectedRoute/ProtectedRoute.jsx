@@ -1,29 +1,25 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth.js';
 
-/**
- * ProtectedRoute Wrapper
- * Uses global AuthContext to determine access.
- */
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = () => {
   const { user, loading } = useAuth();
-  const location = useLocation();
 
-  // 1. Wait for the AuthProvider to finish its check-auth API call
-
-  // 1. Wait for the fetcher to complete
   if (loading) {
-    return <div className="spinner"></div>; // Or a dedicated loading component
+    return (
+      <div className="dashboard-loading">
+        <div className="spinner"></div>
+      </div>
+    );
   }
 
-  // 2. If no user is found after loading, redirect to login
   if (!user) {
-    // Save the current location so we can redirect them back after login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
-  // 3. If authenticated, render the protected content
-  return children;
+  // Universal access for all authenticated roles.
+  // Role-specific restrictions should be handled by AdminRoute or individual components.
+  return <Outlet />;
 };
 
 export default ProtectedRoute;
