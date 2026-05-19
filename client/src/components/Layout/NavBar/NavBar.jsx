@@ -9,6 +9,7 @@ import {
   Search,
   PenSquare,
   User,
+  UserPlus,
 } from 'lucide-react';
 import './nav-bar.css';
 
@@ -127,6 +128,17 @@ const NavBar = () => {
                     <User size={16} />
                     <span>Profile Settings</span>
                   </Link>
+
+                  {isUserAdmin && (
+                    <Link
+                      to="/create-user"
+                      className="dropdown-item"
+                      onClick={closeDropdown}
+                    >
+                      <UserPlus size={16} />
+                      <span>Provision User</span>
+                    </Link>
+                  )}
 
                   <div className="dropdown-divider"></div>
 

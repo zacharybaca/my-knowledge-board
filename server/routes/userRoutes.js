@@ -6,6 +6,7 @@ import {
   getCompanyManagers,
   toggleFavoriteArticle,
   deleteUser,
+  createElevatedUser,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 // Inject Cloudinary multer middleware. Adjust path if your configuration file differs.
@@ -35,5 +36,10 @@ router.get("/managers", protect, getCompanyManagers);
  * Article Interaction Routes
  */
 router.patch("/favorites/:articleId", protect, toggleFavoriteArticle);
+
+/**
+ * Admin/Manager User Management
+ */
+router.post("/elevated", protect, createElevatedUser);
 
 export default router;

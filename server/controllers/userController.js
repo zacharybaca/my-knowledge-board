@@ -139,6 +139,63 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @desc    Create a new Admin or Manager account
+ * @route   POST /api/users/elevated
+ * @access  Private (Admin/Manager Only)
+ */
+const createElevatedUser = asyncHandler(async (req, res) => {
+  // 1. Role Verification
+  if (req.user.role !== "Admin" && req.user.role !== "Manager") {
+    res.status(403);
+    throw new Error("Not authorized to create elevated accounts");
+  }
+
+  const { firstName, lastName, email, password, department, role } = req.body;
+
+  // 2. Validate input role
+  if (!["Manager", "Admin"].includes(role)) {
+    res.status(400);
+    throw new Error("Invalid role selection");
+  }
+
+  // 3. Check for existing user
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    res.status(400);
+    throw new Error("An account with this email already exists");
+  }
+
+  // 4. Create the user
+  const user = await User.create({
+    firstName,
+    lastName,
+    email,
+    password,
+    companyId: req.user.companyId, // Inherited from creator
+    department,
+    role,
+    isVerified: true, // Auto-verified
+  });
+
+  if (user) {
+    res.status(201).json({
+      success: true,
+      data: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+      },
+    });
+  } else {
+    res.status(400);
+    throw new Error("Invalid user data");
+  }
+});
+
 export {
   getUserProfile,
   updateUserProfile,
@@ -146,4 +203,5 @@ export {
   getCompanyManagers,
   toggleFavoriteArticle,
   deleteUser,
+  createElevatedUser,
 };

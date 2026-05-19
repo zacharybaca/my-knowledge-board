@@ -13,6 +13,7 @@ import ArticleView from './components/Article/ArticleView/ArticleView';
 import ArticleReview from './components/Article/ArticleReview/ArticleReview';
 import SearchResults from './components/Search/SearchResults/SearchResults';
 import ProfileSettings from './components/Auth/ProfileSettings/ProfileSettings';
+import CreateElevatedUser from './components/Auth/CreateElevatedUser/CreateElevatedUser';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import './App.css';
@@ -54,6 +55,7 @@ function App() {
         <Route element={<AdminRoute />}>
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
           <Route path="queue/:id" element={<ArticleReview />} />
+          <Route path="create-user" element={<CreateElevatedUser />} />
         </Route>
 
         {/* 404 Fallback */}

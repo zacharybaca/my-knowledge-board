@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
-import { ClipboardCheck, FileText } from 'lucide-react';
+import { ClipboardCheck, FileText, UserPlus } from 'lucide-react';
 import '../dashboards.css';
 
 const ManagerDashboard = () => {
@@ -49,11 +49,32 @@ const ManagerDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
+      <header
+        className="dashboard-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
         <div>
           <h1>Manager Overview</h1>
           <p>Review pending submissions and manage your content.</p>
         </div>
+
+        <Link
+          to="/create-user"
+          className="action-btn"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            textDecoration: 'none',
+          }}
+        >
+          <UserPlus size={18} />
+          <span>Provision Account</span>
+        </Link>
       </header>
 
       <div className="dashboard-metrics">
