@@ -11,11 +11,26 @@ const ArticleCard = ({ article, linkTo }) => {
     <Link to={destination} className="article-card-link">
       <div className="article-card">
         <div className="article-card-header">
-          <span
-            className={`status-badge status-${article.status.toLowerCase()}`}
-          >
-            {article.status}
-          </span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span
+              className={`status-badge status-${article.status.toLowerCase()}`}
+            >
+              {article.status}
+            </span>
+            <span
+              style={{
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '0.7rem',
+                color: '#475569',
+                fontWeight: '600'
+              }}
+            >
+              {article.department}
+            </span>
+          </div>
           <div className="article-card-views">
             <Eye size={14} />
             <span>{article.viewCount}</span>
