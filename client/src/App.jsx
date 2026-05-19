@@ -12,6 +12,7 @@ import ArticleEditor from './components/Article/ArticleEditor/ArticleEditor';
 import ArticleView from './components/Article/ArticleView/ArticleView';
 import ArticleReview from './components/Article/ArticleReview/ArticleReview';
 import SearchResults from './components/Search/SearchResults/SearchResults';
+import ProfileSettings from './components/Auth/ProfileSettings/ProfileSettings';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import './App.css';
@@ -46,6 +47,7 @@ function App() {
           <Route path="articles/:id/edit" element={<ArticleEditor />} />
           <Route path="articles/:id" element={<ArticleView />} />
           <Route path="search" element={<SearchResults />} />
+          <Route path="profile-settings" element={<ProfileSettings />} />
         </Route>
 
         {/* Restricted Admin/Manager Routes */}
