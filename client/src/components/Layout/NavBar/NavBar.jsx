@@ -118,6 +118,16 @@ const NavBar = () => {
                     <span>Write Article</span>
                   </Link>
 
+                  {/* NEW PROFILE SETTINGS LINK */}
+                  <Link
+                    to="/profile-settings"
+                    className="dropdown-item"
+                    onClick={closeDropdown}
+                  >
+                    <User size={16} />
+                    <span>Profile Settings</span>
+                  </Link>
+
                   <div className="dropdown-divider"></div>
 
                   <button
