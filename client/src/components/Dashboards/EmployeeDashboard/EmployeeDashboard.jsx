@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
-import { Search, BookOpen, Clock, FileText } from 'lucide-react';
+import { Search, BookOpen, FileText } from 'lucide-react';
 import '../dashboards.css';
 
 const EmployeeDashboard = () => {
@@ -45,6 +45,17 @@ const EmployeeDashboard = () => {
         <div className="spinner"></div>
       </div>
     );
+
+  const departmentBadgeStyle = {
+    backgroundColor: '#f1f5f9',
+    border: '1px solid #cbd5e1',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    fontSize: '0.7rem',
+    marginRight: '8px',
+    color: '#475569',
+    fontWeight: '600',
+  };
 
   return (
     <div className="dashboard-container">
@@ -90,6 +101,7 @@ const EmployeeDashboard = () => {
                     >
                       <span className="article-title">{article.title}</span>
                       <span className="article-meta">
+                        <span style={departmentBadgeStyle}>{article.department}</span>
                         By {article.authorId?.firstName}{' '}
                         {article.authorId?.lastName}
                       </span>
@@ -120,7 +132,10 @@ const EmployeeDashboard = () => {
                       to={`/articles/${article._id}`}
                       className="article-link flex-between"
                     >
-                      <span className="article-title">{article.title}</span>
+                      <span className="article-title">
+                        <span style={departmentBadgeStyle}>{article.department}</span>
+                        {article.title}
+                      </span>
                       <span
                         className={`status-badge status-${article.status.toLowerCase()}`}
                       >
