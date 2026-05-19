@@ -40,12 +40,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
     // Handle Cloudinary Avatar Upload via multer middleware
     if (req.file) {
-      // Delete old asset from Cloudinary if it exists
       if (user.avatarPublicId) {
         await cloudinary.uploader.destroy(user.avatarPublicId);
       }
-
-      // Assign new Cloudinary data from the req.file object
       user.avatar = req.file.path;
       user.avatarPublicId = req.file.filename;
     }
@@ -59,6 +56,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       email: updatedUser.email,
       avatar: updatedUser.avatar,
       role: updatedUser.role,
+      department: updatedUser.department, // CRITICAL: Added department
       companyId: updatedUser.companyId,
     });
   } else {
