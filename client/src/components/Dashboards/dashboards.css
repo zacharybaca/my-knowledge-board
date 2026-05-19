@@ -195,7 +195,8 @@
 .flex-between {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .block {
@@ -205,13 +206,22 @@
 .article-title {
   color: #0f172a;
   font-weight: 500;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 4px;
+  line-height: 1.5;
 }
 
 .article-meta {
   font-size: 0.85rem;
   color: #64748b;
-  display: block;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Status Badges */
@@ -221,6 +231,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-draft {
@@ -247,6 +258,7 @@
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Loading State */
