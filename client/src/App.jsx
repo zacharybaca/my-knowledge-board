@@ -9,7 +9,6 @@ import VerifyWorkspace from './components/Auth/VerifyWorkspace/VerifyWorkspace';
 import EmployeeDashboard from './components/Dashboards/EmployeeDashboard/EmployeeDashboard';
 import ManagerDashboard from './components/Dashboards/ManagerDashboard/ManagerDashboard';
 import ArticleEditor from './components/Article/ArticleEditor/ArticleEditor';
-// Import these when you create them
 import ArticleView from './components/Article/ArticleView/ArticleView';
 import ArticleReview from './components/Article/ArticleReview/ArticleReview';
 import SearchResults from './components/Search/SearchResults/SearchResults';
@@ -33,31 +32,29 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
+        {/* Public Routes */}
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="register-company" element={<CompanyRegistration />} />
         <Route path="verify-workspace/:token" element={<VerifyWorkspace />} />
 
+        {/* Global Authenticated Routes (Accessible by Employees, Managers, Admins) */}
         <Route element={<ProtectedRoute />}>
           <Route path="employee-dashboard" element={<EmployeeDashboard />} />
-
-          {/* Article Routing */}
           <Route path="articles/new" element={<ArticleEditor />} />
           <Route path="articles/:id/edit" element={<ArticleEditor />} />
-
-          {/* Future Routes needed for full dashboard functionality */}
           <Route path="articles/:id" element={<ArticleView />} />
           <Route path="search" element={<SearchResults />} />
         </Route>
 
+        {/* Restricted Admin/Manager Routes */}
         <Route element={<AdminRoute />}>
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
-
-          {/* Future Route for Manager Approval Queue */}
           <Route path="queue/:id" element={<ArticleReview />} />
         </Route>
 
+        {/* 404 Fallback */}
         <Route
           path="*"
           element={
