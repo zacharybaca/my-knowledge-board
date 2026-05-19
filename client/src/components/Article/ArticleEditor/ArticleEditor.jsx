@@ -11,24 +11,28 @@ const ArticleEditor = () => {
   const { fetcher } = useFetcher();
   const editorRef = useRef(null);
 
+  // 1. Explicitly check that an ID exists AND that it isn't the string "new"
+  const isEditing = Boolean(id && id !== 'new');
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     tags: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(!!id);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const [toastConfig, setToastConfig] = useState(null);
 
   useEffect(() => {
-    if (id) {
+    if (isEditing) {
       const fetchArticle = async () => {
         const response = await fetcher(`/api/articles/${id}`);
         if (response.success) {
           setFormData({
-            title: response.data.title,
-            content: response.data.content,
-            tags: response.data.tags.join(', '),
+            title: response.data.title || '',
+            content: response.data.content || '',
+            // Safely handle tags array if it exists
+            tags: response.data.tags ? response.data.tags.join(', ') : '',
           });
         } else {
           setToastConfig({ type: 'error', message: 'Failed to load article.' });
@@ -37,7 +41,10 @@ const ArticleEditor = () => {
       };
       fetchArticle();
     }
-  }, [id, fetcher]);
+    // 2. CRITICAL FIX: 'fetcher' is intentionally removed from the dependency array
+    // to prevent an infinite API calling loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEditing]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,8 +69,9 @@ const ArticleEditor = () => {
         .filter(Boolean),
     };
 
-    const endpoint = id ? `/api/articles/${id}` : '/api/articles';
-    const method = id ? 'PUT' : 'POST';
+    // 3. Use the safe isEditing flag to determine the endpoint and method
+    const endpoint = isEditing ? `/api/articles/${id}` : '/api/articles';
+    const method = isEditing ? 'PUT' : 'POST';
 
     const response = await fetcher(endpoint, {
       method,
@@ -71,7 +79,8 @@ const ArticleEditor = () => {
     });
 
     if (response.success) {
-      navigate('/dashboard');
+      // You can change this to navigate(-1) if you prefer to go back to the previous page
+      navigate('/employee-dashboard');
     } else {
       setToastConfig({
         type: 'error',
@@ -99,7 +108,7 @@ const ArticleEditor = () => {
       )}
 
       <div className="editor-header">
-        <h1>{id ? 'Edit Article' : 'Draft New Article'}</h1>
+        <h1>{isEditing ? 'Edit Article' : 'Draft New Article'}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="editor-form">
