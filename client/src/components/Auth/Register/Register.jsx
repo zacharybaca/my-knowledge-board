@@ -11,6 +11,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     companyId: '',
+    department: '',
   });
 
   const [avatar, setAvatar] = useState(null);
@@ -66,20 +67,19 @@ const Register = () => {
       return;
     }
 
-    // Utilize FormData for multipart file transmission
     const payload = new FormData();
     payload.append('firstName', formData.firstName);
     payload.append('lastName', formData.lastName);
     payload.append('email', formData.email);
     payload.append('password', formData.password);
     payload.append('companyId', formData.companyId);
+    payload.append('department', formData.department);
 
     if (avatar) {
       payload.append('avatar', avatar);
     }
 
     try {
-      // Bypassing useFetcher to allow the browser to auto-set boundary headers
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         body: payload,
@@ -108,7 +108,7 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-page-container">
+    <div className="auth-container">
       {toastConfig && (
         <Toast
           message={toastConfig.message}
@@ -147,7 +147,7 @@ const Register = () => {
           </div>
 
           <div className="auth-form-row">
-            <div className="auth-form-group half-width">
+            <div className="form-group half-width">
               <label>First Name</label>
               <input
                 type="text"
@@ -158,7 +158,7 @@ const Register = () => {
                 required
               />
             </div>
-            <div className="auth-form-group half-width">
+            <div className="form-group half-width">
               <label>Last Name</label>
               <input
                 type="text"
@@ -171,7 +171,7 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Work Email Address</label>
             <input
               type="email"
@@ -183,7 +183,34 @@ const Register = () => {
             />
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
+            <label htmlFor="department">Department</label>
+            <select
+              id="department"
+              value={formData.department}
+              onChange={(e) =>
+                setFormData({ ...formData, department: e.target.value })
+              }
+              required
+            >
+              <option value="">Select Department...</option>
+              <option value="Customer Service">
+                Customer Service & Billing
+              </option>
+              <option value="Tech Support">Tech Support</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Sales">Sales</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Product">Product</option>
+              <option value="Finance">Finance</option>
+              <option value="Legal">Legal</option>
+              <option value="Operations">Operations</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <label>Company</label>
             <select
               value={formData.companyId}
@@ -203,7 +230,7 @@ const Register = () => {
             </select>
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Password</label>
             <input
               type="password"
@@ -215,7 +242,7 @@ const Register = () => {
             />
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Confirm Password</label>
             <input
               type="password"

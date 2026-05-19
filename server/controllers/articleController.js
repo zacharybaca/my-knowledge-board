@@ -1,3 +1,5 @@
+// controllers/articleController.js
+
 import asyncHandler from "express-async-handler";
 import Article from "../models/Article.js";
 
@@ -12,6 +14,7 @@ const createArticle = asyncHandler(async (req, res) => {
   const article = await Article.create({
     companyId: req.user.companyId,
     authorId: req.user._id,
+    department: req.user.department,
     title,
     content,
     tags,
@@ -22,25 +25,23 @@ const createArticle = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Search/Get all approved articles in company
+ * @desc    Search/Get all approved articles in company and department
  * @route   GET /api/articles
  * @access  Private
  */
 const getArticles = asyncHandler(async (req, res) => {
   const { keyword, tag } = req.query;
 
-  // Base query: Only show approved articles for the user's company
   let query = {
     companyId: req.user.companyId,
+    department: req.user.department,
     status: "Approved",
   };
 
-  // If search keyword exists, use MongoDB text index
   if (keyword) {
     query.$text = { $search: keyword };
   }
 
-  // Filter by tag if provided
   if (tag) {
     query.tags = tag;
   }
@@ -62,12 +63,11 @@ const getArticleById = asyncHandler(async (req, res) => {
     .populate("authorId", "firstName lastName email")
     .populate("approverId", "firstName lastName");
 
-  // Security check: Ensure article belongs to user's company
   if (
     article &&
-    article.companyId.toString() === req.user.companyId.toString()
+    article.companyId.toString() === req.user.companyId.toString() &&
+    article.department === req.user.department
   ) {
-    // Increment view count
     article.viewCount += 1;
     await article.save();
 
@@ -91,7 +91,6 @@ const updateArticle = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to edit this article");
   }
 
-  // Reset status to 'Pending' if an author edits a 'Rejected' article
   if (article.status === "Rejected") {
     article.status = "Pending";
   }
@@ -116,13 +115,14 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
 
   if (
     !article ||
-    article.companyId.toString() !== req.user.companyId.toString()
+    article.companyId.toString() !== req.user.companyId.toString() ||
+    article.department !== req.user.department
   ) {
     res.status(404);
-    throw new Error("Article not found");
+    throw new Error("Article not found or out of scope");
   }
 
-  article.status = status; // 'Approved' or 'Rejected'
+  article.status = status;
   article.approverId = req.user._id;
 
   if (status === "Rejected") {
@@ -155,6 +155,7 @@ const getUserArticles = asyncHandler(async (req, res) => {
 const getPendingArticles = asyncHandler(async (req, res) => {
   const articles = await Article.find({
     companyId: req.user.companyId,
+    department: req.user.department,
     status: "Pending",
   }).populate("authorId", "firstName lastName");
 

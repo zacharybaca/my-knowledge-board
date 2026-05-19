@@ -1,5 +1,7 @@
+// controllers/authController.js
+
 import User from "../models/User.js";
-import Company from "../models/Company.js"; // Needed for domain validation
+import Company from "../models/Company.js";
 import generateToken from "../utils/generateToken.js";
 import asyncHandler from "express-async-handler";
 import crypto from "crypto";
@@ -7,7 +9,8 @@ import crypto from "crypto";
 // @desc    Register new user
 // @route   POST /api/auth/register
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, companyId } = req.body;
+  const { firstName, lastName, email, password, companyId, department } =
+    req.body;
 
   const userExists = await User.findOne({ email });
   if (userExists) {
@@ -18,7 +21,6 @@ const registerUser = asyncHandler(async (req, res) => {
   let avatarUrl = "";
   let avatarPublicId = "";
 
-  // multer-storage-cloudinary attaches the secure URL to path and public ID to filename
   if (req.file) {
     avatarUrl = req.file.path;
     avatarPublicId = req.file.filename;
@@ -30,6 +32,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     companyId,
+    department,
     avatar: avatarUrl,
     avatarPublicId,
   });
@@ -43,6 +46,7 @@ const registerUser = asyncHandler(async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        department: user.department,
         avatar: user.avatar,
       },
     });
@@ -53,7 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body; // Removed username
+  const { email, password } = req.body;
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
@@ -65,6 +69,7 @@ const loginUser = asyncHandler(async (req, res) => {
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      department: user.department,
     });
   } else {
     res.status(401);
@@ -88,7 +93,6 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "User logged out" });
 });
 
-// Update forgotPassword message to be more generic since the app name is TBD
 const forgotPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: req.body.email });
 
@@ -129,7 +133,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/verify/:token
 // @access  Public
 const verifyWorkspace = asyncHandler(async (req, res) => {
-  // Hash the token from the URL to compare with the DB
   const verifyTokenHash = crypto
     .createHash("sha256")
     .update(req.params.token)
@@ -137,7 +140,7 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({
     verificationToken: verifyTokenHash,
-    verificationExpire: { $gt: Date.now() }, // Ensure it hasn't expired
+    verificationExpire: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -145,19 +148,16 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
     throw new Error("Invalid or expired verification token");
   }
 
-  // 1. Activate the User
   user.isVerified = true;
   user.verificationToken = undefined;
   user.verificationExpire = undefined;
   await user.save();
 
-  // 2. Activate the Company
   const company = await Company.findById(user.companyId);
   company.status = "Active";
   company.isActive = true;
   await company.save();
 
-  // 3. Log them in automatically
   generateToken(res, user._id);
 
   res.status(200).json({
@@ -167,6 +167,7 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
     email: user.email,
     role: user.role,
     companyId: user.companyId,
+    department: user.department,
     message: "Workspace activated successfully!",
   });
 });

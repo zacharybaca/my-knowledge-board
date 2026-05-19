@@ -10,6 +10,11 @@ const userSchema = mongoose.Schema(
       ref: "Company",
       required: true,
     },
+    department: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },

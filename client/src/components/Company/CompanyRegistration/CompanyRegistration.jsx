@@ -1,3 +1,5 @@
+// CompanyRegistration.jsx
+
 import React, { useState } from 'react';
 import Toast from '../../Layout/Toast/Toast.jsx';
 import { MailCheck } from 'lucide-react';
@@ -79,7 +81,7 @@ const CompanyRegistration = () => {
 
   if (isSuccess) {
     return (
-      <div className="auth-page-container">
+      <div className="auth-container">
         <div
           className="auth-card success-state"
           style={{ maxWidth: '500px', textAlign: 'center' }}
@@ -105,7 +107,7 @@ const CompanyRegistration = () => {
   }
 
   return (
-    <div className="auth-page-container">
+    <div className="auth-container">
       {toastConfig && (
         <Toast
           message={toastConfig.message}
@@ -152,7 +154,7 @@ const CompanyRegistration = () => {
           </div>
 
           {/* Company Details */}
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Organization Name</label>
             <input
               type="text"
@@ -164,7 +166,7 @@ const CompanyRegistration = () => {
             />
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Email Domain</label>
             <input
               type="text"
@@ -181,8 +183,8 @@ const CompanyRegistration = () => {
           <hr style={{ margin: '20px 0', borderColor: '#e2e8f0' }} />
 
           {/* Admin User Details */}
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <div className="auth-form-group" style={{ flex: 1 }}>
+          <div className="auth-form-row">
+            <div className="form-group half-width">
               <label>First Name</label>
               <input
                 type="text"
@@ -192,7 +194,7 @@ const CompanyRegistration = () => {
                 required
               />
             </div>
-            <div className="auth-form-group" style={{ flex: 1 }}>
+            <div className="form-group half-width">
               <label>Last Name</label>
               <input
                 type="text"
@@ -204,7 +206,7 @@ const CompanyRegistration = () => {
             </div>
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Admin Email</label>
             <input
               type="email"
@@ -215,7 +217,7 @@ const CompanyRegistration = () => {
             />
           </div>
 
-          <div className="auth-form-group">
+          <div className="form-group">
             <label>Password</label>
             <input
               type="password"
