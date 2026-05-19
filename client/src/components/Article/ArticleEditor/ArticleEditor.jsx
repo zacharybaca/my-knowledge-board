@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
+import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
 import './article-editor.css';
 
@@ -9,6 +10,7 @@ const ArticleEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { fetcher } = useFetcher();
+  const { isUserAdmin } = useAuth();
   const editorRef = useRef(null);
 
   const isEditing = Boolean(id && id !== 'new');
@@ -66,6 +68,7 @@ const ArticleEditor = () => {
         .split(',')
         .map((tag) => tag.trim())
         .filter(Boolean),
+      status: isUserAdmin ? 'Approved' : 'Pending',
     };
 
     const endpoint = isEditing ? `/api/articles/${id}` : '/api/articles';
@@ -77,7 +80,7 @@ const ArticleEditor = () => {
     });
 
     if (response.success) {
-      navigate('/employee-dashboard');
+      navigate(isUserAdmin ? '/manager-dashboard' : '/employee-dashboard');
     } else {
       setToastConfig({
         type: 'error',
@@ -215,7 +218,11 @@ const ArticleEditor = () => {
             className="btn-submit"
             disabled={isSubmitting || !formData.content.trim()}
           >
-            {isSubmitting ? 'Saving...' : 'Submit for Approval'}
+            {isSubmitting
+              ? 'Saving...'
+              : isUserAdmin
+              ? 'Publish Article'
+              : 'Submit for Approval'}
           </button>
         </div>
       </form>
