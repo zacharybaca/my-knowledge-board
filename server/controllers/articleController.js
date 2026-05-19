@@ -1,5 +1,3 @@
-// controllers/articleController.js
-
 import asyncHandler from "express-async-handler";
 import Article from "../models/Article.js";
 
@@ -11,6 +9,12 @@ import Article from "../models/Article.js";
 const createArticle = asyncHandler(async (req, res) => {
   const { title, content, tags, status } = req.body;
 
+  let finalStatus = status || "Pending";
+
+  if (req.user.role === "Admin" || req.user.role === "Manager") {
+    finalStatus = "Approved";
+  }
+
   const article = await Article.create({
     companyId: req.user.companyId,
     authorId: req.user._id,
@@ -18,7 +22,7 @@ const createArticle = asyncHandler(async (req, res) => {
     title,
     content,
     tags,
-    status: status || "Draft",
+    status: finalStatus,
   });
 
   res.status(201).json(article);
@@ -91,14 +95,17 @@ const updateArticle = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to edit this article");
   }
 
-  if (article.status === "Rejected") {
+  if (req.user.role === "Admin" || req.user.role === "Manager") {
+    article.status = "Approved";
+  } else if (article.status === "Rejected") {
     article.status = "Pending";
+  } else if (req.body.status) {
+    article.status = req.body.status;
   }
 
   article.title = req.body.title || article.title;
   article.content = req.body.content || article.content;
   article.tags = req.body.tags || article.tags;
-  article.status = req.body.status || article.status;
 
   const updatedArticle = await article.save();
   res.json(updatedArticle);
