@@ -101,7 +101,9 @@ const EmployeeDashboard = () => {
                     >
                       <span className="article-title">{article.title}</span>
                       <span className="article-meta">
-                        <span style={departmentBadgeStyle}>{article.department}</span>
+                        <span style={departmentBadgeStyle}>
+                          {article.department}
+                        </span>
                         By {article.authorId?.firstName}{' '}
                         {article.authorId?.lastName}
                       </span>
@@ -133,7 +135,9 @@ const EmployeeDashboard = () => {
                       className="article-link flex-between"
                     >
                       <span className="article-title">
-                        <span style={departmentBadgeStyle}>{article.department}</span>
+                        <span style={departmentBadgeStyle}>
+                          {article.department}
+                        </span>
                         {article.title}
                       </span>
                       <span

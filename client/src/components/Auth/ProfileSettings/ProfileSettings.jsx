@@ -109,7 +109,10 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="auth-container" style={{ minHeight: 'auto', padding: '20px 0' }}>
+    <div
+      className="auth-container"
+      style={{ minHeight: 'auto', padding: '20px 0' }}
+    >
       {toastConfig && (
         <Toast
           message={toastConfig.message}
@@ -118,9 +121,17 @@ const ProfileSettings = () => {
         />
       )}
 
-      <div className="auth-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <h2 className="auth-title" style={{ marginBottom: '10px' }}>Profile Settings</h2>
-        <p className="auth-footer" style={{ marginTop: 0, marginBottom: '30px' }}>
+      <div
+        className="auth-card"
+        style={{ maxWidth: '600px', margin: '0 auto' }}
+      >
+        <h2 className="auth-title" style={{ marginBottom: '10px' }}>
+          Profile Settings
+        </h2>
+        <p
+          className="auth-footer"
+          style={{ marginTop: 0, marginBottom: '30px' }}
+        >
           Update your personal information, email address, or password.
         </p>
 
@@ -135,7 +146,8 @@ const ProfileSettings = () => {
                 />
               ) : (
                 <div className="avatar-placeholder">
-                  {formData.firstName?.charAt(0)}{formData.lastName?.charAt(0)}
+                  {formData.firstName?.charAt(0)}
+                  {formData.lastName?.charAt(0)}
                 </div>
               )}
             </div>
@@ -187,9 +199,17 @@ const ProfileSettings = () => {
             />
           </div>
 
-          <hr style={{ margin: '30px 0', borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+          <hr
+            style={{
+              margin: '30px 0',
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            }}
+          />
 
-          <p className="auth-footer" style={{ textAlign: 'left', marginBottom: '15px' }}>
+          <p
+            className="auth-footer"
+            style={{ textAlign: 'left', marginBottom: '15px' }}
+          >
             Leave password fields blank to keep your current password.
           </p>
 

@@ -25,7 +25,7 @@ const ArticleCard = ({ article, linkTo }) => {
                 borderRadius: '12px',
                 fontSize: '0.7rem',
                 color: '#475569',
-                fontWeight: '600'
+                fontWeight: '600',
               }}
             >
               {article.department}

@@ -101,7 +101,9 @@ const ManagerDashboard = () => {
                           {article.title}
                         </span>
                         <span className="article-meta">
-                          <span style={departmentBadgeStyle}>{article.department}</span>
+                          <span style={departmentBadgeStyle}>
+                            {article.department}
+                          </span>
                           Submitted by {article.authorId?.firstName}{' '}
                           {article.authorId?.lastName}
                         </span>
@@ -135,7 +137,9 @@ const ManagerDashboard = () => {
                       className="article-link flex-between"
                     >
                       <span className="article-title">
-                        <span style={departmentBadgeStyle}>{article.department}</span>
+                        <span style={departmentBadgeStyle}>
+                          {article.department}
+                        </span>
                         {article.title}
                       </span>
                       <span

@@ -21,7 +21,8 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.auth-card h2, .auth-card p {
+.auth-card h2,
+.auth-card p {
   text-align: center;
   color: #10b981;
   padding-bottom: 2rem;

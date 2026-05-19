@@ -221,8 +221,8 @@ const ArticleEditor = () => {
             {isSubmitting
               ? 'Saving...'
               : isUserAdmin
-              ? 'Publish Article'
-              : 'Submit for Approval'}
+                ? 'Publish Article'
+                : 'Submit for Approval'}
           </button>
         </div>
       </form>
