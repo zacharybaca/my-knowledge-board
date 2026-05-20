@@ -1,3 +1,5 @@
+// client/src/components/Admin/CreateElevatedUser/CreateElevatedUser.jsx (Update)
+
 import React, { useState } from 'react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
@@ -13,7 +15,7 @@ const CreateElevatedUser = () => {
     email: '',
     password: '',
     department: '',
-    role: 'Manager',
+    role: 'Employee', // Updated default state
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,14 +53,13 @@ const CreateElevatedUser = () => {
         message: `${formData.role} account created successfully.`,
         type: 'success',
       });
-      // Reset form
       setFormData({
         firstName: '',
         lastName: '',
         email: '',
         password: '',
         department: '',
-        role: 'Manager',
+        role: 'Employee',
       });
     } else {
       setToastConfig({
@@ -97,14 +98,15 @@ const CreateElevatedUser = () => {
           <ShieldCheck size={48} color="#10b981" />
         </div>
 
+        {/* Updated headings to reflect broader scope */}
         <h2 className="auth-title" style={{ marginBottom: '10px' }}>
-          Create Management Account
+          Provision User Account
         </h2>
         <p
           className="auth-footer"
           style={{ marginTop: 0, marginBottom: '30px' }}
         >
-          Provision a new Admin or Manager for your workspace.
+          Create a new user account for your workspace.
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -176,6 +178,8 @@ const CreateElevatedUser = () => {
                 onChange={handleChange}
                 required
               >
+                {/* Added Employee option */}
+                <option value="Employee">Employee</option>
                 <option value="Manager">Manager</option>
                 <option value="Admin">Admin</option>
               </select>
