@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useFetcher } from '../../../hooks/useFetcher';
 import '../auth-forms.css';
 import Toast from '../../Layout/Toast/Toast.jsx';
 
@@ -22,6 +23,7 @@ const Register = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { fetcher } = useFetcher();
 
   useEffect(() => {
     if (location.state?.message) {
@@ -35,17 +37,15 @@ const Register = () => {
 
   useEffect(() => {
     const fetchCompanies = async () => {
-      try {
-        const res = await fetch('/api/companies');
-        const data = await res.json();
-        if (res.ok) {
-          setCompanies(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch companies', error);
+      const response = await fetcher('/api/companies');
+      if (response.success) {
+        setCompanies(response.data);
+      } else {
+        console.error('Failed to fetch companies', response.error);
       }
     };
     fetchCompanies();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAvatarChange = (e) => {
@@ -79,32 +79,23 @@ const Register = () => {
       payload.append('avatar', avatar);
     }
 
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        body: payload,
+    const response = await fetcher('/api/auth/register', {
+      method: 'POST',
+      body: payload,
+    });
+
+    if (response.success) {
+      navigate('/login', {
+        state: { message: 'Registration successful! Please log in.' },
       });
-
-      const responseData = await res.json();
-
-      if (res.ok) {
-        navigate('/login', {
-          state: { message: 'Registration successful! Please log in.' },
-        });
-      } else {
-        setToastConfig({
-          message: responseData.message || 'Registration failed',
-          type: 'error',
-        });
-      }
-    } catch (error) {
+    } else {
       setToastConfig({
-        message: 'Server error during registration.',
+        message: response.error || 'Registration failed',
         type: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
     }
+    
+    setIsSubmitting(false);
   };
 
   return (
