@@ -131,7 +131,7 @@ const ArticleEditor = () => {
             id="department"
             name="department"
             value={formData.department}
-            onChange={handleChange}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
             required
           >
             <option value="">Select Department...</option>
