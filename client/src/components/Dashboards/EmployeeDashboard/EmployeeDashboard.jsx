@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
-import { Search, BookOpen, FileText } from 'lucide-react';
+import { Search, BookOpen, FileText, Pin } from 'lucide-react';
+import PinButton from '../../Article/PinButton/PinButton.jsx';
 import '../dashboards.css';
 
 const EmployeeDashboard = () => {
@@ -12,19 +13,21 @@ const EmployeeDashboard = () => {
 
   const [recentArticles, setRecentArticles] = useState([]);
   const [myArticles, setMyArticles] = useState([]);
+  const [pinnedArticles, setPinnedArticles] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Fetch recently approved company articles and user's personal articles concurrently
-      const [recentRes, personalRes] = await Promise.all([
+      const [recentRes, personalRes, pinnedRes] = await Promise.all([
         fetcher('/api/articles'),
         fetcher('/api/articles/my-articles'),
+        fetcher('/api/articles/favorites')
       ]);
 
       if (recentRes.success) setRecentArticles(recentRes.data.slice(0, 5));
       if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+      if (pinnedRes.success) setPinnedArticles(pinnedRes.data);
 
       setIsLoading(false);
     };
@@ -36,6 +39,12 @@ const EmployeeDashboard = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleUnpin = (articleId, isPinnedState) => {
+    if (!isPinnedState) {
+      setPinnedArticles((prev) => prev.filter(article => article._id !== articleId));
     }
   };
 
@@ -83,6 +92,40 @@ const EmployeeDashboard = () => {
       </div>
 
       <div className="dashboard-grid">
+        {/* Pinned Articles Section */}
+        <section className="dashboard-card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card-header">
+            <Pin size={20} className="card-icon" />
+            <h2>Pinned Articles</h2>
+          </div>
+          <div className="card-content">
+            {pinnedArticles.length === 0 ? (
+              <p className="empty-state">You have no pinned articles. Pin articles to access them quickly.</p>
+            ) : (
+              <ul className="article-list">
+                {pinnedArticles.map((article) => (
+                  <li key={article._id}>
+                    <Link
+                      to={`/articles/${article._id}`}
+                      className="article-link flex-between"
+                    >
+                      <span className="article-title">
+                        <span style={departmentBadgeStyle}>{article.department}</span>
+                        {article.title}
+                      </span>
+                      <PinButton
+                        articleId={article._id}
+                        initialIsPinned={true}
+                        onToggleComplete={handleUnpin}
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
         <section className="dashboard-card">
           <div className="card-header">
             <BookOpen size={20} className="card-icon" />
@@ -97,16 +140,15 @@ const EmployeeDashboard = () => {
                   <li key={article._id}>
                     <Link
                       to={`/articles/${article._id}`}
-                      className="article-link"
+                      className="article-link flex-between"
                     >
-                      <span className="article-title">{article.title}</span>
-                      <span className="article-meta">
-                        <span style={departmentBadgeStyle}>
-                          {article.department}
-                        </span>
-                        By {article.authorId?.firstName}{' '}
-                        {article.authorId?.lastName}
-                      </span>
+                      <div className="article-meta-container">
+                         <span className="article-title">{article.title}</span>
+                         <span className="article-meta">
+                           <span style={departmentBadgeStyle}>{article.department}</span>
+                           By {article.authorId?.firstName} {article.authorId?.lastName}
+                         </span>
+                      </div>
                     </Link>
                   </li>
                 ))}
@@ -135,9 +177,7 @@ const EmployeeDashboard = () => {
                       className="article-link flex-between"
                     >
                       <span className="article-title">
-                        <span style={departmentBadgeStyle}>
-                          {article.department}
-                        </span>
+                        <span style={departmentBadgeStyle}>{article.department}</span>
                         {article.title}
                       </span>
                       <span
