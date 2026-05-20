@@ -15,6 +15,19 @@ const articleSchema = new mongoose.Schema(
     department: {
       type: String,
       required: true,
+      enum: [
+        "Customer Service",
+        "Tech Support",
+        "Human Resources",
+        "Sales",
+        "Marketing",
+        "Engineering",
+        "Product",
+        "Finance",
+        "Legal",
+        "Operations",
+        "Other"
+      ],
     },
     title: { type: String, required: true },
     content: { type: String, required: true }, // HTML or Markdown string
