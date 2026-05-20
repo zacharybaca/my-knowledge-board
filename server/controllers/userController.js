@@ -145,37 +145,33 @@ const deleteUser = asyncHandler(async (req, res) => {
  * @access  Private (Admin/Manager Only)
  */
 const createElevatedUser = asyncHandler(async (req, res) => {
-  // 1. Role Verification
   if (req.user.role !== "Admin" && req.user.role !== "Manager") {
     res.status(403);
-    throw new Error("Not authorized to create elevated accounts");
+    throw new Error("Not authorized to create accounts");
   }
 
   const { firstName, lastName, email, password, department, role } = req.body;
 
-  // 2. Validate input role
-  if (!["Manager", "Admin"].includes(role)) {
+  if (!["Employee", "Manager", "Admin"].includes(role)) {
     res.status(400);
     throw new Error("Invalid role selection");
   }
 
-  // 3. Check for existing user
   const userExists = await User.findOne({ email });
   if (userExists) {
     res.status(400);
     throw new Error("An account with this email already exists");
   }
 
-  // 4. Create the user
   const user = await User.create({
     firstName,
     lastName,
     email,
     password,
-    companyId: req.user.companyId, // Inherited from creator
+    companyId: req.user.companyId,
     department,
     role,
-    isVerified: true, // Auto-verified
+    isVerified: true,
   });
 
   if (user) {
