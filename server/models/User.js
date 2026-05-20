@@ -25,7 +25,7 @@ const userSchema = mongoose.Schema(
         "Finance",
         "Legal",
         "Operations",
-        "Other"
+        "Other",
       ],
     },
     firstName: { type: String, required: true },

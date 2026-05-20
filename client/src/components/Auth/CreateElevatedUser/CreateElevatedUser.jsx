@@ -148,25 +148,29 @@ const CreateElevatedUser = () => {
             <div className="form-group half-width">
               <label htmlFor="department">Department</label>
               <select
-            id="department"
-            name="department"
-            value={formData.department}
-            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            required
-          >
-            <option value="">Select Department...</option>
-            <option value="Customer Service">Customer Service & Billing</option>
-            <option value="Tech Support">Tech Support</option>
-            <option value="Human Resources">Human Resources</option>
-            <option value="Sales">Sales</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Product">Product</option>
-            <option value="Finance">Finance</option>
-            <option value="Legal">Legal</option>
-            <option value="Operations">Operations</option>
-            <option value="Other">Other</option>
-          </select>
+                id="department"
+                name="department"
+                value={formData.department}
+                onChange={(e) =>
+                  setFormData({ ...formData, department: e.target.value })
+                }
+                required
+              >
+                <option value="">Select Department...</option>
+                <option value="Customer Service">
+                  Customer Service & Billing
+                </option>
+                <option value="Tech Support">Tech Support</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Product">Product</option>
+                <option value="Finance">Finance</option>
+                <option value="Legal">Legal</option>
+                <option value="Operations">Operations</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
             <div className="form-group half-width">

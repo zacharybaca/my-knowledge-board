@@ -22,7 +22,7 @@ const EmployeeDashboard = () => {
       const [recentRes, personalRes, pinnedRes] = await Promise.all([
         fetcher('/api/articles'),
         fetcher('/api/articles/my-articles'),
-        fetcher('/api/articles/favorites')
+        fetcher('/api/articles/favorites'),
       ]);
 
       if (recentRes.success) setRecentArticles(recentRes.data.slice(0, 5));
@@ -52,7 +52,9 @@ const EmployeeDashboard = () => {
       });
     } else {
       // Remove from pinned list
-      setPinnedArticles((prev) => prev.filter(article => article._id !== articleObj._id));
+      setPinnedArticles((prev) =>
+        prev.filter((article) => article._id !== articleObj._id)
+      );
     }
   };
 
@@ -108,7 +110,10 @@ const EmployeeDashboard = () => {
           </div>
           <div className="card-content">
             {pinnedArticles.length === 0 ? (
-              <p className="empty-state">You have no pinned articles. Pin articles to access them quickly.</p>
+              <p className="empty-state">
+                You have no pinned articles. Pin articles to access them
+                quickly.
+              </p>
             ) : (
               <ul className="article-list">
                 {pinnedArticles.map((article) => (
@@ -118,13 +123,17 @@ const EmployeeDashboard = () => {
                       className="article-link flex-between"
                     >
                       <span className="article-title">
-                        <span style={departmentBadgeStyle}>{article.department}</span>
+                        <span style={departmentBadgeStyle}>
+                          {article.department}
+                        </span>
                         {article.title}
                       </span>
                       <PinButton
                         articleId={article._id}
                         initialIsPinned={true}
-                        onToggleComplete={(id, isPinned) => handlePinToggle(article, isPinned)}
+                        onToggleComplete={(id, isPinned) =>
+                          handlePinToggle(article, isPinned)
+                        }
                       />
                     </Link>
                   </li>
@@ -151,17 +160,24 @@ const EmployeeDashboard = () => {
                       className="article-link flex-between"
                     >
                       <div className="article-meta-container">
-                         <span className="article-title">{article.title}</span>
-                         <span className="article-meta">
-                           <span style={departmentBadgeStyle}>{article.department}</span>
-                           By {article.authorId?.firstName} {article.authorId?.lastName}
-                         </span>
+                        <span className="article-title">{article.title}</span>
+                        <span className="article-meta">
+                          <span style={departmentBadgeStyle}>
+                            {article.department}
+                          </span>
+                          By {article.authorId?.firstName}{' '}
+                          {article.authorId?.lastName}
+                        </span>
                       </div>
                       <PinButton
                         articleId={article._id}
                         // Checks if this specific article is currently in the pinnedArticles state array
-                        initialIsPinned={pinnedArticles.some(p => p._id === article._id)}
-                        onToggleComplete={(id, isPinned) => handlePinToggle(article, isPinned)}
+                        initialIsPinned={pinnedArticles.some(
+                          (p) => p._id === article._id
+                        )}
+                        onToggleComplete={(id, isPinned) =>
+                          handlePinToggle(article, isPinned)
+                        }
                       />
                     </Link>
                   </li>
@@ -190,9 +206,20 @@ const EmployeeDashboard = () => {
                       to={`/articles/${article._id}`}
                       className="article-link flex-between"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span className="article-title" style={{ marginBottom: 0 }}>
-                          <span style={departmentBadgeStyle}>{article.department}</span>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                        }}
+                      >
+                        <span
+                          className="article-title"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <span style={departmentBadgeStyle}>
+                            {article.department}
+                          </span>
                           {article.title}
                         </span>
                         <span
@@ -203,8 +230,12 @@ const EmployeeDashboard = () => {
                       </div>
                       <PinButton
                         articleId={article._id}
-                        initialIsPinned={pinnedArticles.some(p => p._id === article._id)}
-                        onToggleComplete={(id, isPinned) => handlePinToggle(article, isPinned)}
+                        initialIsPinned={pinnedArticles.some(
+                          (p) => p._id === article._id
+                        )}
+                        onToggleComplete={(id, isPinned) =>
+                          handlePinToggle(article, isPinned)
+                        }
                       />
                     </Link>
                   </li>

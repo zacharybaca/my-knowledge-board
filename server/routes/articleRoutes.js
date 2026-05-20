@@ -22,10 +22,7 @@ router.get("/pending", protect, getPendingArticles);
 router.get("/favorites", protect, getFavoriteArticles);
 
 // 2. Dynamic Routes (/:id catches everything else)
-router
-  .route("/:id")
-  .get(protect, getArticleById)
-  .put(protect, updateArticle);
+router.route("/:id").get(protect, getArticleById).put(protect, updateArticle);
 
 router.patch("/:id/status", protect, approveRejectArticle);
 

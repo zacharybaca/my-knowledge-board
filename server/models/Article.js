@@ -26,7 +26,7 @@ const articleSchema = new mongoose.Schema(
         "Finance",
         "Legal",
         "Operations",
-        "Other"
+        "Other",
       ],
     },
     title: { type: String, required: true },
