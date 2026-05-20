@@ -169,6 +169,26 @@ const getPendingArticles = asyncHandler(async (req, res) => {
   res.json(articles);
 });
 
+/**
+ * @desc    Get user's favorite/pinned articles
+ * @route   GET /api/articles/favorites
+ * @access  Private
+ */
+const getFavoriteArticles = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const articles = await Article.find({ _id: { $in: user.favoriteArticles } })
+    .populate("authorId", "firstName lastName")
+    .sort({ createdAt: -1 });
+
+  res.json(articles);
+});
+
 export {
   createArticle,
   getArticles,
@@ -177,4 +197,5 @@ export {
   approveRejectArticle,
   getUserArticles,
   getPendingArticles,
+  getFavoriteArticles,
 };
