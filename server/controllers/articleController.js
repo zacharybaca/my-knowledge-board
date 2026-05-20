@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Article from "../models/Article.js";
+import User from "../models/User.js";
 
 /**
  * @desc    Create a new article
@@ -175,6 +176,7 @@ const getPendingArticles = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getFavoriteArticles = asyncHandler(async (req, res) => {
+  // 1. Looks up the User (this is why we needed the import)
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -182,6 +184,7 @@ const getFavoriteArticles = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
+  // 2. Uses the Article model to find all articles that match the IDs in the user's array
   const articles = await Article.find({ _id: { $in: user.favoriteArticles } })
     .populate("authorId", "firstName lastName")
     .sort({ createdAt: -1 });
