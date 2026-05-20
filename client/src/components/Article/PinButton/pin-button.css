@@ -1,0 +1,32 @@
+.pin-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.pin-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.pin-btn.pinned {
+  color: #10b981;
+}
+
+.pin-btn.pinned:hover {
+  color: #059669;
+  background: #d1fae5;
+}
+
+.pin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
