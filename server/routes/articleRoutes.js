@@ -9,20 +9,24 @@ import {
   getPendingArticles,
   getFavoriteArticles,
 } from "../controllers/articleController.js";
-import { protect, manager } from "../middleware/authMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js"; // Ensure your auth middleware is imported
 
 const router = express.Router();
 
-// NOTE: Static routes (/my-articles, /pending) must be declared before dynamic routes (/:id) to prevent interception.
-
+// 1. Static Routes (Must come first)
+router.route("/").post(protect, createArticle).get(protect, getArticles);
 router.get("/my-articles", protect, getUserArticles);
-router.get("/pending", protect, manager, getPendingArticles);
+router.get("/pending", protect, getPendingArticles);
+
+// CRITICAL: /favorites must be defined before /:id
 router.get("/favorites", protect, getFavoriteArticles);
 
-router.route("/").get(protect, getArticles).post(protect, createArticle);
+// 2. Dynamic Routes (/:id catches everything else)
+router
+  .route("/:id")
+  .get(protect, getArticleById)
+  .put(protect, updateArticle);
 
-router.route("/:id").get(protect, getArticleById).put(protect, updateArticle);
-
-router.patch("/:id/status", protect, manager, approveRejectArticle);
+router.patch("/:id/status", protect, approveRejectArticle);
 
 export default router;
