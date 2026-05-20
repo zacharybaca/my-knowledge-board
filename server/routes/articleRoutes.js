@@ -7,6 +7,7 @@ import {
   approveRejectArticle,
   getUserArticles,
   getPendingArticles,
+  getFavoriteArticles,
 } from "../controllers/articleController.js";
 import { protect, manager } from "../middleware/authMiddleware.js";
 
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.get("/my-articles", protect, getUserArticles);
 router.get("/pending", protect, manager, getPendingArticles);
+router.get("/favorites", protect, getFavoriteArticles);
 
 router.route("/").get(protect, getArticles).post(protect, createArticle);
 
