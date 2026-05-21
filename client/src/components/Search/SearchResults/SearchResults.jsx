@@ -68,6 +68,7 @@ const SearchResults = () => {
     <div className="search-page-container">
       <div className="search-header-section">
         <h1>{user ? `Welcome, ${user.firstName}!` : 'Knowledge Base'}</h1>
+        <h2>{user ? `You are part of ${companyName}'s workspace.` : 'Explore the knowledge base.'}</h2>
         <p>
           {user ? `Search across ${companyName}'s policies, process guides, and technical documentation.` : 'Search across organizational policies, process guides, and technical documentation.'}
         </p>
