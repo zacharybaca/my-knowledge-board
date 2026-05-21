@@ -1,5 +1,3 @@
-// controllers/authController.js
-
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import generateToken from "../utils/generateToken.js";
@@ -58,7 +56,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  // Chain populate to embed the company object
+  const user = await User.findOne({ email }).populate("companyId", "name");
 
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
@@ -68,9 +67,9 @@ const loginUser = asyncHandler(async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      companyId: user.companyId,
+      companyId: user.companyId, // Transmits populated object
       department: user.department,
-      avatar: user.avatar, // Added
+      avatar: user.avatar,
     });
   } else {
     res.status(401);
@@ -139,10 +138,11 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
     .update(req.params.token)
     .digest("hex");
 
+  // Chain populate to embed the company object
   const user = await User.findOne({
     verificationToken: verifyTokenHash,
     verificationExpire: { $gt: Date.now() },
-  });
+  }).populate("companyId", "name");
 
   if (!user) {
     res.status(400);
@@ -154,7 +154,8 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
   user.verificationExpire = undefined;
   await user.save();
 
-  const company = await Company.findById(user.companyId);
+  // Handle Mongoose populate object reference for findById
+  const company = await Company.findById(user.companyId._id);
   company.status = "Active";
   company.isActive = true;
   await company.save();
@@ -167,11 +168,11 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
     lastName: user.lastName,
     email: user.email,
     role: user.role,
-    companyId: user.companyId,
+    companyId: user.companyId, // Transmits populated object
     department: user.department,
-    avatar: user.avatar, // Added
+    avatar: user.avatar,
     message: "Workspace activated successfully!",
   });
 });
 
-export { registerUser, loginUser, logoutUser, forgotPassword, verifyWorkspace };
+export { registerUser, loginUser, logoutUser, forgotPassword, verifyWorkspace }; 
