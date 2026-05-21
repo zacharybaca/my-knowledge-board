@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
-import { ArrowLeft, Clock, Eye, User, Tag } from 'lucide-react';
+import { useAuth } from '../../../hooks/useAuth.js';
+import { ArrowLeft, Clock, Eye, User, Tag, Edit } from 'lucide-react';
 import './article-view.css';
 
 const ArticleView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { fetcher } = useFetcher();
+  const { user } = useAuth();
 
   const [article, setArticle] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,11 +51,27 @@ const ArticleView = () => {
     );
   }
 
+  const canEdit =
+    user?.role === 'Admin' ||
+    user?.role === 'Manager' ||
+    user?._id === article.authorId?._id;
+
   return (
     <div className="article-view-container">
-      <button onClick={() => navigate(-1)} className="btn-back">
-        <ArrowLeft size={16} /> Back to Dashboard
-      </button>
+      <div className="article-view-controls">
+        <button onClick={() => navigate(-1)} className="btn-back">
+          <ArrowLeft size={16} /> Back to Dashboard
+        </button>
+
+        {canEdit && (
+          <button
+            onClick={() => navigate(`/articles/${article._id}/edit`)}
+            className="btn-edit"
+          >
+            <Edit size={16} /> Edit Article
+          </button>
+        )}
+      </div>
 
       <article className="article-wrapper">
         <header className="article-header">
@@ -96,10 +114,6 @@ const ArticleView = () => {
           )}
         </header>
 
-        {/*
-          Warning: dangerouslySetInnerHTML is used here because the content
-          is generated from our trusted TinyMCE implementation.
-        */}
         <div
           className="article-body"
           dangerouslySetInnerHTML={{ __html: article.content }}
