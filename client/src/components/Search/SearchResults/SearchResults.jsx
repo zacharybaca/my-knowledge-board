@@ -20,8 +20,8 @@ const SearchResults = () => {
   const { fetcher } = useFetcher();
   const { user } = useAuth();
 
-  // Access the populated object directly
   const companyName = user?.companyId?.name || 'your organization';
+  const companyLogoUrl = user?.companyId?.imageUrl;
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -66,6 +66,17 @@ const SearchResults = () => {
 
   return (
     <div className="search-page-container">
+      {/* Company Jumbotron Section */}
+      {companyLogoUrl && (
+        <div className="company-jumbotron">
+          <img
+            src={companyLogoUrl}
+            alt={`${companyName} Logo`}
+            className="jumbotron-logo"
+          />
+        </div>
+      )}
+
       <div className="search-header-section">
         <h1>{user ? `Welcome, ${user.firstName}!` : 'Knowledge Base'}</h1>
         <h2>{user ? `You are part of ${companyName}'s workspace.` : 'Explore the knowledge base.'}</h2>
