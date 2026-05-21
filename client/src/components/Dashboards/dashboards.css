@@ -171,6 +171,8 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  height: 200px;
+  overflow-y: auto;
 }
 
 .article-list li {
@@ -203,16 +205,15 @@
   display: block;
 }
 
-.article-title {
-  color: #0f172a;
-  font-weight: 500;
-  font-size: 1rem;
+.article-list .article-title {
+  color: #50C878;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 4px;
-  line-height: 1.5;
+  line-height: 1;
 }
 
 .article-meta {
