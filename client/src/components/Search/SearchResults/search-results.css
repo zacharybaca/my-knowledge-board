@@ -37,6 +37,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
+  padding: 1%;
+  height: 40vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 2px solid green;
 }
 
 .search-loading {
