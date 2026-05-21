@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
+import { useAuth } from '../../../hooks/useAuth.js';
 import SearchBar from '../SearchBar/SearchBar.jsx';
 import ArticleCard from '../../Article/ArticleCard/ArticleCard.jsx';
 import TagFilter from '../TagFilter/TagFilter.jsx';
@@ -10,7 +11,6 @@ const SearchResults = () => {
   const [articles, setArticles] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
 
-  // Search state passed down to the SearchBar
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTag, setFilterTag] = useState('');
 
@@ -18,13 +18,15 @@ const SearchResults = () => {
   const [error, setError] = useState(null);
 
   const { fetcher } = useFetcher();
+  const { user } = useAuth();
 
-  // 1. Initial Load: Fetch all articles to extract all unique tags for the dropdown
+  // Access the populated object directly
+  const companyName = user?.companyId?.name || 'your organization';
+
   useEffect(() => {
     const fetchInitialData = async () => {
       const response = await fetcher('/api/articles');
       if (response.success) {
-        // Extract unique tags from all approved articles
         const tags = new Set();
         response.data.forEach((article) => {
           if (article.tags) {
@@ -37,13 +39,11 @@ const SearchResults = () => {
     fetchInitialData();
   }, [fetcher]);
 
-  // 2. Search Execution: Refetch articles when search term or tag changes
   useEffect(() => {
     const fetchResults = async () => {
       setIsLoading(true);
       setError(null);
 
-      // Build the query string based on active filters
       const params = new URLSearchParams();
       if (searchTerm) params.append('keyword', searchTerm);
       if (filterTag) params.append('tag', filterTag);
@@ -67,10 +67,9 @@ const SearchResults = () => {
   return (
     <div className="search-page-container">
       <div className="search-header-section">
-        <h1>Knowledge Base</h1>
+        <h1>{user ? `Welcome, ${user.firstName}!` : 'Knowledge Base'}</h1>
         <p>
-          Search across organizational policies, process guides, and technical
-          documentation.
+          {user ? `Search across ${companyName}'s policies, process guides, and technical documentation.` : 'Search across organizational policies, process guides, and technical documentation.'}
         </p>
       </div>
 
