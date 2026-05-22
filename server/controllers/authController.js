@@ -57,7 +57,10 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   // Chain populate to embed the company object
-  const user = await User.findOne({ email }).populate("companyId", "name imageUrl");
+  const user = await User.findOne({ email }).populate(
+    "companyId",
+    "name imageUrl",
+  );
 
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
@@ -140,9 +143,9 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
 
   // Chain populate to embed the company object
   const user = await User.findOne({
-  verificationToken: verifyTokenHash,
-  verificationExpire: { $gt: Date.now() },
-}).populate("companyId", "name imageUrl");
+    verificationToken: verifyTokenHash,
+    verificationExpire: { $gt: Date.now() },
+  }).populate("companyId", "name imageUrl");
 
   if (!user) {
     res.status(400);

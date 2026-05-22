@@ -118,9 +118,7 @@ const ManagerDashboard = () => {
                       className="article-link flex-between"
                     >
                       <div>
-                        <span className="article-title">
-                          {article.title}
-                        </span>
+                        <span className="article-title">{article.title}</span>
                         <span className="article-meta">
                           <span style={departmentBadgeStyle}>
                             {article.department}

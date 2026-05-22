@@ -9,9 +9,9 @@ import { v2 as cloudinary } from "cloudinary";
  */
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
-  .populate("companyId", "name imageUrl") // Added imageUrl here
-  .populate("managerId", "firstName lastName email")
-  .select("-password");
+    .populate("companyId", "name imageUrl") // Added imageUrl here
+    .populate("managerId", "firstName lastName email")
+    .select("-password");
 
   if (user) {
     res.json(user);
