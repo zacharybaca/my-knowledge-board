@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SocketContext } from './SocketContext.jsx';
 import { io } from 'socket.io-client';
-import { useAuth } from './useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
