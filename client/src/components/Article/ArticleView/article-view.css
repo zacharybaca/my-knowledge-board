@@ -279,3 +279,67 @@
   font-size: 0.95rem;
   line-height: 1.5;
 }
+
+/* Append to existing CSS */
+.article-voting-section {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.voting-metrics h4 {
+  margin: 0 0 4px 0;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.helpfulness-rating {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.voting-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.vote-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.active-upvote {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #10b981;
+}
+
+.active-downvote {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.vote-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
