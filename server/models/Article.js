@@ -44,6 +44,18 @@ const articleSchema = new mongoose.Schema(
     }, // Manager who approved/rejected
     rejectionReason: { type: String, default: null },
     viewCount: { type: Number, default: 0 },
+    upvotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true },
 );
