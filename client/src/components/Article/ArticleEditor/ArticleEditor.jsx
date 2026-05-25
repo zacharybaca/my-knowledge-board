@@ -4,6 +4,7 @@ import { Editor } from '@tinymce/tinymce-react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
+import { Wand2 } from 'lucide-react';
 import './article-editor.css';
 
 const ArticleEditor = () => {
@@ -19,10 +20,12 @@ const ArticleEditor = () => {
     title: '',
     department: '',
     content: '',
+    summary: '',
     tags: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [toastConfig, setToastConfig] = useState(null);
 
   useEffect(() => {
@@ -34,6 +37,7 @@ const ArticleEditor = () => {
             title: response.data.title || '',
             department: response.data.department || '',
             content: response.data.content || '',
+            summary: response.data.summary || '',
             tags: response.data.tags ? response.data.tags.join(', ') : '',
           });
         } else {
@@ -55,6 +59,40 @@ const ArticleEditor = () => {
     setFormData((prev) => ({ ...prev, content }));
   };
 
+  const handleAIAnalysis = async () => {
+    if (!formData.content || formData.content.length < 50) {
+      setToastConfig({
+        type: 'error',
+        message: 'Insufficient content for AI analysis. Please write more.',
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    const response = await fetcher('/api/ai/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ content: formData.content }),
+    });
+
+    if (response.success) {
+      setFormData((prev) => ({
+        ...prev,
+        summary: response.data.summary,
+        tags: response.data.tags.join(', '),
+      }));
+      setToastConfig({
+        type: 'success',
+        message: 'AI generated summary and tags successfully.',
+      });
+    } else {
+      setToastConfig({
+        type: 'error',
+        message: response.error || 'AI Analysis failed.',
+      });
+    }
+    setIsAnalyzing(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -64,6 +102,7 @@ const ArticleEditor = () => {
       title: formData.title,
       department: formData.department,
       content: formData.content,
+      summary: formData.summary,
       tags: formData.tags
         .split(',')
         .map((tag) => tag.trim())
@@ -151,18 +190,6 @@ const ArticleEditor = () => {
           </select>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="tags">Tags (Comma-separated)</label>
-          <input
-            type="text"
-            id="tags"
-            name="tags"
-            value={formData.tags}
-            onChange={handleChange}
-            placeholder="e.g., security, compliance, IT"
-          />
-        </div>
-
         <div className="form-group editor-container">
           <label>Content</label>
           <Editor
@@ -204,6 +231,86 @@ const ArticleEditor = () => {
               promotion: false,
             }}
           />
+        </div>
+
+        <div
+          className="ai-assist-section"
+          style={{
+            margin: '20px 0',
+            padding: '15px',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '10px',
+            }}
+          >
+            <h3 style={{ fontSize: '1rem', margin: 0, color: '#0f172a' }}>
+              AI Assistant
+            </h3>
+            <button
+              type="button"
+              onClick={handleAIAnalysis}
+              disabled={isAnalyzing}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                opacity: isAnalyzing ? 0.7 : 1,
+              }}
+            >
+              <Wand2 size={16} />{' '}
+              {isAnalyzing ? 'Analyzing...' : 'Auto-Generate Metadata'}
+            </button>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '10px' }}>
+            <label htmlFor="summary">Summary</label>
+            <textarea
+              id="summary"
+              name="summary"
+              value={formData.summary}
+              onChange={handleChange}
+              rows="3"
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #cbd5e1',
+              }}
+              placeholder="AI generated summary will appear here..."
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label htmlFor="tags">Tags (Comma-separated)</label>
+            <input
+              type="text"
+              id="tags"
+              name="tags"
+              value={formData.tags}
+              onChange={handleChange}
+              placeholder="e.g., security, compliance, IT"
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #cbd5e1',
+              }}
+            />
+          </div>
         </div>
 
         <div className="editor-actions">
