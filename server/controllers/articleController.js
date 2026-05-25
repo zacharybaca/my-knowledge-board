@@ -192,6 +192,68 @@ const getFavoriteArticles = asyncHandler(async (req, res) => {
   res.json(articles);
 });
 
+/**
+ * @desc    Get top viewed articles
+ * @route   GET /api/articles/top
+ * @access  Private
+ */
+const getTopArticles = asyncHandler(async (req, res) => {
+  const articles = await Article.find({ status: "Approved" })
+    .sort({ viewCount: -1 })
+    .limit(5)
+    .populate("authorId", "firstName lastName")
+    .select("title department viewCount status");
+
+  res.json(articles);
+});
+
+/**
+ * @desc    Vote on an article (Thumbs Up / Down)
+ * @route   PATCH /api/articles/:id/vote
+ * @access  Private
+ */
+const voteArticle = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id);
+  const { voteType } = req.body; // Expects 'up' or 'down'
+  const userId = req.user._id;
+
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  const hasUpvoted = article.upvotes.includes(userId);
+  const hasDownvoted = article.downvotes.includes(userId);
+
+  if (voteType === "up") {
+    if (hasUpvoted) {
+      // Toggle off if already upvoted
+      article.upvotes.pull(userId);
+    } else {
+      // Add upvote, remove downvote if it exists
+      article.upvotes.push(userId);
+      article.downvotes.pull(userId);
+    }
+  } else if (voteType === "down") {
+    if (hasDownvoted) {
+      // Toggle off if already downvoted
+      article.downvotes.pull(userId);
+    } else {
+      // Add downvote, remove upvote if it exists
+      article.downvotes.push(userId);
+      article.upvotes.pull(userId);
+    }
+  }
+
+  await article.save();
+
+  res.json({
+    upvotes: article.upvotes,
+    downvotes: article.downvotes,
+  });
+});
+
+
 export {
   createArticle,
   getArticles,
@@ -199,6 +261,8 @@ export {
   updateArticle,
   approveRejectArticle,
   getUserArticles,
+  getTopArticles,
+  voteArticle,
   getPendingArticles,
   getFavoriteArticles,
 };
