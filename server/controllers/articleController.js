@@ -140,6 +140,17 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   }
 
   const reviewedArticle = await article.save();
+
+  const io = req.app.get("io");
+  if (io) {
+    io.to(article.authorId.toString()).emit("article_status_update", {
+      articleId: article._id,
+      title: article.title,
+      status: article.status,
+      message: `Your article "${article.title}" has been ${article.status.toLowerCase()}.`
+    });
+  }
+
   res.json(reviewedArticle);
 });
 
@@ -176,7 +187,6 @@ const getPendingArticles = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getFavoriteArticles = asyncHandler(async (req, res) => {
-  // 1. Looks up the User (this is why we needed the import)
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -184,7 +194,6 @@ const getFavoriteArticles = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  // 2. Uses the Article model to find all articles that match the IDs in the user's array
   const articles = await Article.find({ _id: { $in: user.favoriteArticles } })
     .populate("authorId", "firstName lastName")
     .sort({ createdAt: -1 });
@@ -214,7 +223,7 @@ const getTopArticles = asyncHandler(async (req, res) => {
  */
 const voteArticle = asyncHandler(async (req, res) => {
   const article = await Article.findById(req.params.id);
-  const { voteType } = req.body; // Expects 'up' or 'down'
+  const { voteType } = req.body;
   const userId = req.user._id;
 
   if (!article) {
@@ -227,19 +236,15 @@ const voteArticle = asyncHandler(async (req, res) => {
 
   if (voteType === "up") {
     if (hasUpvoted) {
-      // Toggle off if already upvoted
       article.upvotes.pull(userId);
     } else {
-      // Add upvote, remove downvote if it exists
       article.upvotes.push(userId);
       article.downvotes.pull(userId);
     }
   } else if (voteType === "down") {
     if (hasDownvoted) {
-      // Toggle off if already downvoted
       article.downvotes.pull(userId);
     } else {
-      // Add downvote, remove upvote if it exists
       article.downvotes.push(userId);
       article.upvotes.pull(userId);
     }
@@ -252,7 +257,6 @@ const voteArticle = asyncHandler(async (req, res) => {
     downvotes: article.downvotes,
   });
 });
-
 
 export {
   createArticle,
