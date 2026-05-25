@@ -8,6 +8,8 @@ import {
   getUserArticles,
   getPendingArticles,
   getFavoriteArticles,
+  getTopArticles,
+  voteArticle,
 } from "../controllers/articleController.js";
 import { protect } from "../middleware/authMiddleware.js"; // Ensure your auth middleware is imported
 
@@ -17,6 +19,7 @@ const router = express.Router();
 router.route("/").post(protect, createArticle).get(protect, getArticles);
 router.get("/my-articles", protect, getUserArticles);
 router.get("/pending", protect, getPendingArticles);
+router.get("/top", protect, getTopArticles);
 
 // CRITICAL: /favorites must be defined before /:id
 router.get("/favorites", protect, getFavoriteArticles);
@@ -25,5 +28,6 @@ router.get("/favorites", protect, getFavoriteArticles);
 router.route("/:id").get(protect, getArticleById).put(protect, updateArticle);
 
 router.patch("/:id/status", protect, approveRejectArticle);
+router.patch("/:id/vote", protect, voteArticle);
 
 export default router;
