@@ -32,19 +32,19 @@ const ManagerDashboard = () => {
   }, [fetcher]);
 
   useEffect(() => {
-      if (!socket) return;
+    if (!socket) return;
 
-      socket.on('article_status_update', (data) => {
-        // Trigger UI notification
-        alert(data.message);
-        // Replace with: toast.info(data.message);
+    socket.on('article_status_update', (data) => {
+      // Trigger UI notification
+      alert(data.message);
+      // Replace with: toast.info(data.message);
 
-        // Execute state refresh logic here to update article lists
-      });
+      // Execute state refresh logic here to update article lists
+    });
 
-      return () => socket.off('article_status_update');
-    }, [socket]);
-    
+    return () => socket.off('article_status_update');
+  }, [socket]);
+
   if (isLoading)
     return (
       <div className="dashboard-loading">

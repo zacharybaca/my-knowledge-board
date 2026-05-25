@@ -2,7 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
-import { ArrowLeft, Clock, Eye, User, Tag, Edit, AlertCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  Eye,
+  User,
+  Tag,
+  Edit,
+  AlertCircle,
+  ThumbsUp,
+  ThumbsDown,
+} from 'lucide-react';
 import './article-view.css';
 
 const ArticleView = () => {
@@ -38,14 +48,14 @@ const ArticleView = () => {
 
     const response = await fetcher(`/api/articles/${id}/vote`, {
       method: 'PATCH',
-      body: JSON.stringify({ voteType })
+      body: JSON.stringify({ voteType }),
     });
 
     if (response.success) {
-      setArticle(prev => ({
+      setArticle((prev) => ({
         ...prev,
         upvotes: response.data.upvotes,
-        downvotes: response.data.downvotes
+        downvotes: response.data.downvotes,
       }));
     }
     setIsVoting(false);
@@ -80,7 +90,8 @@ const ArticleView = () => {
   const upvotesCount = article.upvotes?.length || 0;
   const downvotesCount = article.downvotes?.length || 0;
   const totalVotes = upvotesCount + downvotesCount;
-  const helpfulPercentage = totalVotes === 0 ? 0 : Math.round((upvotesCount / totalVotes) * 100);
+  const helpfulPercentage =
+    totalVotes === 0 ? 0 : Math.round((upvotesCount / totalVotes) * 100);
 
   const hasUpvoted = article.upvotes?.includes(user?._id);
   const hasDownvoted = article.downvotes?.includes(user?._id);
@@ -107,7 +118,9 @@ const ArticleView = () => {
           <AlertCircle size={24} className="rejection-icon" />
           <div className="rejection-content">
             <h4>Revisions Required</h4>
-            <p><strong>Manager Feedback:</strong> {article.rejectionReason}</p>
+            <p>
+              <strong>Manager Feedback:</strong> {article.rejectionReason}
+            </p>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import asyncHandler from 'express-async-handler';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import asyncHandler from "express-async-handler";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -8,10 +8,10 @@ export const generateArticleMetadata = asyncHandler(async (req, res) => {
 
   if (!content) {
     res.status(400);
-    throw new Error('Content is required for analysis.');
+    throw new Error("Content is required for analysis.");
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
     Analyze the following technical article content.
@@ -30,20 +30,25 @@ export const generateArticleMetadata = asyncHandler(async (req, res) => {
     let responseText = result.response.text();
 
     // Aggressive sanitization: locate first '{' and last '}' to strip outside text
-    const jsonStartIndex = responseText.indexOf('{');
-    const jsonEndIndex = responseText.lastIndexOf('}');
+    const jsonStartIndex = responseText.indexOf("{");
+    const jsonEndIndex = responseText.lastIndexOf("}");
 
     if (jsonStartIndex === -1 || jsonEndIndex === -1) {
       throw new Error("Model did not return a JSON object.");
     }
 
-    const cleanedJson = responseText.substring(jsonStartIndex, jsonEndIndex + 1);
+    const cleanedJson = responseText.substring(
+      jsonStartIndex,
+      jsonEndIndex + 1,
+    );
     const parsedData = JSON.parse(cleanedJson);
 
     res.json(parsedData);
   } catch (error) {
     console.error("AI Generation Error:", error);
     res.status(500);
-    throw new Error("Failed to generate or parse AI metadata. Check server terminal for raw output.");
+    throw new Error(
+      "Failed to generate or parse AI metadata. Check server terminal for raw output.",
+    );
   }
 });

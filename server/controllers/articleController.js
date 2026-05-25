@@ -147,7 +147,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
       articleId: article._id,
       title: article.title,
       status: article.status,
-      message: `Your article "${article.title}" has been ${article.status.toLowerCase()}.`
+      message: `Your article "${article.title}" has been ${article.status.toLowerCase()}.`,
     });
   }
 
