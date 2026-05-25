@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
-import { ArrowLeft, Clock, Eye, User, Tag, Edit } from 'lucide-react';
+import { ArrowLeft, Clock, Eye, User, Tag, Edit, AlertCircle } from 'lucide-react';
 import './article-view.css';
 
 const ArticleView = () => {
@@ -72,6 +72,17 @@ const ArticleView = () => {
           </button>
         )}
       </div>
+
+      {/* Rejection Reason Banner */}
+      {article.status === 'Rejected' && article.rejectionReason && (
+        <div className="rejection-alert-banner">
+          <AlertCircle size={24} className="rejection-icon" />
+          <div className="rejection-content">
+            <h4>Revisions Required</h4>
+            <p><strong>Manager Feedback:</strong> {article.rejectionReason}</p>
+          </div>
+        </div>
+      )}
 
       <article className="article-wrapper">
         <header className="article-header">
