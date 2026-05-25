@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
+import { useSocket } from '../../../hooks/useSocket';
 import { Search, BookOpen, FileText, Pin } from 'lucide-react';
 import PinButton from '../../Article/PinButton/PinButton.jsx';
 import '../dashboards.css';
@@ -10,7 +11,7 @@ const EmployeeDashboard = () => {
   const { user } = useAuth();
   const { fetcher } = useFetcher();
   const navigate = useNavigate();
-
+  const { socket } = useSocket();
   const [recentArticles, setRecentArticles] = useState([]);
   const [myArticles, setMyArticles] = useState([]);
   const [pinnedArticles, setPinnedArticles] = useState([]);
@@ -34,6 +35,20 @@ const EmployeeDashboard = () => {
 
     fetchDashboardData();
   }, [fetcher]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('article_status_update', (data) => {
+      // Trigger UI notification
+      alert(data.message);
+      // Replace with: toast.info(data.message);
+
+      // Execute state refresh logic here to update article lists
+    });
+
+    return () => socket.off('article_status_update');
+  }, [socket]);
 
   const handleSearch = (e) => {
     e.preventDefault();
