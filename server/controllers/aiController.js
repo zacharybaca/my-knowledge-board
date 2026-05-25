@@ -11,28 +11,39 @@ export const generateArticleMetadata = asyncHandler(async (req, res) => {
     throw new Error('Content is required for analysis.');
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `
     Analyze the following technical article content.
     Provide a concise 2-sentence summary.
     Provide an array of 3 to 5 highly relevant categorization tags (single words or short phrases).
 
-    Return ONLY a valid JSON object matching this exact schema, with no markdown formatting or backticks:
-    {
-      "summary": "string",
-      "tags": ["string"]
-    }
+    You must respond ONLY with a valid, raw JSON object. Do not include markdown formatting, backticks, or introductory text.
+    Schema: {"summary": "string", "tags": ["string"]}
 
     Article Content:
     ${content}
   `;
 
-  const result = await model.generateContent(prompt);
-  const responseText = result.response.text();
+  try {
+    const result = await model.generateContent(prompt);
+    let responseText = result.response.text();
 
-  // Clean potential markdown blocks from standard LLM outputs
-  const cleanedJson = responseText.replace(/```json\n?|```/g, '').trim();
+    // Aggressive sanitization: locate first '{' and last '}' to strip outside text
+    const jsonStartIndex = responseText.indexOf('{');
+    const jsonEndIndex = responseText.lastIndexOf('}');
 
-  res.json(JSON.parse(cleanedJson));
+    if (jsonStartIndex === -1 || jsonEndIndex === -1) {
+      throw new Error("Model did not return a JSON object.");
+    }
+
+    const cleanedJson = responseText.substring(jsonStartIndex, jsonEndIndex + 1);
+    const parsedData = JSON.parse(cleanedJson);
+
+    res.json(parsedData);
+  } catch (error) {
+    console.error("AI Generation Error:", error);
+    res.status(500);
+    throw new Error("Failed to generate or parse AI metadata. Check server terminal for raw output.");
+  }
 });
