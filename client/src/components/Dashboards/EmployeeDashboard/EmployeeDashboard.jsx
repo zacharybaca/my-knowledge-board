@@ -11,7 +11,7 @@ const EmployeeDashboard = () => {
   const { user } = useAuth();
   const { fetcher } = useFetcher();
   const navigate = useNavigate();
-  const { socket } = useSocket();
+  const socket = useSocket();
   const [recentArticles, setRecentArticles] = useState([]);
   const [myArticles, setMyArticles] = useState([]);
   const [pinnedArticles, setPinnedArticles] = useState([]);
