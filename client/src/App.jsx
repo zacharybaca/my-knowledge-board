@@ -1,4 +1,5 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
 import NavBar from './components/Layout/NavBar/NavBar';
 import Footer from './components/Layout/Footer/Footer';
 import Login from './components/Auth/Login/Login';
@@ -16,9 +17,11 @@ import ProfileSettings from './components/Auth/ProfileSettings/ProfileSettings';
 import CreateElevatedUser from './components/Auth/CreateElevatedUser/CreateElevatedUser';
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
+import Chatbot from './components/Chatbot/Chatbot';
 import './App.css';
 
 const Layout = () => {
+  const { user } = useAuth();
   return (
     <div className="app-container">
       <NavBar />
@@ -26,6 +29,7 @@ const Layout = () => {
         <Outlet />
       </main>
       <Footer />
+      {user && <Chatbot />}
     </div>
   );
 };
