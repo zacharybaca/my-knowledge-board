@@ -9,7 +9,7 @@ import '../dashboards.css';
 const ManagerDashboard = () => {
   const { user } = useAuth();
   const { fetcher } = useFetcher();
-  const { socket } = useSocket();
+  const socket = useSocket();
 
   const [pendingArticles, setPendingArticles] = useState([]);
   const [myArticles, setMyArticles] = useState([]);
