@@ -42,8 +42,17 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     Employee Question: ${question}
   `;
 
-  const result = await model.generateContent(prompt);
-  const answer = result.response.text();
+  try {
+    const result = await model.generateContent(prompt);
+    const answer = result.response.text();
+    res.json({ answer });
+  } catch (error) {
+    if (error.status === 503) {
+      res.status(503);
+      throw new Error("The AI network is currently experiencing high traffic. Please wait a moment and ask your question again.");
+    }
 
-  res.json({ answer });
+    res.status(500);
+    throw new Error("Knowledge base AI is temporarily disconnected. Try again later.");
+  }
 });
