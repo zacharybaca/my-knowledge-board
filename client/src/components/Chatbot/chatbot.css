@@ -135,6 +135,10 @@
   cursor: not-allowed;
 }
 
+.color-black {
+  color: black;
+}
+
 .typing-indicator span {
   animation: typing 1.4s infinite;
   font-size: 1.2rem;
