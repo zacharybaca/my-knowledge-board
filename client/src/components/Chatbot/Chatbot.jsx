@@ -82,7 +82,7 @@ const Chatbot = () => {
       {isOpen && (
         <div className="chatbot-window">
           <div className="chatbot-header">
-            <h3>Knowledge Assistant</h3>
+            <h3><span className="color-black">MyKnowledge</span> Assistant</h3>
             <button onClick={() => setIsOpen(false)} className="close-btn">
               <X size={20} />
             </button>
