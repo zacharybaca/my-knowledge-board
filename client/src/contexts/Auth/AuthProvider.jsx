@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useFetcher } from '../../hooks/useFetcher.js';
 import { AuthContext } from './AuthContext.jsx';
 
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   /**
    * Validates the session with the backend on mount.
    */
-  const checkUserAuth = async () => {
+  const checkUserAuth = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetcher('/api/users/profile');
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetcher]);
 
   /**
    * Triggers the backend logout and resets local user state.
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   // Run the auth check once when the provider mounts
   useEffect(() => {
     checkUserAuth();
-  }, []);
+  }, [checkUserAuth]);
 
   return (
     <AuthContext.Provider
