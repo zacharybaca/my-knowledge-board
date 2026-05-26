@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import asyncHandler from 'express-async-handler';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import asyncHandler from "express-async-handler";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -8,15 +8,15 @@ export const generateArticleMetadata = asyncHandler(async (req, res) => {
 
   if (!content) {
     res.status(400);
-    throw new Error('Content is required for analysis.');
+    throw new Error("Content is required for analysis.");
   }
 
   // Enforce strict JSON output at the model level
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: "gemini-2.5-flash",
     generationConfig: {
       responseMimeType: "application/json",
-    }
+    },
   });
 
   const prompt = `
@@ -45,6 +45,8 @@ export const generateArticleMetadata = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("AI Generation Error:", error);
     res.status(500);
-    throw new Error("Failed to generate or parse AI metadata. The model returned malformed data.");
+    throw new Error(
+      "Failed to generate or parse AI metadata. The model returned malformed data.",
+    );
   }
 });

@@ -6,7 +6,10 @@ import './chatbot.css';
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Hello. I can answer questions regarding company policies and procedures. How can I help?' }
+    {
+      sender: 'bot',
+      text: 'Hello. I can answer questions regarding company policies and procedures. How can I help?',
+    },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,19 +30,28 @@ const Chatbot = () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
-    setMessages(prev => [...prev, { sender: 'user', text: userMessage }]);
+    setMessages((prev) => [...prev, { sender: 'user', text: userMessage }]);
     setInput('');
     setIsLoading(true);
 
     const response = await fetcher('/api/chat/ask', {
       method: 'POST',
-      body: JSON.stringify({ question: userMessage })
+      body: JSON.stringify({ question: userMessage }),
     });
 
     if (response.success) {
-      setMessages(prev => [...prev, { sender: 'bot', text: response.data.answer }]);
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'bot', text: response.data.answer },
+      ]);
     } else {
-      setMessages(prev => [...prev, { sender: 'bot', text: response.error || 'Error connecting to the knowledge base.' }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'bot',
+          text: response.error || 'Error connecting to the knowledge base.',
+        },
+      ]);
     }
 
     setIsLoading(false);
@@ -58,7 +70,14 @@ const Chatbot = () => {
             xmlns="http://www.w3.org/2000/svg"
           >
             <rect width="512" height="512" rx="112" fill="#0f172a" />
-            <rect x="152" y="136" width="48" height="240" rx="24" fill="#10b981" />
+            <rect
+              x="152"
+              y="136"
+              width="48"
+              height="240"
+              rx="24"
+              fill="#10b981"
+            />
             <path
               d="M360 144L176 256"
               stroke="#10b981"
@@ -82,7 +101,9 @@ const Chatbot = () => {
       {isOpen && (
         <div className="chatbot-window">
           <div className="chatbot-header">
-            <h3><span className="color-black">MyKnowledge</span> Assistant</h3>
+            <h3>
+              <span className="color-black">MyKnowledge</span> Assistant
+            </h3>
             <button onClick={() => setIsOpen(false)} className="close-btn">
               <X size={20} />
             </button>
@@ -96,7 +117,9 @@ const Chatbot = () => {
             ))}
             {isLoading && (
               <div className="message-bubble bot typing-indicator">
-                <span>.</span><span>.</span><span>.</span>
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
               </div>
             )}
             <div ref={messagesEndRef} />

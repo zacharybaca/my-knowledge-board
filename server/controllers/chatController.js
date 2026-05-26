@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import asyncHandler from 'express-async-handler';
-import Article from '../models/Article.js';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import asyncHandler from "express-async-handler";
+import Article from "../models/Article.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -10,26 +10,31 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
   if (!question) {
     res.status(400);
-    throw new Error('Question is required.');
+    throw new Error("Question is required.");
   }
 
   // 1. Keyword Extraction for Simple Retrieval
-  const words = question.split(' ').filter(w => w.length > 3);
-  const regex = new RegExp(words.join('|'), 'i');
+  const words = question.split(" ").filter((w) => w.length > 3);
+  const regex = new RegExp(words.join("|"), "i");
 
   // 2. Fetch Company-Specific Context
   const relevantArticles = await Article.find({
     companyId: companyId,
-    status: 'Approved',
-    $or: [{ title: regex }, { tags: regex }, { content: regex }]
-  }).limit(3).select('title content');
+    status: "Approved",
+    $or: [{ title: regex }, { tags: regex }, { content: regex }],
+  })
+    .limit(3)
+    .select("title content");
 
-  const contextData = relevantArticles.length > 0
-    ? relevantArticles.map(a => `Title: ${a.title}\nContent: ${a.content}`).join('\n\n')
-    : "No highly relevant policies found. General company knowledge applies.";
+  const contextData =
+    relevantArticles.length > 0
+      ? relevantArticles
+          .map((a) => `Title: ${a.title}\nContent: ${a.content}`)
+          .join("\n\n")
+      : "No highly relevant policies found. General company knowledge applies.";
 
   // 3. System Prompt Execution
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
     You are an internal knowledge base assistant for the company.
@@ -49,10 +54,14 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   } catch (error) {
     if (error.status === 503) {
       res.status(503);
-      throw new Error("The AI network is currently experiencing high traffic. Please wait a moment and ask your question again.");
+      throw new Error(
+        "The AI network is currently experiencing high traffic. Please wait a moment and ask your question again.",
+      );
     }
 
     res.status(500);
-    throw new Error("Knowledge base AI is temporarily disconnected. Try again later.");
+    throw new Error(
+      "Knowledge base AI is temporarily disconnected. Try again later.",
+    );
   }
 });
