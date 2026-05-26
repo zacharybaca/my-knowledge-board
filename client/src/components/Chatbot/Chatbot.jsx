@@ -39,7 +39,7 @@ const Chatbot = () => {
     if (response.success) {
       setMessages(prev => [...prev, { sender: 'bot', text: response.data.answer }]);
     } else {
-      setMessages(prev => [...prev, { sender: 'bot', text: 'Error connecting to the knowledge base.' }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: response.error || 'Error connecting to the knowledge base.' }]);
     }
 
     setIsLoading(false);
