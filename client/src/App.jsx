@@ -18,6 +18,7 @@ import CreateElevatedUser from './components/Auth/CreateElevatedUser/CreateEleva
 import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import Chatbot from './components/Chatbot/Chatbot';
+import UserManagement from './components/UserManagement/UserManagement';
 import './App.css';
 
 const Layout = () => {
@@ -60,6 +61,15 @@ function App() {
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
           <Route path="queue/:id" element={<ArticleReview />} />
           <Route path="create-user" element={<CreateElevatedUser />} />
+          <Route
+            path="user-management"
+            element={
+              // Example wrapper: Replace with your actual protected route component if different
+              <ProtectedRoute>
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* 404 Fallback */}
