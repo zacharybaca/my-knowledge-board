@@ -26,8 +26,8 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 
 | Domain       | Technology                                                                                |
 | :----------- | :-----------------------------------------------------------------------------------------|                               
-| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React, web sockets, uuid                   |
-| **Backend**  | Node.js, Express, Mongoose, JSON Web Tokens (JWT), bcryptjs, leo-profanity, web sockets,  |
+| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React, Web Sockets, UUID                   |
+| **Backend**  | Node.js, Express, Mongoose, JSON Web Tokens (JWT), Bcryptjs, Leo-Profanity, Web Sockets   |
 | **Database** | MongoDB                                                                                   |
 | **Services** | Cloudinary (Image Hosting)                                                                |
 
