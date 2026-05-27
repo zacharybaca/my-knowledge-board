@@ -192,6 +192,64 @@ const createElevatedUser = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @desc    Update user suspension status
+ * @route   PATCH /api/users/:id/status
+ * @access  Private (Manager/Admin Only)
+ */
+const updateUserStatus = asyncHandler(async (req, res) => {
+  if (req.user.role !== "Admin" && req.user.role !== "Manager") {
+    res.status(403);
+    throw new Error("Not authorized to modify user status");
+  }
+
+  const user = await User.findById(req.params.id);
+
+  if (!user || user.companyId.toString() !== req.user.companyId.toString()) {
+    res.status(404);
+    throw new Error("User not found or access denied");
+  }
+
+  // Prevent self-suspension or suspending other Admins (optional safety check)
+  if (user._id.toString() === req.user._id.toString()) {
+    res.status(400);
+    throw new Error("Cannot suspend your own account");
+  }
+
+  user.isSuspended = req.body.isSuspended;
+  user.suspensionReason = req.body.suspensionReason || "";
+
+  await user.save();
+  res.json({ message: `User account ${user.isSuspended ? 'suspended' : 'restored'}` });
+});
+
+/**
+ * @desc    Delete user by ID (Manager/Admin action)
+ * @route   DELETE /api/users/:id
+ * @access  Private (Manager/Admin Only)
+ */
+const deleteUserById = asyncHandler(async (req, res) => {
+  if (req.user.role !== "Admin" && req.user.role !== "Manager") {
+    res.status(403);
+    throw new Error("Not authorized to delete accounts");
+  }
+
+  const user = await User.findById(req.params.id);
+
+  if (!user || user.companyId.toString() !== req.user.companyId.toString()) {
+    res.status(404);
+    throw new Error("User not found or access denied");
+  }
+
+  if (user._id.toString() === req.user._id.toString()) {
+    res.status(400);
+    throw new Error("Use the profile settings to delete your own account");
+  }
+
+  await user.deleteOne();
+  res.json({ message: "User permanently deleted" });
+});
+
 export {
   getUserProfile,
   updateUserProfile,
@@ -200,4 +258,6 @@ export {
   toggleFavoriteArticle,
   deleteUser,
   createElevatedUser,
+  updateUserStatus,
+  deleteUserById,
 };
