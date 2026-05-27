@@ -5,6 +5,8 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   max-width: 1200px;
   margin: 0 auto;
+  background-color: #27C08D;
+  border: 2px solid black;
 }
 
 .user-management-container h2 {
@@ -184,4 +186,14 @@
 
 .btn-submit.suspend-confirm:hover {
   background-color: #dc2626;
+}
+
+.user-management-title {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
