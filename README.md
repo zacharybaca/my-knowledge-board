@@ -1,4 +1,3 @@
-
 <div align="center">
   <img src="./client/public/logo.svg" alt="MyKnowledgeBoard Logo" width="150" />
 
@@ -14,39 +13,67 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 
 ## Core Features
 
-* **Multi-Tenant Architecture:** Isolated organizational environments governed by `companyId` scoping and email domain verification.
-* **Role-Based Access Control (RBAC):** Distinct permission tiers for Employees, Managers, and Admins.
-* **Approval Workflow:** State-driven content lifecycle management (Draft, Pending, Approved, Rejected) with manager feedback integration.
-* **Asset Management:** Integrated Cloudinary pipeline for user avatar processing and automated cascading cleanup.
-* **Contextual Discovery:** MongoDB `$text` indexing for high-relevancy search across organizational documentation.
+- **Multi-Tenant Architecture:** Isolated organizational environments governed by `companyId` scoping and email domain verification.
+- **Role-Based Access Control (RBAC):** Distinct permission tiers for Employees, Managers, and Admins.
+- **Approval Workflow:** State-driven content lifecycle management (Draft, Pending, Approved, Rejected) with manager feedback integration.
+- **Asset Management:** Integrated Cloudinary pipeline for user avatar processing and automated cascading cleanup.
+- **Contextual Discovery:** MongoDB `$text` indexing for high-relevancy search across organizational documentation.
 
-* --
+- --
 
 ## Technical Stack
 
-| Domain | Technology |
-| :--- | :--- |
-| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React |
-| **Backend** | Node.js, Express, Mongoose, JSON Web Tokens (JWT), bcryptjs |
-| **Database** | MongoDB |
-| **Services** | Cloudinary (Image Hosting) |
+| Domain       | Technology                                                  |
+| :----------- | :---------------------------------------------------------- |
+| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React        |
+| **Backend**  | Node.js, Express, Mongoose, JSON Web Tokens (JWT), bcryptjs |
+| **Database** | MongoDB                                                     |
+| **Services** | Cloudinary (Image Hosting)                                  |
 
-- --
+---
 
 ## Environment Configuration
 
     Create a `.env` file in the `server` directory with the following variables:
 
-        PORT=5000
-        MONGO_URI=your_mongodb_connection_string
-        JWT_SECRET=your_jwt_secret_key
-        FRONTEND_URL=http://localhost:5173
-        CLIENT_URL=http://localhost:5173
-
         # Cloudinary Configuration
         CLOUDINARY_CLOUD_NAME=your_cloud_name
-        CLOUDINARY_API_KEY=your_api_key
-        CLOUDINARY_API_SECRET=your_api_secret
+        CLOUDINARY_KEY=your_api_key
+        CLOUDINARY_SECRET=your_api_secret
+        CLOUDINARY_URL=your_cloudinary_url
+
+        # Server Configuration
+        JWT_SECRET=your_jwt_secret_key
+        MONGO_URI=your_mongodb_connection_string
+        FRONTEND_URL=http://localhost:5173
+        NODE_ENV=development
+        CLIENT_URL=http://localhost:5173
+        PORT=5000
+
+        # Send Grid Configuration
+        EMAIL_USERNAME=your_sendgrid_username
+        EMAIL_PASSWORD=your_sendgrid_password
+        FROM_NAME=your_email_from_name
+        FROM_EMAIL=your_email_from_email
+        SENDGRID_API_KEY=your_sendgrid_api_key
+
+        # Stripe Configuration
+        STRIPE_SECRET_KEY=your_stripe_secret_key
+        STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+
+        # Gemini Configuration
+        GEMINI_API_KEY=your_gemini_api_key
+
+    Create a `.env` file in the `client` directory with the following variables:
+
+        # Client Configuration
+        VITE_API_URL=http://localhost:5000
+
+        # Tiny MCE Configuration
+        VITE_TINYMCE_API_KEY=your_tinymce_api_key
+
+        # Stripe Configuration
+        VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
 ## Installation & Execution
 
@@ -203,22 +230,22 @@ The client application is built with React and Vite, utilizing a feature-based d
 
 ### Component Breakdown
 
-* Article: Manages the core knowledge base content lifecycle. Includes the editor interface, standardized card displays, detailed viewing, and the manager-specific approval queue interface.
-* Auth: Handles system access and onboarding. Includes standard login, employee registration, and the secure workspace verification flow.
-* Company: Interfaces for the multi-tenant architecture. Displays active participating organizations and handles the creation of new tenant workspaces.
-* Dashboards: Role-specific landing areas providing contextual data and actions based on whether the authenticated user is an Employee or a Manager.
-* Layout: The persistent UI shell. Contains navigation bars, footers, sidebars, and the global notification system (Toast).
-* Pages: Top-level route views, such as the public-facing Home page.
-* Search: Components interfacing with the backend MongoDB text-indexing to provide high-relevancy document discovery and tag-based filtering.
-* Utility: Higher-order components and wrappers, primarily used for Role-Based Access Control (RBAC) to restrict access to protected and admin-only routes.
+- Article: Manages the core knowledge base content lifecycle. Includes the editor interface, standardized card displays, detailed viewing, and the manager-specific approval queue interface.
+- Auth: Handles system access and onboarding. Includes standard login, employee registration, and the secure workspace verification flow.
+- Company: Interfaces for the multi-tenant architecture. Displays active participating organizations and handles the creation of new tenant workspaces.
+- Dashboards: Role-specific landing areas providing contextual data and actions based on whether the authenticated user is an Employee or a Manager.
+- Layout: The persistent UI shell. Contains navigation bars, footers, sidebars, and the global notification system (Toast).
+- Pages: Top-level route views, such as the public-facing Home page.
+- Search: Components interfacing with the backend MongoDB text-indexing to provide high-relevancy document discovery and tag-based filtering.
+- Utility: Higher-order components and wrappers, primarily used for Role-Based Access Control (RBAC) to restrict access to protected and admin-only routes.
 
 ### State Management & Data Fetching
 
-* Contexts (AppProvider.jsx): Global state is segmented by domain (Auth, Companies, Fetcher) and nested hierarchically within a primary provider to ensure correct dependency resolution (e.g., Company state relying on Auth state).
-* Custom Hooks:
-  * useAuth: Exposes login, logout, and current user data.
-  * useCompany: Exposes current tenant data.
-  * useFetcher: A centralized utility for executing API requests with intercepted credentials and error handling.
+- Contexts (AppProvider.jsx): Global state is segmented by domain (Auth, Companies, Fetcher) and nested hierarchically within a primary provider to ensure correct dependency resolution (e.g., Company state relying on Auth state).
+- Custom Hooks:
+  - useAuth: Exposes login, logout, and current user data.
+  - useCompany: Exposes current tenant data.
+  - useFetcher: A centralized utility for executing API requests with intercepted credentials and error handling.
 
 ### System Integration Requirements
 
