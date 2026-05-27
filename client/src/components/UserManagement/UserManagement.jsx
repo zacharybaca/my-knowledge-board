@@ -92,7 +92,7 @@ const UserManagement = () => {
         <Toast message={toastConfig.message} type={toastConfig.type} onClose={() => setToastConfig(null)} />
       )}
 
-      <h2>User Base Management</h2>
+      <h2 className="user-management-title">Employee Directory Management</h2>
 
       <table className="user-table">
         <thead>
