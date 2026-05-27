@@ -159,6 +159,9 @@ const ManagerDashboard = () => {
             <Link to="/articles/new" className="action-link">
               Write Article
             </Link>
+            <Link to="/user-management" className="btn-secondary">
+              Manage Users
+            </Link>
           </div>
           <div className="card-content">
             {myArticles.length === 0 ? (
