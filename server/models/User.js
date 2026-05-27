@@ -53,12 +53,12 @@ const userSchema = mongoose.Schema(
       default: false,
     },
     isSuspended: {
-    type: Boolean,
-    default: false,
+      type: Boolean,
+      default: false,
     },
     suspensionReason: {
-    type: String,
-    default: "",
+      type: String,
+      default: "",
     },
     verificationToken: String,
     verificationExpire: Date,

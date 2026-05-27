@@ -220,7 +220,9 @@ const updateUserStatus = asyncHandler(async (req, res) => {
   user.suspensionReason = req.body.suspensionReason || "";
 
   await user.save();
-  res.json({ message: `User account ${user.isSuspended ? 'suspended' : 'restored'}` });
+  res.json({
+    message: `User account ${user.isSuspended ? "suspended" : "restored"}`,
+  });
 });
 
 /**

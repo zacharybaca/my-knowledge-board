@@ -43,7 +43,7 @@ router.patch("/favorites/:articleId", protect, toggleFavoriteArticle);
  * Admin/Manager User Management
  */
 router.post("/elevated", protect, createElevatedUser);
-router.route('/:id/status').patch(protect, updateUserStatus);
-router.route('/:id').delete(protect, deleteUserById);
+router.route("/:id/status").patch(protect, updateUserStatus);
+router.route("/:id").delete(protect, deleteUserById);
 
 export default router;
