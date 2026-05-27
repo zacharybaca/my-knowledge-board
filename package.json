@@ -1,5 +1,5 @@
 {
-  "name": "react-starter-template",
+  "name": "my-knowledge-board-main",
   "version": "1.0.0",
   "description": "🚀 A modern React + Vite starter template — fast, minimal, and MERN-ready.",
   "main": "server/server.js",

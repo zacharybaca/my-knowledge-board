@@ -1,5 +1,5 @@
 {
-  "name": "react-starter-template-server",
+  "name": "my-knowledge-board-server",
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
@@ -11,11 +11,11 @@
     "mern",
     "backend",
     "express",
-    "react-starter-template"
+    "my-knowledge-board"
   ],
   "author": "Zachary Baca",
   "license": "ISC",
-  "description": "Backend API for React Starter Template",
+  "description": "Backend API for My Knowledge Board",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@sendgrid/mail": "^8.1.6",
