@@ -61,15 +61,7 @@ function App() {
           <Route path="manager-dashboard" element={<ManagerDashboard />} />
           <Route path="queue/:id" element={<ArticleReview />} />
           <Route path="create-user" element={<CreateElevatedUser />} />
-          <Route
-            path="user-management"
-            element={
-              // Example wrapper: Replace with your actual protected route component if different
-              <ProtectedRoute>
-                <UserManagement />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="user-management" element={<UserManagement />} />
         </Route>
 
         {/* 404 Fallback */}
