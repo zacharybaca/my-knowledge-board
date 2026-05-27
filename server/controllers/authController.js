@@ -63,6 +63,11 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   if (user && (await user.matchPassword(password))) {
+    if (user.isSuspended) {
+      res.status(403);
+      throw new Error(`Account Suspended: ${user.suspensionReason || 'Please contact your manager.'}`);
+    }
+
     generateToken(res, user._id);
     res.status(200).json({
       _id: user._id,
