@@ -18,17 +18,18 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 - **Approval Workflow:** State-driven content lifecycle management (Draft, Pending, Approved, Rejected) with manager feedback integration.
 - **Asset Management:** Integrated Cloudinary pipeline for user avatar processing and automated cascading cleanup.
 - **Contextual Discovery:** MongoDB `$text` indexing for high-relevancy search across organizational documentation.
+- **MyKnowledge Assistant:** An AI chatbot that will answer a user's questions regarding a company's workplace policies or procedures.
 
 - --
 
 ## Technical Stack
 
-| Domain       | Technology                                                  |
-| :----------- | :---------------------------------------------------------- |
-| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React        |
-| **Backend**  | Node.js, Express, Mongoose, JSON Web Tokens (JWT), bcryptjs |
-| **Database** | MongoDB                                                     |
-| **Services** | Cloudinary (Image Hosting)                                  |
+| Domain       | Technology                                                                                |
+| :----------- | :-----------------------------------------------------------------------------------------|                               
+| **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React, web sockets, uuid                   |
+| **Backend**  | Node.js, Express, Mongoose, JSON Web Tokens (JWT), bcryptjs, leo-profanity, web sockets,  |
+| **Database** | MongoDB                                                                                   |
+| **Services** | Cloudinary (Image Hosting)                                                                |
 
 ---
 
