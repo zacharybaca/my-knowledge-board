@@ -258,6 +258,52 @@ const voteArticle = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Submit feedback on an article
+ * @route   POST /api/articles/:id/feedback
+ * @access  Private
+ */
+const submitArticleFeedback = asyncHandler(async (req, res) => {
+  const { isHelpful, comment } = req.body;
+  const article = await Article.findById(req.params.id);
+
+  if (!article) {
+    res.status(404);
+    throw new Error('Article not found');
+  }
+
+  // Prevent cross-company feedback
+  if (article.companyId.toString() !== req.user.companyId.toString()) {
+    res.status(403);
+    throw new Error('Access denied');
+  }
+
+  const existingFeedbackIndex = article.feedback.findIndex(
+    (f) => f.userId.toString() === req.user._id.toString()
+  );
+
+  if (existingFeedbackIndex !== -1) {
+    // Update existing feedback
+    article.feedback[existingFeedbackIndex] = {
+      userId: req.user._id,
+      isHelpful,
+      comment,
+      submittedAt: Date.now()
+    };
+  } else {
+    // Append new feedback
+    article.feedback.push({
+      userId: req.user._id,
+      isHelpful,
+      comment,
+      submittedAt: Date.now()
+    });
+  }
+
+  await article.save();
+  res.status(200).json({ message: 'Feedback recorded' });
+});
+
 export {
   createArticle,
   getArticles,
@@ -269,4 +315,5 @@ export {
   voteArticle,
   getPendingArticles,
   getFavoriteArticles,
+  submitArticleFeedback,
 };
