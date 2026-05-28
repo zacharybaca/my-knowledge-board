@@ -10,6 +10,7 @@ import {
   Tag,
   Edit,
   AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import ArticleFeedback from '../ArticleFeedback/ArticleFeedback.jsx';
 import './article-view.css';
@@ -93,7 +94,17 @@ const ArticleView = () => {
           </div>
         </div>
       )}
-
+      {article.expiresAt && new Date(article.expiresAt) < new Date() && (
+        <div className="expiration-alert-banner" style={{ background: '#fef2f2', border: '1px solid #f87171', color: '#991b1b', padding: '16px', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <AlertTriangle size={24} />
+          <div>
+            <h4 style={{ margin: 0 }}>This article has expired</h4>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+              The information below has not been reviewed recently and may be out of date. Proceed with caution.
+            </p>
+          </div>
+        </div>
+      )}
       <article className="article-wrapper">
         <header className="article-header">
           <div className="article-meta-top">
