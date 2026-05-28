@@ -309,7 +309,7 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
  * @route   GET /api/articles/review-queue
  * @access  Private (Manager/Admin Only)
  */
-export const getReviewQueue = asyncHandler(async (req, res) => {
+const getReviewQueue = asyncHandler(async (req, res) => {
   if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
     res.status(403);
     throw new Error('Not authorized to access review queue');
@@ -334,7 +334,7 @@ export const getReviewQueue = asyncHandler(async (req, res) => {
  * @route   PATCH /api/articles/:id/certify
  * @access  Private (Manager/Admin Only)
  */
-export const certifyArticle = asyncHandler(async (req, res) => {
+const certifyArticle = asyncHandler(async (req, res) => {
   if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
     res.status(403);
     throw new Error('Not authorized to certify articles');
