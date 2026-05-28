@@ -304,6 +304,61 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Feedback recorded' });
 });
 
+/**
+ * @desc    Get articles nearing expiration or expired
+ * @route   GET /api/articles/review-queue
+ * @access  Private (Manager/Admin Only)
+ */
+export const getReviewQueue = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
+    res.status(403);
+    throw new Error('Not authorized to access review queue');
+  }
+
+  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  const articles = await Article.find({
+    companyId: req.user.companyId,
+    status: 'Approved',
+    expiresAt: { $lte: thirtyDaysFromNow }
+  })
+    .select('title expiresAt lastReviewedAt authorId')
+    .populate('authorId', 'firstName lastName')
+    .sort({ expiresAt: 1 });
+
+  res.json(articles);
+});
+
+/**
+ * @desc    Certify article accuracy and extend expiration
+ * @route   PATCH /api/articles/:id/certify
+ * @access  Private (Manager/Admin Only)
+ */
+export const certifyArticle = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
+    res.status(403);
+    throw new Error('Not authorized to certify articles');
+  }
+
+  const article = await Article.findById(req.params.id);
+
+  if (!article || article.companyId.toString() !== req.user.companyId.toString()) {
+    res.status(404);
+    throw new Error('Article not found');
+  }
+
+  // Extend by 180 days
+  article.expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+  article.lastReviewedAt = Date.now();
+  article.lastReviewedBy = req.user._id;
+
+  await article.save();
+  res.json({
+    message: 'Article certified successfully',
+    expiresAt: article.expiresAt
+  });
+});
+
 export {
   createArticle,
   getArticles,
@@ -316,4 +371,6 @@ export {
   getPendingArticles,
   getFavoriteArticles,
   submitArticleFeedback,
+  getReviewQueue,
+  certifyArticle,
 };
