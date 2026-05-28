@@ -10,6 +10,7 @@ import {
   getFavoriteArticles,
   getTopArticles,
   voteArticle,
+  submitArticleFeedback,
 } from "../controllers/articleController.js";
 import { protect } from "../middleware/authMiddleware.js"; // Ensure your auth middleware is imported
 
@@ -26,6 +27,7 @@ router.get("/favorites", protect, getFavoriteArticles);
 
 // 2. Dynamic Routes (/:id catches everything else)
 router.route("/:id").get(protect, getArticleById).put(protect, updateArticle);
+router.route('/:id/feedback').post(protect, submitArticleFeedback);
 
 router.patch("/:id/status", protect, approveRejectArticle);
 router.patch("/:id/vote", protect, voteArticle);
