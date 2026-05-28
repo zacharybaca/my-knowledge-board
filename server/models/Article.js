@@ -12,6 +12,18 @@ const articleSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+    },
+    lastReviewedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    lastReviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     department: {
       type: String,
       required: true,
