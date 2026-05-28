@@ -24,6 +24,11 @@ const ArticleView = () => {
   const [article, setArticle] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [templateData, setTemplateData] = useState({
+    Customer_Name: '',
+    Account_Number: '',
+    Discount_Amount: '5.00'
+  });
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -61,10 +66,54 @@ const ArticleView = () => {
     );
   }
 
+  const handleTemplateInputChange = (e) => {
+    const { name, value } = e.target;
+    setTemplateData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCopyToClipboard = () => {
+    const parsedHtml = parseTemplateContent(article.content);
+
+    // Create a temporary element to strip HTML tags and get pure text
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = parsedHtml;
+    const textToCopy = tempDiv.innerText || tempDiv.textContent;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      // You could trigger a small toast notification here
+      alert("Template copied to clipboard!");
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+    });
+  };
+
   const canEdit =
     user?.role === 'Admin' ||
     user?.role === 'Manager' ||
     user?._id === article.authorId?._id;
+
+  const parseTemplateContent = (htmlContent) => {
+    if (!htmlContent) return '';
+    let parsedHtml = htmlContent;
+
+    // Define the variables we want to watch for
+    const variables = ['Customer_Name', 'Account_Number', 'Discount_Amount'];
+
+    variables.forEach(variable => {
+      const regex = new RegExp(`\\[${variable}\\]`, 'g');
+      // Replace with the user input, or keep the bracketed term if empty
+      const valueToInject = templateData[variable] ?
+        `<span class="template-filled">${templateData[variable]}</span>` :
+        `<span class="template-empty">[${variable}]</span>`;
+
+      parsedHtml = parsedHtml.replace(regex, valueToInject);
+    });
+
+    return parsedHtml;
+  };
 
   return (
     <div className="article-view-container">
@@ -146,9 +195,64 @@ const ArticleView = () => {
           )}
         </header>
 
+        {article.content && article.content.includes('[') && (
+          <div>
+            <div className="template-controls">
+              <h4>Template Variables</h4>
+              <p className="template-instruction">Fill out the fields below to auto-populate the email templates in this article.</p>
+              <div className="template-inputs-grid">
+                {article.content.includes('[Customer_Name]') && (
+                  <div className="input-group">
+                    <label>Customer Name</label>
+                    <input
+                      type="text"
+                      name="Customer_Name"
+                      value={templateData.Customer_Name}
+                      onChange={handleTemplateInputChange}
+                      placeholder="e.g., Jane Doe"
+                    />
+                  </div>
+                )}
+                {article.content.includes('[Account_Number]') && (
+                  <div className="input-group">
+                    <label>Account Number</label>
+                    <input
+                      type="text"
+                      name="Account_Number"
+                      value={templateData.Account_Number}
+                      onChange={handleTemplateInputChange}
+                      placeholder="e.g., 12345678"
+                    />
+                  </div>
+                )}
+                 {article.content.includes('[Discount_Amount]') && (
+                  <div className="input-group">
+                    <label>Discount Amount ($)</label>
+                    <input
+                      type="text"
+                      name="Discount_Amount"
+                      value={templateData.Discount_Amount}
+                      onChange={handleTemplateInputChange}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="template-controls">
+               {/* ... existing template header and inputs ... */}
+
+               <div className="template-actions">
+                 <button onClick={handleCopyToClipboard} className="btn-copy">
+                    Copy Filled Template
+                 </button>
+               </div>
+            </div>
+          </div>
+        )}
+
         <div
           className="article-body"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          dangerouslySetInnerHTML={{ __html: parseTemplateContent(article.content) }}
         />
 
         <ArticleFeedback articleId={article._id} />
