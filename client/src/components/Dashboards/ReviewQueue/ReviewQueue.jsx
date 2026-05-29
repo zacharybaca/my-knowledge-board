@@ -23,12 +23,12 @@ const ReviewQueue = () => {
 
   const handleCertify = async (articleId) => {
     const response = await fetcher(`/api/articles/${articleId}/certify`, {
-      method: 'PATCH'
+      method: 'PATCH',
     });
 
     if (response.success) {
       // Remove from queue visually
-      setQueue(prev => prev.filter(article => article._id !== articleId));
+      setQueue((prev) => prev.filter((article) => article._id !== articleId));
     }
   };
 
@@ -46,7 +46,10 @@ const ReviewQueue = () => {
 
   return (
     <div className="review-queue-container">
-      <h3><AlertTriangle size={20} className="warning-icon"/> Expiration & Review Queue</h3>
+      <h3>
+        <AlertTriangle size={20} className="warning-icon" /> Expiration & Review
+        Queue
+      </h3>
       <table className="queue-table">
         <thead>
           <tr>
@@ -57,18 +60,28 @@ const ReviewQueue = () => {
           </tr>
         </thead>
         <tbody>
-          {queue.map(article => {
+          {queue.map((article) => {
             const isExpired = new Date(article.expiresAt) < new Date();
             return (
-              <tr key={article._id} className={isExpired ? 'expired-row' : 'warning-row'}>
-                <td><Link to={`/articles/${article._id}`}>{article.title}</Link></td>
-                <td>{article.authorId?.firstName} {article.authorId?.lastName}</td>
+              <tr
+                key={article._id}
+                className={isExpired ? 'expired-row' : 'warning-row'}
+              >
+                <td>
+                  <Link to={`/articles/${article._id}`}>{article.title}</Link>
+                </td>
+                <td>
+                  {article.authorId?.firstName} {article.authorId?.lastName}
+                </td>
                 <td>
                   {new Date(article.expiresAt).toLocaleDateString()}
                   {isExpired && <span className="expired-badge">Expired</span>}
                 </td>
                 <td>
-                  <button onClick={() => handleCertify(article._id)} className="btn-certify">
+                  <button
+                    onClick={() => handleCertify(article._id)}
+                    className="btn-certify"
+                  >
                     Certify Accuracy
                   </button>
                 </td>

@@ -16,7 +16,11 @@ export const AuthProvider = ({ children }) => {
   const isUserAdmin = useMemo(() => {
     if (!user) return false;
     const userRoles = Array.isArray(user.role) ? user.role : [user.role];
-    return user.isAdmin || userRoles.includes('Admin') || userRoles.includes('Manager');
+    return (
+      user.isAdmin ||
+      userRoles.includes('Admin') ||
+      userRoles.includes('Manager')
+    );
   }, [user]);
 
   /**

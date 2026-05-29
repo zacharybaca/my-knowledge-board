@@ -18,17 +18,17 @@ const ArticleEditor = () => {
 
   // Available departments mapping
   const availableDepartments = [
-    "Customer Service",
-    "Tech Support",
-    "Human Resources",
-    "Sales",
-    "Marketing",
-    "Engineering",
-    "Product",
-    "Finance",
-    "Legal",
-    "Operations",
-    "Other"
+    'Customer Service',
+    'Tech Support',
+    'Human Resources',
+    'Sales',
+    'Marketing',
+    'Engineering',
+    'Product',
+    'Finance',
+    'Legal',
+    'Operations',
+    'Other',
   ];
 
   const [formData, setFormData] = useState({
@@ -127,9 +127,12 @@ const ArticleEditor = () => {
 
     // Ensure at least one department is selected
     if (formData.departments.length === 0) {
-        setToastConfig({ type: 'error', message: 'Please select at least one department.' });
-        setIsSubmitting(false);
-        return;
+      setToastConfig({
+        type: 'error',
+        message: 'Please select at least one department.',
+      });
+      setIsSubmitting(false);
+      return;
     }
 
     const payload = {
@@ -199,7 +202,9 @@ const ArticleEditor = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="departments">Target Departments (Hold Ctrl/Cmd to select multiple)</label>
+          <label htmlFor="departments">
+            Target Departments (Hold Ctrl/Cmd to select multiple)
+          </label>
           <select
             id="departments"
             name="departments"
@@ -210,8 +215,10 @@ const ArticleEditor = () => {
             required
             style={{ height: 'auto', minHeight: '120px' }}
           >
-            {availableDepartments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
+            {availableDepartments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
             ))}
           </select>
         </div>
@@ -227,9 +234,24 @@ const ArticleEditor = () => {
               height: 500,
               menubar: true,
               plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
+                'advlist',
+                'autolink',
+                'lists',
+                'link',
+                'image',
+                'charmap',
+                'preview',
+                'anchor',
+                'searchreplace',
+                'visualblocks',
+                'code',
+                'fullscreen',
+                'insertdatetime',
+                'media',
+                'table',
+                'code',
+                'help',
+                'wordcount',
               ],
               toolbar:
                 'undo redo | blocks | ' +
@@ -244,20 +266,46 @@ const ArticleEditor = () => {
           />
         </div>
 
-        <div className="ai-assist-section" style={{ margin: '20px 0', padding: '15px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '1rem', margin: 0, color: '#0f172a' }}>AI Assistant</h3>
+        <div
+          className="ai-assist-section"
+          style={{
+            margin: '20px 0',
+            padding: '15px',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '10px',
+            }}
+          >
+            <h3 style={{ fontSize: '1rem', margin: 0, color: '#0f172a' }}>
+              AI Assistant
+            </h3>
             <button
               type="button"
               onClick={handleAIAnalysis}
               disabled={isAnalyzing}
               style={{
-                display: 'flex', alignItems: 'center', gap: '8px', background: '#10b981', color: 'white',
-                border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
                 opacity: isAnalyzing ? 0.7 : 1,
               }}
             >
-              <Wand2 size={16} /> {isAnalyzing ? 'Analyzing...' : 'Auto-Generate Metadata'}
+              <Wand2 size={16} />{' '}
+              {isAnalyzing ? 'Analyzing...' : 'Auto-Generate Metadata'}
             </button>
           </div>
 
@@ -269,7 +317,12 @@ const ArticleEditor = () => {
               value={formData.summary}
               onChange={handleChange}
               rows="3"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #cbd5e1',
+              }}
               placeholder="AI generated summary will appear here..."
             />
           </div>
@@ -283,17 +336,35 @@ const ArticleEditor = () => {
               value={formData.tags}
               onChange={handleChange}
               placeholder="e.g., security, compliance, IT"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #cbd5e1',
+              }}
             />
           </div>
         </div>
 
         <div className="editor-actions">
-          <button type="button" className="btn-cancel" onClick={() => navigate(-1)} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="btn-cancel"
+            onClick={() => navigate(-1)}
+            disabled={isSubmitting}
+          >
             Cancel
           </button>
-          <button type="submit" className="btn-submit" disabled={isSubmitting || !formData.content.trim()}>
-            {isSubmitting ? 'Saving...' : isUserAdmin ? 'Publish Article' : 'Submit for Approval'}
+          <button
+            type="submit"
+            className="btn-submit"
+            disabled={isSubmitting || !formData.content.trim()}
+          >
+            {isSubmitting
+              ? 'Saving...'
+              : isUserAdmin
+                ? 'Publish Article'
+                : 'Submit for Approval'}
           </button>
         </div>
       </form>

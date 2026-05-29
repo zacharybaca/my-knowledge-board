@@ -36,12 +36,14 @@ const ArticleFeedback = ({ articleId }) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ isHelpful: helpful, comment: feedbackComment })
+      body: JSON.stringify({ isHelpful: helpful, comment: feedbackComment }),
     });
   };
 
   if (status === 'submitted') {
-    return <div className="feedback-terminal">Thank you for your feedback.</div>;
+    return (
+      <div className="feedback-terminal">Thank you for your feedback.</div>
+    );
   }
 
   return (

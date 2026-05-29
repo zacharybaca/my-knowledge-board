@@ -22,7 +22,7 @@ const articleSchema = new mongoose.Schema(
     },
     lastReviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     department: {
       type: [String],
@@ -41,24 +41,26 @@ const articleSchema = new mongoose.Schema(
         "Other",
       ],
     },
-    feedback: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User',
-    },
-    isHelpful: {
-      type: Boolean,
-      required: true,
-    },
-    comment: {
-      type: String,
-    },
-    submittedAt: {
-      type: Date,
-      default: Date.now,
-    }
-    }],
+    feedback: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+          ref: "User",
+        },
+        isHelpful: {
+          type: Boolean,
+          required: true,
+        },
+        comment: {
+          type: String,
+        },
+        submittedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     title: { type: String, required: true },
     content: { type: String, required: true },
     tags: [{ type: String }],

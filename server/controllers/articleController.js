@@ -16,7 +16,8 @@ const createArticle = asyncHandler(async (req, res) => {
     finalStatus = "Approved";
   }
 
-  const targetDepartments = departments && departments.length > 0 ? departments : [req.user.department];
+  const targetDepartments =
+    departments && departments.length > 0 ? departments : [req.user.department];
 
   const article = await Article.create({
     companyId: req.user.companyId,
@@ -272,16 +273,16 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
 
   if (!article) {
     res.status(404);
-    throw new Error('Article not found');
+    throw new Error("Article not found");
   }
 
   if (article.companyId.toString() !== req.user.companyId.toString()) {
     res.status(403);
-    throw new Error('Access denied');
+    throw new Error("Access denied");
   }
 
   const existingFeedbackIndex = article.feedback.findIndex(
-    (f) => f.userId.toString() === req.user._id.toString()
+    (f) => f.userId.toString() === req.user._id.toString(),
   );
 
   if (existingFeedbackIndex !== -1) {
@@ -289,19 +290,19 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
       userId: req.user._id,
       isHelpful,
       comment,
-      submittedAt: Date.now()
+      submittedAt: Date.now(),
     };
   } else {
     article.feedback.push({
       userId: req.user._id,
       isHelpful,
       comment,
-      submittedAt: Date.now()
+      submittedAt: Date.now(),
     });
   }
 
   await article.save();
-  res.status(200).json({ message: 'Feedback recorded' });
+  res.status(200).json({ message: "Feedback recorded" });
 });
 
 /**
@@ -312,18 +313,18 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
 const getReviewQueue = asyncHandler(async (req, res) => {
   if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
-    throw new Error('Not authorized to access review queue');
+    throw new Error("Not authorized to access review queue");
   }
 
   const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   const articles = await Article.find({
     companyId: req.user.companyId,
-    status: 'Approved',
-    expiresAt: { $lte: thirtyDaysFromNow }
+    status: "Approved",
+    expiresAt: { $lte: thirtyDaysFromNow },
   })
-    .select('title expiresAt lastReviewedAt authorId')
-    .populate('authorId', 'firstName lastName')
+    .select("title expiresAt lastReviewedAt authorId")
+    .populate("authorId", "firstName lastName")
     .sort({ expiresAt: 1 });
 
   res.json(articles);
@@ -337,14 +338,17 @@ const getReviewQueue = asyncHandler(async (req, res) => {
 const certifyArticle = asyncHandler(async (req, res) => {
   if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
-    throw new Error('Not authorized to certify articles');
+    throw new Error("Not authorized to certify articles");
   }
 
   const article = await Article.findById(req.params.id);
 
-  if (!article || article.companyId.toString() !== req.user.companyId.toString()) {
+  if (
+    !article ||
+    article.companyId.toString() !== req.user.companyId.toString()
+  ) {
     res.status(404);
-    throw new Error('Article not found');
+    throw new Error("Article not found");
   }
 
   article.expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
@@ -353,8 +357,8 @@ const certifyArticle = asyncHandler(async (req, res) => {
 
   await article.save();
   res.json({
-    message: 'Article certified successfully',
-    expiresAt: article.expiresAt
+    message: "Article certified successfully",
+    expiresAt: article.expiresAt,
   });
 });
 

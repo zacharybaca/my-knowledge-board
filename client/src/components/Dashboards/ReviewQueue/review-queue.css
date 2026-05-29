@@ -37,7 +37,8 @@
   text-align: left;
 }
 
-.queue-table th, .queue-table td {
+.queue-table th,
+.queue-table td {
   padding: 12px;
   border-bottom: 1px solid #e2e8f0;
 }

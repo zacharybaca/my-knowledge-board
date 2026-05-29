@@ -45,9 +45,12 @@ const CreateElevatedUser = () => {
     setIsSubmitting(true);
 
     if (formData.roles.length === 0) {
-        setToastConfig({ message: 'User must have at least one role.', type: 'error' });
-        setIsSubmitting(false);
-        return;
+      setToastConfig({
+        message: 'User must have at least one role.',
+        type: 'error',
+      });
+      setIsSubmitting(false);
+      return;
     }
 
     const payload = {
@@ -88,18 +91,39 @@ const CreateElevatedUser = () => {
   };
 
   return (
-    <div className="auth-container" style={{ minHeight: 'auto', padding: '20px 0' }}>
+    <div
+      className="auth-container"
+      style={{ minHeight: 'auto', padding: '20px 0' }}
+    >
       {toastConfig && (
-        <Toast message={toastConfig.message} type={toastConfig.type} onClose={() => setToastConfig(null)} />
+        <Toast
+          message={toastConfig.message}
+          type={toastConfig.type}
+          onClose={() => setToastConfig(null)}
+        />
       )}
 
-      <div className="auth-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+      <div
+        className="auth-card"
+        style={{ maxWidth: '600px', margin: '0 auto' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '16px',
+          }}
+        >
           <ShieldCheck size={48} color="#10b981" />
         </div>
 
-        <h2 className="auth-title" style={{ marginBottom: '10px' }}>Provision User Account</h2>
-        <p className="auth-footer" style={{ marginTop: 0, marginBottom: '30px' }}>
+        <h2 className="auth-title" style={{ marginBottom: '10px' }}>
+          Provision User Account
+        </h2>
+        <p
+          className="auth-footer"
+          style={{ marginTop: 0, marginBottom: '30px' }}
+        >
           Create a new user account for your workspace.
         </p>
 
@@ -107,25 +131,51 @@ const CreateElevatedUser = () => {
           <div className="auth-form-row">
             <div className="form-group half-width">
               <label>First Name</label>
-              <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
             </div>
             <div className="form-group half-width">
               <label>Last Name</label>
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
             </div>
           </div>
 
           <div className="form-group">
             <label>Work Email Address</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div className="auth-form-row">
             <div className="form-group half-width">
               <label htmlFor="department">Primary Department</label>
-              <select id="department" name="department" value={formData.department} onChange={handleChange} required>
+              <select
+                id="department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                required
+              >
                 <option value="">Select Department...</option>
-                <option value="Customer Service">Customer Service & Billing</option>
+                <option value="Customer Service">
+                  Customer Service & Billing
+                </option>
                 <option value="Tech Support">Tech Support</option>
                 <option value="Human Resources">Human Resources</option>
                 <option value="Sales">Sales</option>
@@ -159,10 +209,23 @@ const CreateElevatedUser = () => {
 
           <div className="form-group">
             <label>Temporary Password</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required minLength="6" placeholder="Minimum 6 characters" />
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              minLength="6"
+              placeholder="Minimum 6 characters"
+            />
           </div>
 
-          <button type="submit" className="auth-submit-btn" disabled={isSubmitting} style={{ marginTop: '20px' }}>
+          <button
+            type="submit"
+            className="auth-submit-btn"
+            disabled={isSubmitting}
+            style={{ marginTop: '20px' }}
+          >
             {isSubmitting ? 'Provisioning Account...' : 'Create Account'}
           </button>
         </form>

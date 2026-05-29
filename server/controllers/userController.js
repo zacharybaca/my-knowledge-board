@@ -153,7 +153,7 @@ const createElevatedUser = asyncHandler(async (req, res) => {
   const rolesArray = Array.isArray(role) ? role : [role || "Employee"];
   const validRoles = ["Employee", "Manager", "Admin"];
 
-  if (!rolesArray.every(r => validRoles.includes(r))) {
+  if (!rolesArray.every((r) => validRoles.includes(r))) {
     res.status(400);
     throw new Error("Invalid role selection");
   }

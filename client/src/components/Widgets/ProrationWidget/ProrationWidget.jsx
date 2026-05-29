@@ -8,7 +8,7 @@ const ProrationWidget = () => {
   const [daysInMonth, setDaysInMonth] = useState(30);
 
   const calculateProration = () => {
-    if (!monthlyRate || !daysActive) return "0.00";
+    if (!monthlyRate || !daysActive) return '0.00';
     const dailyRate = parseFloat(monthlyRate) / parseInt(daysInMonth);
     const total = dailyRate * parseInt(daysActive);
     return total.toFixed(2);
@@ -41,7 +41,10 @@ const ProrationWidget = () => {
         </div>
         <div className="widget-input-group">
           <label>Days in Billing Cycle</label>
-          <select value={daysInMonth} onChange={(e) => setDaysInMonth(e.target.value)}>
+          <select
+            value={daysInMonth}
+            onChange={(e) => setDaysInMonth(e.target.value)}
+          >
             <option value="28">28 Days</option>
             <option value="30">30 Days</option>
             <option value="31">31 Days</option>

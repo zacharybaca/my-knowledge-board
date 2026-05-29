@@ -19,7 +19,7 @@ const FirstStatementWidget = () => {
       prorated: prorated.toFixed(2),
       advance: advance.toFixed(2),
       install: install.toFixed(2),
-      total: (prorated + advance + install).toFixed(2)
+      total: (prorated + advance + install).toFixed(2),
     };
   };
 
@@ -31,21 +31,47 @@ const FirstStatementWidget = () => {
         <FileText size={18} />
         <h4>First-Statement Estimator</h4>
       </div>
-      <div className="widget-body" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))' }}>
+      <div
+        className="widget-body"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))' }}
+      >
         <div className="widget-input-group">
           <label>Base Plan ($)</label>
-          <input type="number" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="0.00" />
+          <input
+            type="number"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
+            placeholder="0.00"
+          />
         </div>
         <div className="widget-input-group">
           <label>Days in Month 1</label>
-          <input type="number" value={daysActive} onChange={(e) => setDaysActive(e.target.value)} placeholder="0" />
+          <input
+            type="number"
+            value={daysActive}
+            onChange={(e) => setDaysActive(e.target.value)}
+            placeholder="0"
+          />
         </div>
         <div className="widget-input-group">
           <label>Install Fee ($)</label>
-          <input type="number" value={installFee} onChange={(e) => setInstallFee(e.target.value)} />
+          <input
+            type="number"
+            value={installFee}
+            onChange={(e) => setInstallFee(e.target.value)}
+          />
         </div>
       </div>
-      <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.9rem', color: '#475569' }}>
+      <div
+        style={{
+          padding: '0 16px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          fontSize: '0.9rem',
+          color: '#475569',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>Partial Month 1 (Prorated):</span>
           <span>${invoice.prorated}</span>
