@@ -13,7 +13,6 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     throw new Error("Question is required.");
   }
 
-  // Utilize native MongoDB full-text search parameters with score prioritization
   const relevantArticles = await Article.find(
     {
       companyId: companyId,
@@ -50,11 +49,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     const result = await model.generateContent(prompt);
     const answer = result.response.text();
 
-    // Explicit wrapper payload structural safety match for frontend useFetcher usage
-    res.status(200).json({
-      success: true,
-      data: { answer }
-    });
+    res.json({ answer });
   } catch (error) {
     if (error.status === 503) {
       res.status(503);
