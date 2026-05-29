@@ -13,16 +13,16 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     throw new Error("Question is required.");
   }
 
-  // 1. Keyword Extraction for Simple Retrieval
-  const words = question.split(" ").filter((w) => w.length > 3);
-  const regex = new RegExp(words.join("|"), "i");
-
-  // 2. Fetch Company-Specific Context
-  const relevantArticles = await Article.find({
-    companyId: companyId,
-    status: "Approved",
-    $or: [{ title: regex }, { tags: regex }, { content: regex }],
-  })
+  // Utilize native MongoDB full-text search parameters with score prioritization
+  const relevantArticles = await Article.find(
+    {
+      companyId: companyId,
+      status: "Approved",
+      $text: { $search: question }
+    },
+    { score: { $meta: "textScore" } }
+  )
+    .sort({ score: { $meta: "textScore" } })
     .limit(3)
     .select("title content");
 
@@ -33,7 +33,6 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
           .join("\n\n")
       : "No highly relevant policies found. General company knowledge applies.";
 
-  // 3. System Prompt Execution
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
@@ -50,18 +49,23 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   try {
     const result = await model.generateContent(prompt);
     const answer = result.response.text();
-    res.json({ answer });
+
+    // Explicit wrapper payload structural safety match for frontend useFetcher usage
+    res.status(200).json({
+      success: true,
+      data: { answer }
+    });
   } catch (error) {
     if (error.status === 503) {
       res.status(503);
       throw new Error(
-        "The AI network is currently experiencing high traffic. Please wait a moment and ask your question again.",
+        "The AI network is currently experiencing high traffic. Please wait a moment and ask your question again."
       );
     }
 
     res.status(500);
     throw new Error(
-      "Knowledge base AI is temporarily disconnected. Try again later.",
+      "Knowledge base AI is temporarily disconnected. Try again later."
     );
   }
 });
