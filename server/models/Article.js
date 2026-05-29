@@ -92,7 +92,11 @@ const articleSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-articleSchema.index({ title: "text", content: "text", tags: "text" });
+// Assign weights explicitly to scale search matching relevance dynamically
+articleSchema.index(
+  { title: "text", tags: "text", content: "text" },
+  { weights: { title: 10, tags: 5, content: 1 } }
+);
 
 const Article = mongoose.model("Article", articleSchema);
 
