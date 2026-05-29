@@ -1,5 +1,3 @@
-// client/src/components/Admin/CreateElevatedUser/CreateElevatedUser.jsx (Update)
-
 import React, { useState } from 'react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
@@ -15,7 +13,7 @@ const CreateElevatedUser = () => {
     email: '',
     password: '',
     department: '',
-    role: 'Employee', // Updated default state
+    roles: ['Employee'], // Changed to array
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,10 +27,28 @@ const CreateElevatedUser = () => {
     }));
   };
 
+  // Multi-select handler for roles
+  const handleRoleChange = (e) => {
+    const options = e.target.options;
+    const selectedRoles = [];
+    for (let i = 0; i < options.length; i++) {
+      if (options[i].selected) {
+        selectedRoles.push(options[i].value);
+      }
+    }
+    setFormData((prev) => ({ ...prev, roles: selectedRoles }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setToastConfig(null);
     setIsSubmitting(true);
+
+    if (formData.roles.length === 0) {
+        setToastConfig({ message: 'User must have at least one role.', type: 'error' });
+        setIsSubmitting(false);
+        return;
+    }
 
     const payload = {
       firstName: formData.firstName,
@@ -40,7 +56,7 @@ const CreateElevatedUser = () => {
       email: formData.email,
       password: formData.password,
       department: formData.department,
-      role: formData.role,
+      role: formData.roles, // Transmit array
     };
 
     const response = await fetcher('/api/users/elevated', {
@@ -50,7 +66,7 @@ const CreateElevatedUser = () => {
 
     if (response.success) {
       setToastConfig({
-        message: `${formData.role} account created successfully.`,
+        message: `Account provisioned successfully.`,
         type: 'success',
       });
       setFormData({
@@ -59,7 +75,7 @@ const CreateElevatedUser = () => {
         email: '',
         password: '',
         department: '',
-        role: 'Employee',
+        roles: ['Employee'],
       });
     } else {
       setToastConfig({
@@ -72,40 +88,18 @@ const CreateElevatedUser = () => {
   };
 
   return (
-    <div
-      className="auth-container"
-      style={{ minHeight: 'auto', padding: '20px 0' }}
-    >
+    <div className="auth-container" style={{ minHeight: 'auto', padding: '20px 0' }}>
       {toastConfig && (
-        <Toast
-          message={toastConfig.message}
-          type={toastConfig.type}
-          onClose={() => setToastConfig(null)}
-        />
+        <Toast message={toastConfig.message} type={toastConfig.type} onClose={() => setToastConfig(null)} />
       )}
 
-      <div
-        className="auth-card"
-        style={{ maxWidth: '600px', margin: '0 auto' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '16px',
-          }}
-        >
+      <div className="auth-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
           <ShieldCheck size={48} color="#10b981" />
         </div>
 
-        {/* Updated headings to reflect broader scope */}
-        <h2 className="auth-title" style={{ marginBottom: '10px' }}>
-          Provision User Account
-        </h2>
-        <p
-          className="auth-footer"
-          style={{ marginTop: 0, marginBottom: '30px' }}
-        >
+        <h2 className="auth-title" style={{ marginBottom: '10px' }}>Provision User Account</h2>
+        <p className="auth-footer" style={{ marginTop: 0, marginBottom: '30px' }}>
           Create a new user account for your workspace.
         </p>
 
@@ -113,53 +107,25 @@ const CreateElevatedUser = () => {
           <div className="auth-form-row">
             <div className="form-group half-width">
               <label>First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
+              <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
             </div>
             <div className="form-group half-width">
               <label>Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
+              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
             </div>
           </div>
 
           <div className="form-group">
             <label>Work Email Address</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required />
           </div>
 
           <div className="auth-form-row">
             <div className="form-group half-width">
-              <label htmlFor="department">Department</label>
-              <select
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={(e) =>
-                  setFormData({ ...formData, department: e.target.value })
-                }
-                required
-              >
+              <label htmlFor="department">Primary Department</label>
+              <select id="department" name="department" value={formData.department} onChange={handleChange} required>
                 <option value="">Select Department...</option>
-                <option value="Customer Service">
-                  Customer Service & Billing
-                </option>
+                <option value="Customer Service">Customer Service & Billing</option>
                 <option value="Tech Support">Tech Support</option>
                 <option value="Human Resources">Human Resources</option>
                 <option value="Sales">Sales</option>
@@ -174,15 +140,16 @@ const CreateElevatedUser = () => {
             </div>
 
             <div className="form-group half-width">
-              <label htmlFor="role">Access Level</label>
+              <label htmlFor="roles">Access Levels (Ctrl/Cmd click)</label>
               <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
+                id="roles"
+                name="roles"
+                multiple
+                value={formData.roles}
+                onChange={handleRoleChange}
                 required
+                style={{ height: 'auto', minHeight: '80px' }}
               >
-                {/* Added Employee option */}
                 <option value="Employee">Employee</option>
                 <option value="Manager">Manager</option>
                 <option value="Admin">Admin</option>
@@ -192,23 +159,10 @@ const CreateElevatedUser = () => {
 
           <div className="form-group">
             <label>Temporary Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength="6"
-              placeholder="Minimum 6 characters"
-            />
+            <input type="password" name="password" value={formData.password} onChange={handleChange} required minLength="6" placeholder="Minimum 6 characters" />
           </div>
 
-          <button
-            type="submit"
-            className="auth-submit-btn"
-            disabled={isSubmitting}
-            style={{ marginTop: '20px' }}
-          >
+          <button type="submit" className="auth-submit-btn" disabled={isSubmitting} style={{ marginTop: '20px' }}>
             {isSubmitting ? 'Provisioning Account...' : 'Create Account'}
           </button>
         </form>

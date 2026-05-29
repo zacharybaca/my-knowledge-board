@@ -8,18 +8,20 @@ import User from "../models/User.js";
  * @access  Private
  */
 const createArticle = asyncHandler(async (req, res) => {
-  const { title, content, tags, status } = req.body;
+  const { title, content, tags, status, departments } = req.body;
 
   let finalStatus = status || "Pending";
 
-  if (req.user.role === "Admin" || req.user.role === "Manager") {
+  if (req.user.role.includes("Admin") || req.user.role.includes("Manager")) {
     finalStatus = "Approved";
   }
+
+  const targetDepartments = departments && departments.length > 0 ? departments : [req.user.department];
 
   const article = await Article.create({
     companyId: req.user.companyId,
     authorId: req.user._id,
-    department: req.user.department,
+    department: targetDepartments,
     title,
     content,
     tags,
@@ -71,7 +73,7 @@ const getArticleById = asyncHandler(async (req, res) => {
   if (
     article &&
     article.companyId.toString() === req.user.companyId.toString() &&
-    article.department === req.user.department
+    article.department.includes(req.user.department)
   ) {
     article.viewCount += 1;
     await article.save();
@@ -96,7 +98,7 @@ const updateArticle = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to edit this article");
   }
 
-  if (req.user.role === "Admin" || req.user.role === "Manager") {
+  if (req.user.role.includes("Admin") || req.user.role.includes("Manager")) {
     article.status = "Approved";
   } else if (article.status === "Rejected") {
     article.status = "Pending";
@@ -107,6 +109,7 @@ const updateArticle = asyncHandler(async (req, res) => {
   article.title = req.body.title || article.title;
   article.content = req.body.content || article.content;
   article.tags = req.body.tags || article.tags;
+  article.department = req.body.departments || article.department;
 
   const updatedArticle = await article.save();
   res.json(updatedArticle);
@@ -124,7 +127,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   if (
     !article ||
     article.companyId.toString() !== req.user.companyId.toString() ||
-    article.department !== req.user.department
+    !article.department.includes(req.user.department)
   ) {
     res.status(404);
     throw new Error("Article not found or out of scope");
@@ -272,7 +275,6 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
     throw new Error('Article not found');
   }
 
-  // Prevent cross-company feedback
   if (article.companyId.toString() !== req.user.companyId.toString()) {
     res.status(403);
     throw new Error('Access denied');
@@ -283,7 +285,6 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
   );
 
   if (existingFeedbackIndex !== -1) {
-    // Update existing feedback
     article.feedback[existingFeedbackIndex] = {
       userId: req.user._id,
       isHelpful,
@@ -291,7 +292,6 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
       submittedAt: Date.now()
     };
   } else {
-    // Append new feedback
     article.feedback.push({
       userId: req.user._id,
       isHelpful,
@@ -310,7 +310,7 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const getReviewQueue = asyncHandler(async (req, res) => {
-  if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
+  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
     throw new Error('Not authorized to access review queue');
   }
@@ -335,7 +335,7 @@ const getReviewQueue = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const certifyArticle = asyncHandler(async (req, res) => {
-  if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
+  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
     throw new Error('Not authorized to certify articles');
   }
@@ -347,7 +347,6 @@ const certifyArticle = asyncHandler(async (req, res) => {
     throw new Error('Article not found');
   }
 
-  // Extend by 180 days
   article.expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
   article.lastReviewedAt = Date.now();
   article.lastReviewedBy = req.user._id;

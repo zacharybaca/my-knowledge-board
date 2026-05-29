@@ -33,9 +33,9 @@ const userSchema = mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: {
-      type: String,
+      type: [String],
       enum: ["Employee", "Manager", "Admin"],
-      default: "Employee",
+      default: ["Employee"],
     },
     managerId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -97,20 +97,15 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 userSchema.methods.getResetPasswordToken = function () {
-  // 1. Generate a raw 20-character hex token
   const resetToken = crypto.randomBytes(20).toString("hex");
 
-  // 2. Hash the token and set it to the database field
-  // We hash it in the DB so if your database is ever compromised, hackers can't use the tokens
   this.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
 
-  // 3. Set expiration to 10 minutes from right now
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
-  // 4. Return the RAW token (this is what we email to the user)
   return resetToken;
 };
 
@@ -126,7 +121,6 @@ userSchema.pre(
     try {
       const userId = this._id;
 
-      // 1. Cleanup Cloudinary Image
       if (this.avatarPublicId) {
         await cloudinary.uploader.destroy(this.avatarPublicId);
         console.log(`✅ Cloudinary avatar removed: ${this.avatarPublicId}`);
@@ -135,7 +129,6 @@ userSchema.pre(
       next();
     } catch (error) {
       console.error("❌ Middleware Cleanup Error:", error);
-      // We call next() anyway so the primary user record is still deleted
       next();
     }
   },

@@ -25,7 +25,7 @@ const articleSchema = new mongoose.Schema(
       ref: 'User',
     },
     department: {
-      type: String,
+      type: [String],
       required: true,
       enum: [
         "Customer Service",
@@ -60,7 +60,7 @@ const articleSchema = new mongoose.Schema(
     }
     }],
     title: { type: String, required: true },
-    content: { type: String, required: true }, // HTML or Markdown string
+    content: { type: String, required: true },
     tags: [{ type: String }],
     status: {
       type: String,
@@ -71,7 +71,7 @@ const articleSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
-    }, // Manager who approved/rejected
+    },
     rejectionReason: { type: String, default: null },
     viewCount: { type: Number, default: 0 },
     upvotes: [
@@ -90,7 +90,6 @@ const articleSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Indexing for text search across title and content
 articleSchema.index({ title: "text", content: "text", tags: "text" });
 
 const Article = mongoose.model("Article", articleSchema);

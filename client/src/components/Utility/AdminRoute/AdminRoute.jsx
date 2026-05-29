@@ -5,18 +5,19 @@ import { useAuth } from '../../../hooks/useAuth';
 const AdminRoute = () => {
   const { user, loading } = useAuth();
 
-  // 1. Wait for the fetcher to complete
   if (loading) {
-    return <div className="spinner"></div>; // Or a dedicated loading component
+    return <div className="spinner"></div>;
   }
 
-  // 2. Evaluate authentication
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // 3. Evaluate authorization
-  if (user.role === 'Manager' || user.role === 'Admin') {
+  // Type Coercion: Handle both legacy string caches and new array formats
+  const userRoles = Array.isArray(user.role) ? user.role : [user.role];
+
+  // Evaluate authorization
+  if (userRoles.includes('Manager') || userRoles.includes('Admin')) {
     return <Outlet />;
   }
 

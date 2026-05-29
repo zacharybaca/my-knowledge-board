@@ -11,9 +11,12 @@ export const AuthProvider = ({ children }) => {
    * DERIVED STATE: isUserAdmin
    * Using useMemo ensures this value is re-calculated immediately
    * whenever the 'user' object changes (e.g., after login or checkUserAuth).
+   * Updated to evaluate roles as arrays to match backend schema updates.
    */
   const isUserAdmin = useMemo(() => {
-    return user?.isAdmin || user?.role === 'Admin' || user?.role === 'Manager';
+    if (!user) return false;
+    const userRoles = Array.isArray(user.role) ? user.role : [user.role];
+    return user.isAdmin || userRoles.includes('Admin') || userRoles.includes('Manager');
   }, [user]);
 
   /**

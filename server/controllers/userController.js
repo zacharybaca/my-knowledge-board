@@ -9,7 +9,7 @@ import { v2 as cloudinary } from "cloudinary";
  */
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
-    .populate("companyId", "name imageUrl") // Added imageUrl here
+    .populate("companyId", "name imageUrl")
     .populate("managerId", "firstName lastName email")
     .select("-password");
 
@@ -38,7 +38,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       user.password = req.body.password;
     }
 
-    // Handle Cloudinary Avatar Upload via multer middleware
     if (req.file) {
       if (user.avatarPublicId) {
         await cloudinary.uploader.destroy(user.avatarPublicId);
@@ -56,7 +55,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       email: updatedUser.email,
       avatar: updatedUser.avatar,
       role: updatedUser.role,
-      department: updatedUser.department, // CRITICAL: Added department
+      department: updatedUser.department,
       companyId: updatedUser.companyId,
     });
   } else {
@@ -130,7 +129,6 @@ const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
-    // Triggers the pre('deleteOne') hook for Cloudinary/Cascade cleanup
     await user.deleteOne();
     res.json({ message: "Account deleted successfully" });
   } else {
@@ -145,14 +143,17 @@ const deleteUser = asyncHandler(async (req, res) => {
  * @access  Private (Admin/Manager Only)
  */
 const createElevatedUser = asyncHandler(async (req, res) => {
-  if (req.user.role !== "Admin" && req.user.role !== "Manager") {
+  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
     throw new Error("Not authorized to create accounts");
   }
 
   const { firstName, lastName, email, password, department, role } = req.body;
 
-  if (!["Employee", "Manager", "Admin"].includes(role)) {
+  const rolesArray = Array.isArray(role) ? role : [role || "Employee"];
+  const validRoles = ["Employee", "Manager", "Admin"];
+
+  if (!rolesArray.every(r => validRoles.includes(r))) {
     res.status(400);
     throw new Error("Invalid role selection");
   }
@@ -170,7 +171,7 @@ const createElevatedUser = asyncHandler(async (req, res) => {
     password,
     companyId: req.user.companyId,
     department,
-    role,
+    role: rolesArray,
     isVerified: true,
   });
 
@@ -198,7 +199,7 @@ const createElevatedUser = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const updateUserStatus = asyncHandler(async (req, res) => {
-  if (req.user.role !== "Admin" && req.user.role !== "Manager") {
+  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
     throw new Error("Not authorized to modify user status");
   }
@@ -210,7 +211,6 @@ const updateUserStatus = asyncHandler(async (req, res) => {
     throw new Error("User not found or access denied");
   }
 
-  // Prevent self-suspension or suspending other Admins (optional safety check)
   if (user._id.toString() === req.user._id.toString()) {
     res.status(400);
     throw new Error("Cannot suspend your own account");
@@ -231,7 +231,7 @@ const updateUserStatus = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const deleteUserById = asyncHandler(async (req, res) => {
-  if (req.user.role !== "Admin" && req.user.role !== "Manager") {
+  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
     res.status(403);
     throw new Error("Not authorized to delete accounts");
   }

@@ -4,32 +4,38 @@ import { Clock, Eye, User, Tag } from 'lucide-react';
 import './article-card.css';
 
 const ArticleCard = ({ article, linkTo }) => {
-  // Fallback to the viewer route if no specific linkTo prop is provided
   const destination = linkTo || `/articles/${article._id}`;
+
+  // Ensure department is treated as an array even if the payload is malformed
+  const departments = Array.isArray(article.department) ? article.department : [article.department];
 
   return (
     <Link to={destination} className="article-card-link">
       <div className="article-card">
         <div className="article-card-header">
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span
-              className={`status-badge status-${article.status.toLowerCase()}`}
-            >
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className={`status-badge status-${article.status.toLowerCase()}`}>
               {article.status}
             </span>
-            <span
-              style={{
-                backgroundColor: '#f1f5f9',
-                border: '1px solid #cbd5e1',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '0.7rem',
-                color: '#475569',
-                fontWeight: '600',
-              }}
-            >
-              {article.department}
-            </span>
+
+            {/* Map over the departments array */}
+            {departments.map((dept, index) => (
+               <span
+               key={index}
+               style={{
+                 backgroundColor: '#f1f5f9',
+                 border: '1px solid #cbd5e1',
+                 padding: '2px 8px',
+                 borderRadius: '12px',
+                 fontSize: '0.7rem',
+                 color: '#475569',
+                 fontWeight: '600',
+               }}
+             >
+               {dept}
+             </span>
+            ))}
+
           </div>
           <div className="article-card-views">
             <Eye size={14} />
