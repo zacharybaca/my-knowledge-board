@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Article from "../models/Article.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
 /**
  * @desc    Create a new article
@@ -16,8 +17,7 @@ const createArticle = asyncHandler(async (req, res) => {
     finalStatus = "Approved";
   }
 
-  const targetDepartments =
-    departments && departments.length > 0 ? departments : [req.user.department];
+  const targetDepartments = departments && departments.length > 0 ? departments : [req.user.department];
 
   const article = await Article.create({
     companyId: req.user.companyId,
@@ -28,6 +28,34 @@ const createArticle = asyncHandler(async (req, res) => {
     tags,
     status: finalStatus,
   });
+
+  // Inject Notifications for Managers if Pending
+  if (finalStatus === "Pending") {
+    const managers = await User.find({
+      companyId: req.user.companyId,
+      role: { $in: ["Manager", "Admin"] },
+    });
+
+    const notifications = managers.map((m) => ({
+      recipientId: m._id,
+      message: `New article pending approval: "${title}"`,
+      type: "Approval_Needed",
+      referenceId: article._id,
+    }));
+
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      managers.forEach((m) => {
+        io.to(m._id.toString()).emit("new_notification", {
+          message: `New article pending approval: "${title}"`,
+        });
+      });
+    }
+  }
 
   res.status(201).json(article);
 });
@@ -128,7 +156,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   if (
     !article ||
     article.companyId.toString() !== req.user.companyId.toString() ||
-    !article.department.includes(req.user.department)
+    !article.department.some((d) => req.user.department.includes(d))
   ) {
     res.status(404);
     throw new Error("Article not found or out of scope");
@@ -145,14 +173,26 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
 
   const reviewedArticle = await article.save();
 
+  const message = `Your article "${article.title}" has been ${article.status.toLowerCase()}.`;
+
+  // Inject Notification for Author
+  await Notification.create({
+    recipientId: article.authorId,
+    message,
+    type: "Status_Update",
+    referenceId: article._id,
+  });
+
   const io = req.app.get("io");
   if (io) {
+    // Retain existing event for backward compatibility if needed, add new_notification
     io.to(article.authorId.toString()).emit("article_status_update", {
       articleId: article._id,
       title: article.title,
       status: article.status,
-      message: `Your article "${article.title}" has been ${article.status.toLowerCase()}.`,
+      message,
     });
+    io.to(article.authorId.toString()).emit("new_notification", { message });
   }
 
   res.json(reviewedArticle);

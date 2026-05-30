@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
 import { useSocket } from '../../../hooks/useSocket';
 import { Search, BookOpen, FileText, Pin } from 'lucide-react';
-import PinButton from '../../Article/PinButton/PinButton.jsx';
+import PinButton from '../../Article/PinButton/PinButton';
+import Toast from '../../Layout/Toast/Toast.jsx'; 
+import NotificationBell from '../../Notifications/NotificationBell';
 import '../dashboards.css';
 
 const EmployeeDashboard = () => {
@@ -17,38 +19,42 @@ const EmployeeDashboard = () => {
   const [pinnedArticles, setPinnedArticles] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [toastConfig, setToastConfig] = useState(null);
+
+  const fetchDashboardData = useCallback(async () => {
+    const [recentRes, personalRes, pinnedRes] = await Promise.all([
+      fetcher('/api/articles'),
+      fetcher('/api/articles/my-articles'),
+      fetcher('/api/articles/favorites'),
+    ]);
+
+    if (recentRes.success) setRecentArticles(recentRes.data.slice(0, 5));
+    if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+    if (pinnedRes.success) setPinnedArticles(pinnedRes.data);
+
+    setIsLoading(false);
+  }, [fetcher]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      const [recentRes, personalRes, pinnedRes] = await Promise.all([
-        fetcher('/api/articles'),
-        fetcher('/api/articles/my-articles'),
-        fetcher('/api/articles/favorites'),
-      ]);
-
-      if (recentRes.success) setRecentArticles(recentRes.data.slice(0, 5));
-      if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
-      if (pinnedRes.success) setPinnedArticles(pinnedRes.data);
-
-      setIsLoading(false);
-    };
-
     fetchDashboardData();
-  }, [fetcher]);
+  }, [fetchDashboardData]);
 
   useEffect(() => {
     if (!socket) return;
 
     socket.on('article_status_update', (data) => {
       // Trigger UI notification
-      alert(data.message);
-      // Replace with: toast.info(data.message);
+      setToastConfig({
+        message: data.message,
+        type: data.status === 'Rejected' ? 'error' : 'success'
+      });
 
-      // Execute state refresh logic here to update article lists
+      // Refresh data to reflect newly approved/rejected articles
+      fetchDashboardData();
     });
 
     return () => socket.off('article_status_update');
-  }, [socket]);
+  }, [socket, fetchDashboardData]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -57,16 +63,13 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // Upgraded toggle function to handle both Pinning and Unpinning dynamically
   const handlePinToggle = (articleObj, isPinnedState) => {
     if (isPinnedState) {
-      // Add to pinned list if it isn't already there
       setPinnedArticles((prev) => {
         if (prev.some((p) => p._id === articleObj._id)) return prev;
         return [articleObj, ...prev];
       });
     } else {
-      // Remove from pinned list
       setPinnedArticles((prev) =>
         prev.filter((article) => article._id !== articleObj._id)
       );
@@ -93,12 +96,23 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div>
-          <h1>Welcome, {user?.firstName}</h1>
-          <p>Access company policies, process guides, and documentation.</p>
-        </div>
-      </header>
+      {toastConfig && (
+        <Toast
+          message={toastConfig.message}
+          type={toastConfig.type}
+          onClose={() => setToastConfig(null)}
+        />
+      )}
+
+      <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1>Welcome, {user?.firstName}</h1>
+            <p>Access company policies, process guides, and documentation.</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}>
+            <NotificationBell />
+          </div>
+        </header>
 
       <div className="dashboard-search-section">
         <form onSubmit={handleSearch} className="dashboard-search-form">
@@ -117,7 +131,6 @@ const EmployeeDashboard = () => {
       </div>
 
       <div className="dashboard-grid">
-        {/* Pinned Articles Section */}
         <section className="dashboard-card" style={{ gridColumn: '1 / -1' }}>
           <div className="card-header">
             <Pin size={20} className="card-icon" />
@@ -131,28 +144,33 @@ const EmployeeDashboard = () => {
               </p>
             ) : (
               <ul className="article-list">
-                {pinnedArticles.map((article) => (
-                  <li key={article._id}>
-                    <Link
-                      to={`/articles/${article._id}`}
-                      className="article-link flex-between"
-                    >
-                      <span className="article-title">
-                        <span style={departmentBadgeStyle}>
-                          {article.department}
+                {pinnedArticles.map((article) => {
+                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  return (
+                    <li key={article._id}>
+                      <Link
+                        to={`/articles/${article._id}`}
+                        className="article-link flex-between"
+                      >
+                        <span className="article-title">
+                          {depts.map((dept, i) => (
+                            <span key={i} style={departmentBadgeStyle}>
+                              {dept}
+                            </span>
+                          ))}
+                          {article.title}
                         </span>
-                        {article.title}
-                      </span>
-                      <PinButton
-                        articleId={article._id}
-                        initialIsPinned={true}
-                        onToggleComplete={(id, isPinned) =>
-                          handlePinToggle(article, isPinned)
-                        }
-                      />
-                    </Link>
-                  </li>
-                ))}
+                        <PinButton
+                          articleId={article._id}
+                          initialIsPinned={true}
+                          onToggleComplete={(id, isPinned) =>
+                            handlePinToggle(article, isPinned)
+                          }
+                        />
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -168,35 +186,39 @@ const EmployeeDashboard = () => {
               <p className="empty-state">No articles published yet.</p>
             ) : (
               <ul className="article-list">
-                {recentArticles.map((article) => (
-                  <li key={article._id}>
-                    <Link
-                      to={`/articles/${article._id}`}
-                      className="article-link flex-between"
-                    >
-                      <div className="article-meta-container">
-                        <span className="article-title">{article.title}</span>
-                        <span className="article-meta">
-                          <span style={departmentBadgeStyle}>
-                            {article.department}
+                {recentArticles.map((article) => {
+                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  return (
+                    <li key={article._id}>
+                      <Link
+                        to={`/articles/${article._id}`}
+                        className="article-link flex-between"
+                      >
+                        <div className="article-meta-container">
+                          <span className="article-title">{article.title}</span>
+                          <span className="article-meta">
+                            {depts.map((dept, i) => (
+                              <span key={i} style={departmentBadgeStyle}>
+                                {dept}
+                              </span>
+                            ))}
+                            By {article.authorId?.firstName}{' '}
+                            {article.authorId?.lastName}
                           </span>
-                          By {article.authorId?.firstName}{' '}
-                          {article.authorId?.lastName}
-                        </span>
-                      </div>
-                      <PinButton
-                        articleId={article._id}
-                        // Checks if this specific article is currently in the pinnedArticles state array
-                        initialIsPinned={pinnedArticles.some(
-                          (p) => p._id === article._id
-                        )}
-                        onToggleComplete={(id, isPinned) =>
-                          handlePinToggle(article, isPinned)
-                        }
-                      />
-                    </Link>
-                  </li>
-                ))}
+                        </div>
+                        <PinButton
+                          articleId={article._id}
+                          initialIsPinned={pinnedArticles.some(
+                            (p) => p._id === article._id
+                          )}
+                          onToggleComplete={(id, isPinned) =>
+                            handlePinToggle(article, isPinned)
+                          }
+                        />
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -215,46 +237,51 @@ const EmployeeDashboard = () => {
               <p className="empty-state">You haven't submitted any articles.</p>
             ) : (
               <ul className="article-list">
-                {myArticles.map((article) => (
-                  <li key={article._id}>
-                    <Link
-                      to={`/articles/${article._id}`}
-                      className="article-link flex-between"
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                        }}
+                {myArticles.map((article) => {
+                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  return (
+                    <li key={article._id}>
+                      <Link
+                        to={`/articles/${article._id}`}
+                        className="article-link flex-between"
                       >
-                        <span
-                          className="article-title"
-                          style={{ marginBottom: 0 }}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                          }}
                         >
-                          <span style={departmentBadgeStyle}>
-                            {article.department}
+                          <span
+                            className="article-title"
+                            style={{ marginBottom: 0 }}
+                          >
+                            {depts.map((dept, i) => (
+                              <span key={i} style={departmentBadgeStyle}>
+                                {dept}
+                              </span>
+                            ))}
+                            {article.title}
                           </span>
-                          {article.title}
-                        </span>
-                        <span
-                          className={`status-badge status-${article.status.toLowerCase()}`}
-                        >
-                          {article.status}
-                        </span>
-                      </div>
-                      <PinButton
-                        articleId={article._id}
-                        initialIsPinned={pinnedArticles.some(
-                          (p) => p._id === article._id
-                        )}
-                        onToggleComplete={(id, isPinned) =>
-                          handlePinToggle(article, isPinned)
-                        }
-                      />
-                    </Link>
-                  </li>
-                ))}
+                          <span
+                            className={`status-badge status-${article.status.toLowerCase()}`}
+                          >
+                            {article.status}
+                          </span>
+                        </div>
+                        <PinButton
+                          articleId={article._id}
+                          initialIsPinned={pinnedArticles.some(
+                            (p) => p._id === article._id
+                          )}
+                          onToggleComplete={(id, isPinned) =>
+                            handlePinToggle(article, isPinned)
+                          }
+                        />
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>

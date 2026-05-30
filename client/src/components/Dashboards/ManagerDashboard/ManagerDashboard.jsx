@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
 import { useSocket } from '../../../hooks/useSocket';
 import { ClipboardCheck, FileText, UserPlus } from 'lucide-react';
+import Toast from '../../Layout/Toast/Toast';
+import NotificationBell from '../../Notifications/NotificationBell';
 import '../dashboards.css';
 
 const ManagerDashboard = () => {
@@ -14,36 +16,41 @@ const ManagerDashboard = () => {
   const [pendingArticles, setPendingArticles] = useState([]);
   const [myArticles, setMyArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastConfig, setToastConfig] = useState(null);
+
+  // Wrapped in useCallback so we can call it on mount AND when socket events fire
+  const fetchDashboardData = useCallback(async () => {
+    const [pendingRes, personalRes] = await Promise.all([
+      fetcher('/api/articles/pending'),
+      fetcher('/api/articles/my-articles'),
+    ]);
+
+    if (pendingRes.success) setPendingArticles(pendingRes.data);
+    if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+
+    setIsLoading(false);
+  }, [fetcher]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      const [pendingRes, personalRes] = await Promise.all([
-        fetcher('/api/articles/pending'),
-        fetcher('/api/articles/my-articles'),
-      ]);
-
-      if (pendingRes.success) setPendingArticles(pendingRes.data);
-      if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
-
-      setIsLoading(false);
-    };
-
     fetchDashboardData();
-  }, [fetcher]);
+  }, [fetchDashboardData]);
 
   useEffect(() => {
     if (!socket) return;
 
     socket.on('article_status_update', (data) => {
       // Trigger UI notification
-      alert(data.message);
-      // Replace with: toast.info(data.message);
+      setToastConfig({
+        message: data.message,
+        type: data.status === 'Rejected' ? 'error' : 'success'
+      });
 
-      // Execute state refresh logic here to update article lists
+      // Refresh data to instantly move articles between queues
+      fetchDashboardData();
     });
 
     return () => socket.off('article_status_update');
-  }, [socket]);
+  }, [socket, fetchDashboardData]);
 
   if (isLoading)
     return (
@@ -65,33 +72,44 @@ const ManagerDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <header
-        className="dashboard-header"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-        }}
-      >
-        <div>
-          <h1>Manager Overview</h1>
-          <p>Review pending submissions and manage your content.</p>
-        </div>
+      {toastConfig && (
+        <Toast
+          message={toastConfig.message}
+          type={toastConfig.type}
+          onClose={() => setToastConfig(null)}
+        />
+      )}
 
-        <Link
-          to="/create-user"
-          className="action-btn"
+      <header
+          className="dashboard-header"
           style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            textDecoration: 'none',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
           }}
         >
-          <UserPlus size={18} />
-          <span>Provision Account</span>
-        </Link>
-      </header>
+          <div>
+            <h1>Manager Overview</h1>
+            <p>Review pending submissions and manage your content.</p>
+          </div>
+      
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <NotificationBell />
+            <Link
+              to="/create-user"
+              className="action-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                textDecoration: 'none',
+              }}
+            >
+              <UserPlus size={18} />
+              <span>Provision Account</span>
+            </Link>
+          </div>
+        </header>
 
       <div className="dashboard-metrics">
         <div className="metric-card">
@@ -127,26 +145,31 @@ const ManagerDashboard = () => {
               </p>
             ) : (
               <ul className="article-list">
-                {pendingArticles.map((article) => (
-                  <li key={article._id}>
-                    <Link
-                      to={`/queue/${article._id}`}
-                      className="article-link flex-between"
-                    >
-                      <div>
-                        <span className="article-title">{article.title}</span>
-                        <span className="article-meta">
-                          <span style={departmentBadgeStyle}>
-                            {article.department}
+                {pendingArticles.map((article) => {
+                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  return (
+                    <li key={article._id}>
+                      <Link
+                        to={`/queue/${article._id}`}
+                        className="article-link flex-between"
+                      >
+                        <div>
+                          <span className="article-title">{article.title}</span>
+                          <span className="article-meta">
+                            {depts.map((dept, i) => (
+                              <span key={i} style={departmentBadgeStyle}>
+                                {dept}
+                              </span>
+                            ))}
+                            Submitted by {article.authorId?.firstName}{' '}
+                            {article.authorId?.lastName}
                           </span>
-                          Submitted by {article.authorId?.firstName}{' '}
-                          {article.authorId?.lastName}
-                        </span>
-                      </div>
-                      <span className="action-btn">Review</span>
-                    </Link>
-                  </li>
-                ))}
+                        </div>
+                        <span className="action-btn">Review</span>
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -168,26 +191,31 @@ const ManagerDashboard = () => {
               <p className="empty-state">You haven't submitted any articles.</p>
             ) : (
               <ul className="article-list">
-                {myArticles.map((article) => (
-                  <li key={article._id}>
-                    <Link
-                      to={`/articles/${article._id}`}
-                      className="article-link flex-between"
-                    >
-                      <span className="article-title">
-                        <span style={departmentBadgeStyle}>
-                          {article.department}
-                        </span>
-                        {article.title}
-                      </span>
-                      <span
-                        className={`status-badge status-${article.status.toLowerCase()}`}
+                {myArticles.map((article) => {
+                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  return (
+                    <li key={article._id}>
+                      <Link
+                        to={`/articles/${article._id}`}
+                        className="article-link flex-between"
                       >
-                        {article.status}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+                        <span className="article-title">
+                          {depts.map((dept, i) => (
+                            <span key={i} style={departmentBadgeStyle}>
+                              {dept}
+                            </span>
+                          ))}
+                          {article.title}
+                        </span>
+                        <span
+                          className={`status-badge status-${article.status.toLowerCase()}`}
+                        >
+                          {article.status}
+                        </span>
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
