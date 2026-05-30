@@ -22,7 +22,7 @@ export const markNotificationRead = asyncHandler(async (req, res) => {
   const notification = await Notification.findOneAndUpdate(
     { _id: req.params.id, recipientId: req.user._id },
     { isRead: true },
-    { new: true }
+    { new: true },
   );
 
   if (notification) {

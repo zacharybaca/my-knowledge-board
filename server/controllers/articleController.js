@@ -17,7 +17,8 @@ const createArticle = asyncHandler(async (req, res) => {
     finalStatus = "Approved";
   }
 
-  const targetDepartments = departments && departments.length > 0 ? departments : [req.user.department];
+  const targetDepartments =
+    departments && departments.length > 0 ? departments : [req.user.department];
 
   const article = await Article.create({
     companyId: req.user.companyId,

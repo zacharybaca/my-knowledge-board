@@ -5,7 +5,7 @@ import { useFetcher } from '../../../hooks/useFetcher';
 import { useSocket } from '../../../hooks/useSocket';
 import { Search, BookOpen, FileText, Pin } from 'lucide-react';
 import PinButton from '../../Article/PinButton/PinButton';
-import Toast from '../../Layout/Toast/Toast.jsx'; 
+import Toast from '../../Layout/Toast/Toast.jsx';
 import NotificationBell from '../../Notifications/NotificationBell';
 import '../dashboards.css';
 
@@ -46,7 +46,7 @@ const EmployeeDashboard = () => {
       // Trigger UI notification
       setToastConfig({
         message: data.message,
-        type: data.status === 'Rejected' ? 'error' : 'success'
+        type: data.status === 'Rejected' ? 'error' : 'success',
       });
 
       // Refresh data to reflect newly approved/rejected articles
@@ -104,15 +104,24 @@ const EmployeeDashboard = () => {
         />
       )}
 
-      <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1>Welcome, {user?.firstName}</h1>
-            <p>Access company policies, process guides, and documentation.</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}>
-            <NotificationBell />
-          </div>
-        </header>
+      <header
+        className="dashboard-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <div>
+          <h1>Welcome, {user?.firstName}</h1>
+          <p>Access company policies, process guides, and documentation.</p>
+        </div>
+        <div
+          style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}
+        >
+          <NotificationBell />
+        </div>
+      </header>
 
       <div className="dashboard-search-section">
         <form onSubmit={handleSearch} className="dashboard-search-form">
@@ -145,7 +154,9 @@ const EmployeeDashboard = () => {
             ) : (
               <ul className="article-list">
                 {pinnedArticles.map((article) => {
-                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  const depts = Array.isArray(article.department)
+                    ? article.department
+                    : [article.department];
                   return (
                     <li key={article._id}>
                       <Link
@@ -169,7 +180,7 @@ const EmployeeDashboard = () => {
                         />
                       </Link>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             )}
@@ -187,7 +198,9 @@ const EmployeeDashboard = () => {
             ) : (
               <ul className="article-list">
                 {recentArticles.map((article) => {
-                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  const depts = Array.isArray(article.department)
+                    ? article.department
+                    : [article.department];
                   return (
                     <li key={article._id}>
                       <Link
@@ -217,7 +230,7 @@ const EmployeeDashboard = () => {
                         />
                       </Link>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             )}
@@ -238,7 +251,9 @@ const EmployeeDashboard = () => {
             ) : (
               <ul className="article-list">
                 {myArticles.map((article) => {
-                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  const depts = Array.isArray(article.department)
+                    ? article.department
+                    : [article.department];
                   return (
                     <li key={article._id}>
                       <Link
@@ -280,7 +295,7 @@ const EmployeeDashboard = () => {
                         />
                       </Link>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             )}

@@ -42,7 +42,7 @@ const ManagerDashboard = () => {
       // Trigger UI notification
       setToastConfig({
         message: data.message,
-        type: data.status === 'Rejected' ? 'error' : 'success'
+        type: data.status === 'Rejected' ? 'error' : 'success',
       });
 
       // Refresh data to instantly move articles between queues
@@ -81,35 +81,35 @@ const ManagerDashboard = () => {
       )}
 
       <header
-          className="dashboard-header"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}
-        >
-          <div>
-            <h1>Manager Overview</h1>
-            <p>Review pending submissions and manage your content.</p>
-          </div>
-      
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <NotificationBell />
-            <Link
-              to="/create-user"
-              className="action-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                textDecoration: 'none',
-              }}
-            >
-              <UserPlus size={18} />
-              <span>Provision Account</span>
-            </Link>
-          </div>
-        </header>
+        className="dashboard-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <div>
+          <h1>Manager Overview</h1>
+          <p>Review pending submissions and manage your content.</p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <NotificationBell />
+          <Link
+            to="/create-user"
+            className="action-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              textDecoration: 'none',
+            }}
+          >
+            <UserPlus size={18} />
+            <span>Provision Account</span>
+          </Link>
+        </div>
+      </header>
 
       <div className="dashboard-metrics">
         <div className="metric-card">
@@ -146,7 +146,9 @@ const ManagerDashboard = () => {
             ) : (
               <ul className="article-list">
                 {pendingArticles.map((article) => {
-                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  const depts = Array.isArray(article.department)
+                    ? article.department
+                    : [article.department];
                   return (
                     <li key={article._id}>
                       <Link
@@ -168,7 +170,7 @@ const ManagerDashboard = () => {
                         <span className="action-btn">Review</span>
                       </Link>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             )}
@@ -192,7 +194,9 @@ const ManagerDashboard = () => {
             ) : (
               <ul className="article-list">
                 {myArticles.map((article) => {
-                  const depts = Array.isArray(article.department) ? article.department : [article.department];
+                  const depts = Array.isArray(article.department)
+                    ? article.department
+                    : [article.department];
                   return (
                     <li key={article._id}>
                       <Link
@@ -214,7 +218,7 @@ const ManagerDashboard = () => {
                         </span>
                       </Link>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             )}

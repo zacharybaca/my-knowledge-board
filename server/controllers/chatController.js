@@ -17,9 +17,9 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     {
       companyId: companyId,
       status: "Approved",
-      $text: { $search: question }
+      $text: { $search: question },
     },
-    { score: { $meta: "textScore" } }
+    { score: { $meta: "textScore" } },
   )
     .sort({ score: { $meta: "textScore" } })
     .limit(3)
@@ -54,13 +54,13 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     if (error.status === 503) {
       res.status(503);
       throw new Error(
-        "The AI network is currently experiencing high traffic. Please wait a moment and ask your question again."
+        "The AI network is currently experiencing high traffic. Please wait a moment and ask your question again.",
       );
     }
 
     res.status(500);
     throw new Error(
-      "Knowledge base AI is temporarily disconnected. Try again later."
+      "Knowledge base AI is temporarily disconnected. Try again later.",
     );
   }
 });

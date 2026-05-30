@@ -51,7 +51,9 @@ const NotificationBell = () => {
 
   const handleNotificationClick = async (notif) => {
     if (!notif.isRead) {
-      const response = await fetcher(`/api/notifications/${notif._id}/read`, { method: 'PATCH' });
+      const response = await fetcher(`/api/notifications/${notif._id}/read`, {
+        method: 'PATCH',
+      });
       if (response.success) {
         setNotifications((prev) =>
           prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
@@ -72,9 +74,14 @@ const NotificationBell = () => {
 
   return (
     <div className="notification-wrapper" ref={dropdownRef}>
-      <button className="notification-bell-btn" onClick={() => setIsOpen(!isOpen)}>
+      <button
+        className="notification-bell-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <Bell size={24} />
-        {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+        {unreadCount > 0 && (
+          <span className="notification-badge">{unreadCount}</span>
+        )}
       </button>
 
       {isOpen && (
