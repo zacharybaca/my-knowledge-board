@@ -51,7 +51,10 @@ export const endSession = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 export const getAllSessions = asyncHandler(async (req, res) => {
-  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
+  // 1. Force the role into an array regardless of how it was cached in the JWT
+  const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
+
+  if (!userRoles.includes("Admin") && !userRoles.includes("Manager")) {
     res.status(403);
     throw new Error("Not authorized to view session logs");
   }
