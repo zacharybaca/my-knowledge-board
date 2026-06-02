@@ -63,7 +63,8 @@ function App() {
           <Route path="queue/:id" element={<ArticleReview />} />
           <Route path="create-user" element={<CreateElevatedUser />} />
           <Route path="user-management" element={<UserManagement />} />
-          <Route path="session-logs" element={<SessionLogs />} /> {/* <-- NEW ROUTE */}
+          <Route path="session-logs" element={<SessionLogs />} />{' '}
+          {/* <-- NEW ROUTE */}
         </Route>
 
         {/* 404 Fallback */}

@@ -31,12 +31,17 @@ const Login = () => {
       // --- MOVED SESSION START LOGIC OUTSIDE THE ROLE CHECK ---
       // This ensures all users (Employees, Managers, Admins) are logged
       try {
-        const sessionResponse = await fetcher('/api/sessions/start', { method: 'POST' });
+        const sessionResponse = await fetcher('/api/sessions/start', {
+          method: 'POST',
+        });
         if (sessionResponse.success && sessionResponse.data.sessionId) {
-          localStorage.setItem('currentSessionId', sessionResponse.data.sessionId);
+          localStorage.setItem(
+            'currentSessionId',
+            sessionResponse.data.sessionId
+          );
         }
       } catch (err) {
-        console.error("Failed to start session logging:", err);
+        console.error('Failed to start session logging:', err);
       }
       // --------------------------------------------------------
 

@@ -178,17 +178,21 @@ const ManagerDashboard = () => {
             <FileText size={20} className="card-icon" />
             <h2 style={{ flexGrow: 1 }}>My Submissions</h2>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Link to="/articles/new" className="action-link">
+              <Link to="/articles/new" className="action-link">
                 Write Article
-                </Link>
-                <Link to="/user-management" className="btn-secondary">
+              </Link>
+              <Link to="/user-management" className="btn-secondary">
                 Manage Users
-                </Link>
-                {/* NEW LINK TO SESSION LOGS */}
-                <Link to="/session-logs" className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={16} />
-                    View Access Logs
-                </Link>
+              </Link>
+              {/* NEW LINK TO SESSION LOGS */}
+              <Link
+                to="/session-logs"
+                className="btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Clock size={16} />
+                View Access Logs
+              </Link>
             </div>
           </div>
           <div className="card-content">

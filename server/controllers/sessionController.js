@@ -52,7 +52,9 @@ export const endSession = asyncHandler(async (req, res) => {
  */
 export const getAllSessions = asyncHandler(async (req, res) => {
   // 1. Force the role into an array regardless of how it was cached in the JWT
-  const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
+  const userRoles = Array.isArray(req.user.role)
+    ? req.user.role
+    : [req.user.role];
 
   if (!userRoles.includes("Admin") && !userRoles.includes("Manager")) {
     res.status(403);

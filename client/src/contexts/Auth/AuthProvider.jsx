@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       if (sessionId) {
         await fetcher('/api/sessions/end', {
           method: 'PATCH',
-          body: JSON.stringify({ sessionId })
+          body: JSON.stringify({ sessionId }),
         });
       }
 
