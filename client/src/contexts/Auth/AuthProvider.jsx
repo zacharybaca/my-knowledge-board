@@ -51,12 +51,20 @@ export const AuthProvider = ({ children }) => {
    */
   const logout = async () => {
     try {
-      // Calls the backend logout function to clear the JWT cookie
+      const sessionId = localStorage.getItem('currentSessionId');
+
+      if (sessionId) {
+        await fetcher('/api/sessions/end', {
+          method: 'PATCH',
+          body: JSON.stringify({ sessionId })
+        });
+      }
+
       await fetcher('/api/auth/logout', { method: 'POST' });
 
-      // Clear local state
       setUser(null);
       localStorage.removeItem('userInfo');
+      localStorage.removeItem('currentSessionId');
     } catch (error) {
       console.error('Logout failed:', error);
     }
