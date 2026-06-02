@@ -26,13 +26,26 @@ const Login = () => {
 
     if (response.success) {
       setUser(response.data);
+      localStorage.setItem('userInfo', JSON.stringify(response.data));
 
-      if (response.data.role === 'Admin' || response.data.role === 'Manager') {
-        // Inside your login submission handler, after setting the user/token:
+      // --- MOVED SESSION START LOGIC OUTSIDE THE ROLE CHECK ---
+      // This ensures all users (Employees, Managers, Admins) are logged
+      try {
         const sessionResponse = await fetcher('/api/sessions/start', { method: 'POST' });
-        if (sessionResponse.success) {
+        if (sessionResponse.success && sessionResponse.data.sessionId) {
           localStorage.setItem('currentSessionId', sessionResponse.data.sessionId);
         }
+      } catch (err) {
+        console.error("Failed to start session logging:", err);
+      }
+      // --------------------------------------------------------
+
+      // Type coercion for role evaluation
+      const userRoles = Array.isArray(response.data.role)
+        ? response.data.role
+        : [response.data.role];
+
+      if (userRoles.includes('Admin') || userRoles.includes('Manager')) {
         navigate('/manager-dashboard');
       } else {
         navigate('/employee-dashboard');
