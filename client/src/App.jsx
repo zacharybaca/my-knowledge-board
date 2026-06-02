@@ -19,6 +19,7 @@ import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import Chatbot from './components/Chatbot/Chatbot';
 import UserManagement from './components/UserManagement/UserManagement';
+import SessionLogs from './components/Admin/SessionLogs'; // <-- NEW IMPORT
 import './App.css';
 
 const Layout = () => {
@@ -62,6 +63,7 @@ function App() {
           <Route path="queue/:id" element={<ArticleReview />} />
           <Route path="create-user" element={<CreateElevatedUser />} />
           <Route path="user-management" element={<UserManagement />} />
+          <Route path="session-logs" element={<SessionLogs />} /> {/* <-- NEW ROUTE */}
         </Route>
 
         {/* 404 Fallback */}
