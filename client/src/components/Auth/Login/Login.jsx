@@ -28,6 +28,11 @@ const Login = () => {
       setUser(response.data);
 
       if (response.data.role === 'Admin' || response.data.role === 'Manager') {
+        // Inside your login submission handler, after setting the user/token:
+        const sessionResponse = await fetcher('/api/sessions/start', { method: 'POST' });
+        if (sessionResponse.success) {
+          localStorage.setItem('currentSessionId', sessionResponse.data.sessionId);
+        }
         navigate('/manager-dashboard');
       } else {
         navigate('/employee-dashboard');
