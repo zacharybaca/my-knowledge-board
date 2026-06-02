@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
 import { useSocket } from '../../../hooks/useSocket';
-import { ClipboardCheck, FileText, UserPlus } from 'lucide-react';
+import { ClipboardCheck, FileText, UserPlus, Clock } from 'lucide-react'; // <-- Imported Clock icon
 import Toast from '../../Layout/Toast/Toast';
 import NotificationBell from '../../Notifications/NotificationBell';
 import '../dashboards.css';
@@ -18,7 +18,6 @@ const ManagerDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [toastConfig, setToastConfig] = useState(null);
 
-  // Wrapped in useCallback so we can call it on mount AND when socket events fire
   const fetchDashboardData = useCallback(async () => {
     const [pendingRes, personalRes] = await Promise.all([
       fetcher('/api/articles/pending'),
@@ -39,13 +38,10 @@ const ManagerDashboard = () => {
     if (!socket) return;
 
     socket.on('article_status_update', (data) => {
-      // Trigger UI notification
       setToastConfig({
         message: data.message,
         type: data.status === 'Rejected' ? 'error' : 'success',
       });
-
-      // Refresh data to instantly move articles between queues
       fetchDashboardData();
     });
 
@@ -178,15 +174,22 @@ const ManagerDashboard = () => {
         </section>
 
         <section className="dashboard-card">
-          <div className="card-header">
+          <div className="card-header" style={{ flexWrap: 'wrap' }}>
             <FileText size={20} className="card-icon" />
-            <h2>My Submissions</h2>
-            <Link to="/articles/new" className="action-link">
-              Write Article
-            </Link>
-            <Link to="/user-management" className="btn-secondary">
-              Manage Users
-            </Link>
+            <h2 style={{ flexGrow: 1 }}>My Submissions</h2>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <Link to="/articles/new" className="action-link">
+                Write Article
+                </Link>
+                <Link to="/user-management" className="btn-secondary">
+                Manage Users
+                </Link>
+                {/* NEW LINK TO SESSION LOGS */}
+                <Link to="/session-logs" className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={16} />
+                    View Access Logs
+                </Link>
+            </div>
           </div>
           <div className="card-content">
             {myArticles.length === 0 ? (
