@@ -174,6 +174,13 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
 
   const reviewedArticle = await article.save();
 
+  // --- THE FIX: Clear old "Approval_Needed" notifications for ALL managers ---
+  await Notification.deleteMany({
+    referenceId: article._id,
+    type: "Approval_Needed"
+  });
+  // -------------------------------------------------------------------------
+
   const message = `Your article "${article.title}" has been ${article.status.toLowerCase()}.`;
 
   // Inject Notification for Author
@@ -194,6 +201,10 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
       message,
     });
     io.to(article.authorId.toString()).emit("new_notification", { message });
+
+    // Optional: You can emit a broadcast event here to tell all connected managers
+    // to refresh their notification bell so the number instantly drops without a page reload.
+    io.emit("refresh_notifications");
   }
 
   res.json(reviewedArticle);
