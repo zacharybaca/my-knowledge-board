@@ -177,7 +177,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   // --- THE FIX: Clear old "Approval_Needed" notifications for ALL managers ---
   await Notification.deleteMany({
     referenceId: article._id,
-    type: "Approval_Needed"
+    type: "Approval_Needed",
   });
   // -------------------------------------------------------------------------
 
