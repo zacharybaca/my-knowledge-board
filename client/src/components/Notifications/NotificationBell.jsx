@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCircle } from 'lucide-react';
 import { useFetcher } from '../../hooks/useFetcher';
@@ -13,30 +13,30 @@ const NotificationBell = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      const response = await fetcher('/api/notifications');
-      if (response.success) {
-        setNotifications(response.data);
-      }
-    };
-    fetchNotifications();
+  const fetchNotifications = useCallback(async () => {
+    const response = await fetcher('/api/notifications');
+    if (response.success) {
+      setNotifications(response.data);
+    }
   }, [fetcher]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('new_notification', () => {
-      // Re-fetch to ensure the notification ID and data are accurate
-      const fetchNew = async () => {
-        const response = await fetcher('/api/notifications');
-        if (response.success) setNotifications(response.data);
-      };
-      fetchNew();
-    });
+    socket.on('new_notification', fetchNotifications);
 
-    return () => socket.off('new_notification');
-  }, [socket, fetcher]);
+    // --- THE FIX: Listen for global refreshes ---
+    socket.on('refresh_notifications', fetchNotifications);
+
+    return () => {
+      socket.off('new_notification');
+      socket.off('refresh_notifications');
+    };
+  }, [socket, fetchNotifications]);
 
   // Handle outside click to close dropdown
   useEffect(() => {
