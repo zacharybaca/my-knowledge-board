@@ -1,13 +1,11 @@
-<div align="center">
-  <img src="./client/public/logo.svg" alt="MyKnowledgeBoard Logo" width="150" />
 
-  <br />
+# MyKnowledgeBoard
 
-  <em>
-    <span style="color: #10b981;">Knowledge.</span>
-    <span style="color: #0f172a;">Within Reach.</span>
-  </em>
-</div>
+<p align="center">
+  <img src="client/public/logo.svg" alt="MyKnowledgeBoard Logo" width="200" />
+</p>
+
+> **Knowledge. Within Reach.**
 
 A multi-tenant organizational knowledge board built on the MERN stack. Enables employees to submit, search, and bookmark company-specific process guides and policies, managed through a hierarchical approval workflow.
 
@@ -25,13 +23,13 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 ## Technical Stack
 
 | Domain       | Technology                                                                                |
-| :----------- | :-----------------------------------------------------------------------------------------|                               
+| :----------- | :-----------------------------------------------------------------------------------------|
 | **Frontend** | React, Vite, React Router DOM, TinyMCE, Lucide React, Web Sockets, UUID                   |
 | **Backend**  | Node.js, Express, Mongoose, JSON Web Tokens (JWT), Bcryptjs, Leo-Profanity, Web Sockets   |
 | **Database** | MongoDB                                                                                   |
 | **Services** | Cloudinary (Image Hosting)                                                                |
 
----
+- --
 
 ## Environment Configuration
 
@@ -175,59 +173,194 @@ A multi-tenant organizational knowledge board built on the MERN stack. Enables e
 
 The client application is built with React and Vite, utilizing a feature-based directory structure for modularity and scalability.
 
-### Directory Hierarchy
+### Directory Hierarchy - Client and Server
 
-    client/
-    ├── public/
-    ├── src/
-    │   ├── components/
-    │   │   ├── Article/
-    │   │   │   ├── ApprovalQueue/
-    │   │   │   ├── ArticleCard/
-    │   │   │   ├── ArticleEditor/
-    │   │   │   └── ArticleView/
-    │   │   ├── Auth/
-    │   │   │   ├── Login/
-    │   │   │   ├── Register/
-    │   │   │   ├── VerifyWorkspace/
-    │   │   │   └── auth-forms.css
-    │   │   ├── Company/
-    │   │   │   ├── CompanyList/
-    │   │   │   └── CompanyRegistration/
-    │   │   ├── Dashboards/
-    │   │   │   ├── EmployeeDashboard/
-    │   │   │   └── ManagerDashboard/
-    │   │   ├── Layout/
-    │   │   │   ├── Footer/
-    │   │   │   ├── Header/
-    │   │   │   ├── NavBar/
-    │   │   │   ├── SideBar/
-    │   │   │   └── Toast/
-    │   │   ├── Pages/
-    │   │   │   ├── Home.jsx
-    │   │   │   └── home.css
-    │   │   ├── Search/
-    │   │   │   ├── SearchBar/
-    │   │   │   ├── SearchResults/
-    │   │   │   └── TagFilter/
-    │   │   └── Utility/
-    │   │       ├── AdminRoute/
-    │   │       ├── ProtectedRoute/
-    │   │       └── SearchBar/
-    │   ├── contexts/
-    │   │   ├── Auth/
-    │   │   ├── Companies/
-    │   │   ├── Fetcher/
-    │   │   └── AppProvider.jsx
-    │   ├── hooks/
-    │   │   ├── useAuth.js
-    │   │   ├── useCompany.js
-    │   │   └── useFetcher.js
-    │   ├── App.css
-    │   ├── App.jsx
-    │   ├── index.css
-    │   └── main.jsx
-    └── .env
+    .
+    |-- README.md
+    |-- client
+    |   |-- eslint.config.js
+    |   |-- index.html
+    |   |-- package-lock.json
+    |   |-- package.json
+    |   |-- public
+    |   |   |-- _redirects
+    |   |   |-- favicon.svg
+    |   |   `-- logo.svg
+    |   |-- src
+    |   |   |-- App.css
+    |   |   |-- App.jsx
+    |   |   |-- components
+    |   |   |   |-- Admin
+    |   |   |   |   |-- SessionLogs.jsx
+    |   |   |   |   `-- session-logs.css
+    |   |   |   |-- Article
+    |   |   |   |   |-- ApprovalQueue
+    |   |   |   |   |   |-- ApprovalQueue.jsx
+    |   |   |   |   |   `-- approval-queue.css
+    |   |   |   |   |-- ArticleCard
+    |   |   |   |   |   |-- ArticleCard.jsx
+    |   |   |   |   |   `-- article-card.css
+    |   |   |   |   |-- ArticleEditor
+    |   |   |   |   |   |-- ArticleEditor.jsx
+    |   |   |   |   |   `-- article-editor.css
+    |   |   |   |   |-- ArticleFeedback
+    |   |   |   |   |   |-- ArticleFeedback.jsx
+    |   |   |   |   |   `-- article-feedback.css
+    |   |   |   |   |-- ArticleReview
+    |   |   |   |   |   |-- ArticleReview.jsx
+    |   |   |   |   |   `-- article-review.css
+    |   |   |   |   |-- ArticleView
+    |   |   |   |   |   |-- ArticleView.jsx
+    |   |   |   |   |   `-- article-view.css
+    |   |   |   |   |-- PinButton
+    |   |   |   |   |   |-- PinButton.jsx
+    |   |   |   |   |   `-- pin-button.css
+    |   |   |   |   `-- TopArticles
+    |   |   |   |       |-- TopArticles.jsx
+    |   |   |   |       `-- top-articles.css
+    |   |   |   |-- Auth
+    |   |   |   |   |-- CreateElevatedUser
+    |   |   |   |   |   `-- CreateElevatedUser.jsx
+    |   |   |   |   |-- Login
+    |   |   |   |   |   `-- Login.jsx
+    |   |   |   |   |-- ProfileSettings
+    |   |   |   |   |   `-- ProfileSettings.jsx
+    |   |   |   |   |-- Register
+    |   |   |   |   |   `-- Register.jsx
+    |   |   |   |   |-- VerifyWorkspace
+    |   |   |   |   |   `-- VerifyWorkspace.jsx
+    |   |   |   |   `-- auth-forms.css
+    |   |   |   |-- Chatbot
+    |   |   |   |   |-- Chatbot.jsx
+    |   |   |   |   `-- chatbot.css
+    |   |   |   |-- Company
+    |   |   |   |   |-- CompanyList
+    |   |   |   |   |   |-- CompanyList.jsx
+    |   |   |   |   |   `-- company-list.css
+    |   |   |   |   `-- CompanyRegistration
+    |   |   |   |       `-- CompanyRegistration.jsx
+    |   |   |   |-- Dashboards
+    |   |   |   |   |-- EmployeeDashboard
+    |   |   |   |   |   `-- EmployeeDashboard.jsx
+    |   |   |   |   |-- ManagerDashboard
+    |   |   |   |   |   `-- ManagerDashboard.jsx
+    |   |   |   |   |-- ReviewQueue
+    |   |   |   |   |   |-- ReviewQueue.jsx
+    |   |   |   |   |   `-- review-queue.css
+    |   |   |   |   `-- dashboards.css
+    |   |   |   |-- Layout
+    |   |   |   |   |-- Footer
+    |   |   |   |   |   |-- Footer.jsx
+    |   |   |   |   |   `-- footer.css
+    |   |   |   |   |-- Header
+    |   |   |   |   |   |-- Header.jsx
+    |   |   |   |   |   `-- header.css
+    |   |   |   |   |-- NavBar
+    |   |   |   |   |   |-- Logo.jsx
+    |   |   |   |   |   |-- NavBar.jsx
+    |   |   |   |   |   `-- nav-bar.css
+    |   |   |   |   |-- SideBar
+    |   |   |   |   |   |-- SideBar.jsx
+    |   |   |   |   |   `-- side-bar.css
+    |   |   |   |   `-- Toast
+    |   |   |   |       |-- Toast.jsx
+    |   |   |   |       `-- toast.css
+    |   |   |   |-- Notifications
+    |   |   |   |   |-- NotificationBell.jsx
+    |   |   |   |   `-- notifications.css
+    |   |   |   |-- Pages
+    |   |   |   |   |-- Home.jsx
+    |   |   |   |   `-- home.css
+    |   |   |   |-- Search
+    |   |   |   |   |-- SearchBar
+    |   |   |   |   |   |-- SearchBar.jsx
+    |   |   |   |   |   `-- search-bar.css
+    |   |   |   |   |-- SearchResults
+    |   |   |   |   |   |-- SearchResults.jsx
+    |   |   |   |   |   `-- search-results.css
+    |   |   |   |   `-- TagFilter
+    |   |   |   |       |-- TagFilter.jsx
+    |   |   |   |       `-- tag-filter.css
+    |   |   |   |-- UserManagement
+    |   |   |   |   |-- UserManagement.jsx
+    |   |   |   |   `-- user-management.css
+    |   |   |   |-- Utility
+    |   |   |   |   |-- AdminRoute
+    |   |   |   |   |   `-- AdminRoute.jsx
+    |   |   |   |   `-- ProtectedRoute
+    |   |   |   |       `-- ProtectedRoute.jsx
+    |   |   |   `-- Widgets
+    |   |   |       |-- BandwidthWidget
+    |   |   |       |   `-- BandwidthWidget.jsx
+    |   |   |       |-- FirstStatementWidget
+    |   |   |       |   `-- FirstStatementWidget.jsx
+    |   |   |       |-- ProrationWidget
+    |   |   |       |   `-- ProrationWidget.jsx
+    |   |   |       |-- TroubleshootingWidget
+    |   |   |       |   `-- TroubleshootingWidget.jsx
+    |   |   |       `-- widgets.css
+    |   |   |-- contexts
+    |   |   |   |-- AppProvider.jsx
+    |   |   |   |-- Auth
+    |   |   |   |   |-- AuthContext.jsx
+    |   |   |   |   `-- AuthProvider.jsx
+    |   |   |   |-- Companies
+    |   |   |   |   |-- CompanyContext.jsx
+    |   |   |   |   `-- CompanyProvider.jsx
+    |   |   |   |-- Fetcher
+    |   |   |   |   |-- FetcherContext.jsx
+    |   |   |   |   `-- FetcherProvider.jsx
+    |   |   |   `-- Socket
+    |   |   |       |-- SocketContext.jsx
+    |   |   |       `-- SocketProvider.jsx
+    |   |   |-- hooks
+    |   |   |   |-- useAuth.js
+    |   |   |   |-- useCompany.js
+    |   |   |   |-- useFetcher.js
+    |   |   |   `-- useSocket.js
+    |   |   |-- index.css
+    |   |   `-- main.jsx
+    |   `-- vite.config.js
+    |-- jsconfig.json
+    |-- package-lock.json
+    |-- package.json
+    `-- server
+        |-- app.js
+        |-- controllers
+        |   |-- aiController.js
+        |   |-- articleController.js
+        |   |-- authController.js
+        |   |-- chatController.js
+        |   |-- companyController.js
+        |   |-- notificationController.js
+        |   |-- sessionController.js
+        |   `-- userController.js
+        |-- middleware
+        |   |-- authMiddleware.js
+        |   |-- cloudinary.js
+        |   |-- errorHandler.js
+        |   `-- moderationMiddleware.js
+        |-- models
+        |   |-- Article.js
+        |   |-- Company.js
+        |   |-- Notification.js
+        |   |-- SessionLog.js
+        |   `-- User.js
+        |-- package-lock.json
+        |-- package.json
+        |-- routes
+        |   |-- aiRoutes.js
+        |   |-- articleRoutes.js
+        |   |-- authRoutes.js
+        |   |-- chatRoutes.js
+        |   |-- companyRoutes.js
+        |   |-- notificationRoutes.js
+        |   |-- sessionRoutes.js
+        |   `-- userRoutes.js
+        |-- server.js
+        `-- utils
+            |-- generateToken.js
+            `-- sendEmail.js
 
 ### Component Breakdown
 
