@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
 
 const companySchema = new mongoose.Schema(
   {
@@ -51,23 +52,52 @@ companySchema.pre(
     try {
       const companyId = this._id;
 
-      // 1. Cleanup Cloudinary Image
+      // 1. Cleanup Cloudinary Company Logo
       if (this.imagePublicId) {
         await cloudinary.uploader.destroy(this.imagePublicId);
         console.log(`✅ Cloudinary image removed: ${this.imagePublicId}`);
       }
 
-      // 2. Delete Associated Users
-      await mongoose.model("User").deleteMany({ company: companyId });
-      console.log(`✅ Associated users deleted for company ID: ${companyId}`);
+      // 2. Cascade Delete Articles
+      // We loop and call .deleteOne() on each document so Article pre-delete hooks fire
+      const articles = await mongoose.model("Article").find({ companyId });
+      for (const article of articles) {
+        await article.deleteOne();
+      }
+      console.log(`✅ Deleted ${articles.length} articles for company: ${companyId}`);
+
+      // 3. Cascade Delete or Update Users
+      // Finds any user that has this companyId (works for both String and Array types)
+      const users = await mongoose.model("User").find({ companyId: companyId });
+
+      for (const user of users) {
+        // If your User schema supports multiple workspaces (companyId is an Array)
+        if (Array.isArray(user.companyId)) {
+          // Remove this specific company from their array
+          user.companyId = user.companyId.filter(
+            (id) => id.toString() !== companyId.toString()
+          );
+
+          // If they belong to NO other companies, delete the user entirely
+          if (user.companyId.length === 0) {
+            await user.deleteOne();
+          } else {
+            // Otherwise, save the user with the updated array
+            await user.save();
+          }
+        } else {
+          // If the schema is 1-to-1 (companyId is a single ObjectId), delete the user
+          await user.deleteOne();
+        }
+      }
+      console.log(`✅ Processed ${users.length} users for company: ${companyId}`);
 
       next();
     } catch (error) {
       console.error("❌ Middleware Cleanup Error:", error);
-      // We call next() anyway so the primary record is still deleted
-      next();
+      next(error); // Pass the error to stop the deletion if something critically fails
     }
-  },
+  }
 );
 
 const Company = mongoose.model("Company", companySchema);
