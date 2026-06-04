@@ -33,7 +33,7 @@ const VerifyWorkspace = () => {
           );
         }
       } catch (err) {
-        setStatus('error');
+        setStatus('error', err.message);
         setMessage('A network error occurred during verification.');
       }
     };
