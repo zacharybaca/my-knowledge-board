@@ -64,7 +64,9 @@ companySchema.pre(
       for (const article of articles) {
         await article.deleteOne();
       }
-      console.log(`✅ Deleted ${articles.length} articles for company: ${companyId}`);
+      console.log(
+        `✅ Deleted ${articles.length} articles for company: ${companyId}`,
+      );
 
       // 3. Cascade Delete or Update Users
       // Finds any user that has this companyId (works for both String and Array types)
@@ -75,7 +77,7 @@ companySchema.pre(
         if (Array.isArray(user.companyId)) {
           // Remove this specific company from their array
           user.companyId = user.companyId.filter(
-            (id) => id.toString() !== companyId.toString()
+            (id) => id.toString() !== companyId.toString(),
           );
 
           // If they belong to NO other companies, delete the user entirely
@@ -90,14 +92,16 @@ companySchema.pre(
           await user.deleteOne();
         }
       }
-      console.log(`✅ Processed ${users.length} users for company: ${companyId}`);
+      console.log(
+        `✅ Processed ${users.length} users for company: ${companyId}`,
+      );
 
       next();
     } catch (error) {
       console.error("❌ Middleware Cleanup Error:", error);
       next(error); // Pass the error to stop the deletion if something critically fails
     }
-  }
+  },
 );
 
 const Company = mongoose.model("Company", companySchema);

@@ -23,9 +23,14 @@ const WorkspaceManagement = () => {
     if (!confirmDelete) return;
 
     // 2. Secondary Confirmation for safety
-    const textConfirm = window.prompt(`Type "${workspaceName}" to confirm deletion:`);
+    const textConfirm = window.prompt(
+      `Type "${workspaceName}" to confirm deletion:`
+    );
     if (textConfirm !== workspaceName) {
-      setToastConfig({ type: 'error', message: 'Deletion cancelled: Name did not match.' });
+      setToastConfig({
+        type: 'error',
+        message: 'Deletion cancelled: Name did not match.',
+      });
       return;
     }
 
@@ -37,16 +42,27 @@ const WorkspaceManagement = () => {
       });
 
       if (response.success) {
-        setToastConfig({ type: 'success', message: 'Workspace successfully deleted.' });
+        setToastConfig({
+          type: 'success',
+          message: 'Workspace successfully deleted.',
+        });
 
         // Update local user state to remove the deleted workspace from the UI immediately
-        const updatedWorkspaces = workspaces.filter(w => w._id !== workspaceId);
+        const updatedWorkspaces = workspaces.filter(
+          (w) => w._id !== workspaceId
+        );
         setUser({ ...user, companyId: updatedWorkspaces });
       } else {
-        setToastConfig({ type: 'error', message: response.error || 'Failed to delete workspace.' });
+        setToastConfig({
+          type: 'error',
+          message: response.error || 'Failed to delete workspace.',
+        });
       }
     } catch (error) {
-      setToastConfig({ type: 'error', message: 'A server error occurred during deletion.' });
+      setToastConfig({
+        type: 'error',
+        message: 'A server error occurred during deletion.',
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -80,23 +96,69 @@ const WorkspaceManagement = () => {
             ) : (
               <ul className="article-list">
                 {workspaces.map((workspace) => (
-                  <li key={workspace._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <li
+                    key={workspace._id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '16px 0',
+                      borderBottom: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                      }}
+                    >
                       {workspace.imageUrl ? (
-                        <img src={workspace.imageUrl} alt="logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                        <img
+                          src={workspace.imageUrl}
+                          alt="logo"
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '8px',
+                            objectFit: 'cover',
+                          }}
+                        />
                       ) : (
-                        <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '8px',
+                            backgroundColor: '#f1f5f9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
                           <Building2 size={20} color="#94a3b8" />
                         </div>
                       )}
                       <div>
-                        <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>{workspace.name}</h3>
-                        <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{workspace.emailDomain}</span>
+                        <h3
+                          style={{
+                            margin: 0,
+                            color: '#0f172a',
+                            fontSize: '1.1rem',
+                          }}
+                        >
+                          {workspace.name}
+                        </h3>
+                        <span style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                          {workspace.emailDomain}
+                        </span>
                       </div>
                     </div>
 
                     <button
-                      onClick={() => handleDeleteWorkspace(workspace._id, workspace.name)}
+                      onClick={() =>
+                        handleDeleteWorkspace(workspace._id, workspace.name)
+                      }
                       disabled={isDeleting}
                       style={{
                         display: 'flex',
@@ -109,10 +171,14 @@ const WorkspaceManagement = () => {
                         borderRadius: '6px',
                         cursor: isDeleting ? 'not-allowed' : 'pointer',
                         fontWeight: 'bold',
-                        transition: 'background-color 0.2s'
+                        transition: 'background-color 0.2s',
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fecaca'}
-                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.backgroundColor = '#fecaca')
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.backgroundColor = '#fee2e2')
+                      }
                     >
                       <Trash2 size={18} />
                       {isDeleting ? 'Deleting...' : 'Delete Workspace'}
@@ -122,13 +188,33 @@ const WorkspaceManagement = () => {
               </ul>
             )}
 
-            <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b45309', fontWeight: 'bold', marginBottom: '8px' }}>
+            <div
+              style={{
+                marginTop: '24px',
+                padding: '16px',
+                backgroundColor: '#fffbeb',
+                borderLeft: '4px solid #f59e0b',
+                borderRadius: '4px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: '#b45309',
+                  fontWeight: 'bold',
+                  marginBottom: '8px',
+                }}
+              >
                 <AlertTriangle size={18} />
                 Warning
               </div>
               <p style={{ margin: 0, color: '#92400e', fontSize: '0.9rem' }}>
-                Deleting a workspace is a permanent action. It will instantly remove all articles, files, and users strictly tied to that domain. Ensure you have backed up any necessary data before proceeding.
+                Deleting a workspace is a permanent action. It will instantly
+                remove all articles, files, and users strictly tied to that
+                domain. Ensure you have backed up any necessary data before
+                proceeding.
               </p>
             </div>
           </div>

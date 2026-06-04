@@ -218,8 +218,8 @@ const updateUserStatus = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
   // UPDATED: Check if the Manager and the Target User share at least one company workspace
-  const hasSharedCompany = user?.companyId.some(id =>
-    req.user.companyId.some(reqId => reqId.toString() === id.toString())
+  const hasSharedCompany = user?.companyId.some((id) =>
+    req.user.companyId.some((reqId) => reqId.toString() === id.toString()),
   );
 
   if (!user || !hasSharedCompany) {
@@ -255,8 +255,8 @@ const deleteUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
   // UPDATED: Same shared workspace validation as above
-  const hasSharedCompany = user?.companyId.some(id =>
-    req.user.companyId.some(reqId => reqId.toString() === id.toString())
+  const hasSharedCompany = user?.companyId.some((id) =>
+    req.user.companyId.some((reqId) => reqId.toString() === id.toString()),
   );
 
   if (!user || !hasSharedCompany) {

@@ -32,10 +32,10 @@ const getArticles = asyncHandler(async (req, res) => {
   // UPDATED: Find articles where companyId is IN the user's company array
   const articles = await Article.find({
     companyId: { $in: req.user.companyId },
-    status: "Approved"
+    status: "Approved",
   })
-  .populate("authorId", "firstName lastName avatar")
-  .sort("-createdAt");
+    .populate("authorId", "firstName lastName avatar")
+    .sort("-createdAt");
 
   res.json(articles);
 });
@@ -44,8 +44,10 @@ const getArticles = asyncHandler(async (req, res) => {
 // @route   GET /api/articles/:id
 // @access  Private
 const getArticleById = asyncHandler(async (req, res) => {
-  const article = await Article.findById(req.params.id)
-    .populate("authorId", "firstName lastName avatar");
+  const article = await Article.findById(req.params.id).populate(
+    "authorId",
+    "firstName lastName avatar",
+  );
 
   if (!article) {
     res.status(404);
@@ -54,7 +56,7 @@ const getArticleById = asyncHandler(async (req, res) => {
 
   // UPDATED: Check if the user's company array contains the article's companyId
   const hasCompanyAccess = req.user.companyId.some(
-    id => id.toString() === article.companyId.toString()
+    (id) => id.toString() === article.companyId.toString(),
   );
 
   if (!hasCompanyAccess) {
@@ -109,7 +111,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
 
   // UPDATED: Array verification for security
   const hasCompanyAccess = req.user.companyId.some(
-    id => id.toString() === article.companyId.toString()
+    (id) => id.toString() === article.companyId.toString(),
   );
 
   if (!hasCompanyAccess) {

@@ -7,7 +7,8 @@ import crypto from "crypto";
 // @desc    Register a new employee/user
 // @route   POST /api/auth/register
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, department, companyId } = req.body;
+  const { firstName, lastName, email, password, department, companyId } =
+    req.body;
 
   const userExists = await User.findOne({ email });
 

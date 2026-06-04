@@ -65,7 +65,8 @@ function App() {
           <Route path="create-user" element={<CreateElevatedUser />} />
           <Route path="user-management" element={<UserManagement />} />
           <Route path="session-logs" element={<SessionLogs />} />{' '}
-          <Route path="workspaces" element={<WorkspaceManagement />} /> {/* <-- NEW ROUTE */}
+          <Route path="workspaces" element={<WorkspaceManagement />} />{' '}
+          {/* <-- NEW ROUTE */}
         </Route>
 
         {/* 404 Fallback */}

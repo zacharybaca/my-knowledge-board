@@ -177,7 +177,14 @@ const ManagerDashboard = () => {
           <div className="card-header" style={{ flexWrap: 'wrap' }}>
             <FileText size={20} className="card-icon" />
             <h2 style={{ flexGrow: 1 }}>My Submissions</h2>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
               <Link to="/articles/new" className="action-link">
                 Write Article
               </Link>
@@ -194,11 +201,19 @@ const ManagerDashboard = () => {
               </Link>
 
               {/* NEW: Workspace Management Link (Admins Only) */}
-              {(Array.isArray(user.role) ? user.role.includes('Admin') : user.role === 'Admin') && (
+              {(Array.isArray(user.role)
+                ? user.role.includes('Admin')
+                : user.role === 'Admin') && (
                 <Link
                   to="/workspaces"
                   className="btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', borderColor: '#ef4444' }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#ef4444',
+                    borderColor: '#ef4444',
+                  }}
                 >
                   Manage Workspaces
                 </Link>

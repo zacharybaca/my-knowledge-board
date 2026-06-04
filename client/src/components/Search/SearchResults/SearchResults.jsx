@@ -17,7 +17,10 @@ const SearchResults = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [companyDetails, setCompanyDetails] = useState({ name: 'your organization', imageUrl: null });
+  const [companyDetails, setCompanyDetails] = useState({
+    name: 'your organization',
+    imageUrl: null,
+  });
 
   const { fetcher } = useFetcher();
   const { user } = useAuth();
@@ -27,29 +30,32 @@ const SearchResults = () => {
       if (!user?.companyId || user.companyId.length === 0) return;
 
       // Extract the active company (first one in the array for now)
-      const activeCompany = Array.isArray(user.companyId) ? user.companyId[0] : user.companyId;
+      const activeCompany = Array.isArray(user.companyId)
+        ? user.companyId[0]
+        : user.companyId;
 
       // Scenario A: Object is populated
       if (typeof activeCompany === 'object' && activeCompany.name) {
         setCompanyDetails({
           name: activeCompany.name,
-          imageUrl: activeCompany.imageUrl
+          imageUrl: activeCompany.imageUrl,
         });
         return;
       }
 
       // Scenario B: We just have the ID string
       try {
-        const idToFetch = typeof activeCompany === 'string' ? activeCompany : activeCompany._id;
+        const idToFetch =
+          typeof activeCompany === 'string' ? activeCompany : activeCompany._id;
         const response = await fetcher(`/api/companies/${idToFetch}`);
         if (response.success && response.data) {
           setCompanyDetails({
             name: response.data.name,
-            imageUrl: response.data.imageUrl
+            imageUrl: response.data.imageUrl,
           });
         }
       } catch (err) {
-        console.error("Could not fetch company details", err);
+        console.error('Could not fetch company details', err);
       }
     };
 

@@ -6,8 +6,15 @@ import sendEmail from "../utils/sendEmail.js";
 // @desc    Register a new company and initial Admin user
 // @route   POST /api/companies/register
 const registerCompany = asyncHandler(async (req, res) => {
-  const { companyName, emailDomain, firstName, lastName, email, password, department } =
-    req.body;
+  const {
+    companyName,
+    emailDomain,
+    firstName,
+    lastName,
+    email,
+    password,
+    department,
+  } = req.body;
 
   if (!department) {
     res.status(400);
@@ -15,7 +22,12 @@ const registerCompany = asyncHandler(async (req, res) => {
   }
 
   const reservedNames = [
-    "admin", "system", "support", "billing", "knowledgebase", "root",
+    "admin",
+    "system",
+    "support",
+    "billing",
+    "knowledgebase",
+    "root",
   ];
   if (reservedNames.includes(companyName.toLowerCase().trim())) {
     res.status(400);
@@ -34,7 +46,9 @@ const registerCompany = asyncHandler(async (req, res) => {
   const providedEmailDomain = email.split("@")[1];
   if (providedEmailDomain !== emailDomain) {
     res.status(400);
-    throw new Error(`Admin email must match the registered domain: ${emailDomain}`);
+    throw new Error(
+      `Admin email must match the registered domain: ${emailDomain}`,
+    );
   }
 
   const userExists = await User.findOne({ email });
@@ -92,7 +106,8 @@ const registerCompany = asyncHandler(async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Registration received. Please check your email to activate your workspace.",
+      message:
+        "Registration received. Please check your email to activate your workspace.",
     });
   } catch (error) {
     await User.findByIdAndDelete(adminUser._id);
@@ -131,7 +146,7 @@ const deleteCompany = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: "Workspace and all associated data successfully deleted."
+    message: "Workspace and all associated data successfully deleted.",
   });
 });
 
