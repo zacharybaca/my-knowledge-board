@@ -125,4 +125,31 @@ const getCompanies = asyncHandler(async (req, res) => {
   res.status(200).json(companies);
 });
 
-export { registerCompany, getCompanies };
+// @desc    Delete a company workspace and all associated data
+// @route   DELETE /api/companies/:id
+// @access  Private/Admin
+const deleteCompany = asyncHandler(async (req, res) => {
+  const company = await Company.findById(req.params.id);
+
+  if (!company) {
+    res.status(404);
+    throw new Error("Workspace not found");
+  }
+
+  // Security Check: Optional, but you should ensure the user requesting the
+  // deletion has the ultimate authority to do so (e.g., they are a Super Admin)
+  if (!req.user.role.includes("Admin")) {
+    res.status(403);
+    throw new Error("Not authorized to delete workspaces.");
+  }
+
+  // Calling deleteOne() directly on the document triggers the pre('deleteOne') hook
+  await company.deleteOne();
+
+  res.status(200).json({
+    success: true,
+    message: "Workspace and all associated data successfully deleted."
+  });
+});
+
+export { registerCompany, getCompanies, deleteCompany };
