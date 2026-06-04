@@ -6,24 +6,16 @@ import sendEmail from "../utils/sendEmail.js";
 // @desc    Register a new company and initial Admin user
 // @route   POST /api/companies/register
 const registerCompany = asyncHandler(async (req, res) => {
-  // 1. EXTRACT DEPARTMENT FROM REQ.BODY
   const { companyName, emailDomain, firstName, lastName, email, password, department } =
     req.body;
 
-  // 1a. Validate department is provided
   if (!department) {
     res.status(400);
     throw new Error("Please select a department for the admin user.");
   }
 
-  // 2. Organization Name Verification (Blocklist)
   const reservedNames = [
-    "admin",
-    "system",
-    "support",
-    "billing",
-    "knowledgebase",
-    "root",
+    "admin", "system", "support", "billing", "knowledgebase", "root",
   ];
   if (reservedNames.includes(companyName.toLowerCase().trim())) {
     res.status(400);
@@ -39,13 +31,10 @@ const registerCompany = asyncHandler(async (req, res) => {
     throw new Error("Company name or domain is already registered");
   }
 
-  // 3. Admin Email Verification (Domain Match)
   const providedEmailDomain = email.split("@")[1];
   if (providedEmailDomain !== emailDomain) {
     res.status(400);
-    throw new Error(
-      `Admin email must match the registered domain: ${emailDomain}`,
-    );
+    throw new Error(`Admin email must match the registered domain: ${emailDomain}`);
   }
 
   const userExists = await User.findOne({ email });
@@ -54,7 +43,6 @@ const registerCompany = asyncHandler(async (req, res) => {
     throw new Error("Admin email is already in use");
   }
 
-  // Extract Cloudinary data if image was uploaded
   let imageUrl = "";
   let imagePublicId = "";
 
@@ -63,7 +51,6 @@ const registerCompany = asyncHandler(async (req, res) => {
     imagePublicId = req.file.filename;
   }
 
-  // 4. Create Pending Company
   const company = await Company.create({
     name: companyName,
     emailDomain,
@@ -73,15 +60,14 @@ const registerCompany = asyncHandler(async (req, res) => {
     isActive: false,
   });
 
-  // 5. Create Pending Admin User
   const adminUser = await User.create({
     firstName,
     lastName,
     email,
     password,
-    department, // Pass the department here
-    companyId: company._id,
-    role: ["Admin"], // Explicitly set role as an array to match updated schema
+    department,
+    companyId: [company._id], // UPDATED: Wrapped in array
+    role: ["Admin"], // UPDATED: Wrapped in array to match schema
     isAdmin: true,
     isVerified: false,
   });
@@ -89,7 +75,6 @@ const registerCompany = asyncHandler(async (req, res) => {
   company.createdBy = adminUser._id;
   await company.save();
 
-  // 6. The Token Loop: Generate and Send Email
   const verifyToken = adminUser.getVerificationToken();
   await adminUser.save({ validateBeforeSave: false });
 
@@ -107,8 +92,7 @@ const registerCompany = asyncHandler(async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message:
-        "Registration received. Please check your email to activate your workspace.",
+      message: "Registration received. Please check your email to activate your workspace.",
     });
   } catch (error) {
     await User.findByIdAndDelete(adminUser._id);
@@ -136,14 +120,13 @@ const deleteCompany = asyncHandler(async (req, res) => {
     throw new Error("Workspace not found");
   }
 
-  // Security Check: Optional, but you should ensure the user requesting the
-  // deletion has the ultimate authority to do so (e.g., they are a Super Admin)
+  // Double check authorization
   if (!req.user.role.includes("Admin")) {
     res.status(403);
     throw new Error("Not authorized to delete workspaces.");
   }
 
-  // Calling deleteOne() directly on the document triggers the pre('deleteOne') hook
+  // Trigger the pre('deleteOne') cascade hook
   await company.deleteOne();
 
   res.status(200).json({
