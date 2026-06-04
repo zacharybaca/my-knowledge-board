@@ -4,49 +4,36 @@ import generateToken from "../utils/generateToken.js";
 import asyncHandler from "express-async-handler";
 import crypto from "crypto";
 
-// @desc    Register new user
+// @desc    Register a new employee/user
 // @route   POST /api/auth/register
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, companyId, department } =
-    req.body;
+  const { firstName, lastName, email, password, department, companyId } = req.body;
 
   const userExists = await User.findOne({ email });
+
   if (userExists) {
     res.status(400);
     throw new Error("User already exists");
   }
 
-  let avatarUrl = "";
-  let avatarPublicId = "";
-
-  if (req.file) {
-    avatarUrl = req.file.path;
-    avatarPublicId = req.file.filename;
-  }
-
+  // UPDATED: companyId is initialized as an array containing the provided ID
   const user = await User.create({
     firstName,
     lastName,
     email,
     password,
-    companyId,
     department,
-    avatar: avatarUrl,
-    avatarPublicId,
+    companyId: [companyId],
   });
 
   if (user) {
     res.status(201).json({
-      success: true,
-      data: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        avatar: user.avatar,
-      },
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
     });
   } else {
     res.status(400);
