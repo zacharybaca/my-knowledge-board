@@ -3,116 +3,66 @@ import Article from "../models/Article.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 
-/**
- * @desc    Create a new article
- * @route   POST /api/articles
- * @access  Private
- */
+// @desc    Create new article
+// @route   POST /api/articles
+// @access  Private
 const createArticle = asyncHandler(async (req, res) => {
-  const { title, content, tags, status, departments } = req.body;
+  const { title, content, tags, department } = req.body;
 
-  let finalStatus = status || "Pending";
-
-  if (req.user.role.includes("Admin") || req.user.role.includes("Manager")) {
-    finalStatus = "Approved";
-  }
-
-  const targetDepartments =
-    departments && departments.length > 0 ? departments : [req.user.department];
+  // UPDATED: Assign article to the user's first active workspace
+  const activeCompanyId = req.body.companyId || req.user.companyId[0];
 
   const article = await Article.create({
-    companyId: req.user.companyId,
-    authorId: req.user._id,
-    department: targetDepartments,
     title,
     content,
     tags,
-    status: finalStatus,
+    department,
+    authorId: req.user._id,
+    companyId: activeCompanyId,
+    status: "Pending", // Requires Manager/Admin approval
   });
-
-  // Inject Notifications for Managers if Pending
-  if (finalStatus === "Pending") {
-    const managers = await User.find({
-      companyId: req.user.companyId,
-      role: { $in: ["Manager", "Admin"] },
-    });
-
-    const notifications = managers.map((m) => ({
-      recipientId: m._id,
-      message: `New article pending approval: "${title}"`,
-      type: "Approval_Needed",
-      referenceId: article._id,
-    }));
-
-    if (notifications.length > 0) {
-      await Notification.insertMany(notifications);
-    }
-
-    const io = req.app.get("io");
-    if (io) {
-      managers.forEach((m) => {
-        io.to(m._id.toString()).emit("new_notification", {
-          message: `New article pending approval: "${title}"`,
-        });
-      });
-    }
-  }
 
   res.status(201).json(article);
 });
 
-/**
- * @desc    Search/Get all approved articles in company and department
- * @route   GET /api/articles
- * @access  Private
- */
+// @desc    Get all articles for a company
+// @route   GET /api/articles
+// @access  Private
 const getArticles = asyncHandler(async (req, res) => {
-  const { keyword, tag } = req.query;
-
-  let query = {
-    companyId: req.user.companyId,
-    department: req.user.department,
-    status: "Approved",
-  };
-
-  if (keyword) {
-    query.$text = { $search: keyword };
-  }
-
-  if (tag) {
-    query.tags = tag;
-  }
-
-  const articles = await Article.find(query)
-    .populate("authorId", "firstName lastName")
-    .sort(keyword ? { score: { $meta: "textScore" } } : { createdAt: -1 });
+  // UPDATED: Find articles where companyId is IN the user's company array
+  const articles = await Article.find({
+    companyId: { $in: req.user.companyId },
+    status: "Approved"
+  })
+  .populate("authorId", "firstName lastName avatar")
+  .sort("-createdAt");
 
   res.json(articles);
 });
 
-/**
- * @desc    Get article by ID
- * @route   GET /api/articles/:id
- * @access  Private
- */
+// @desc    Get single article by ID
+// @route   GET /api/articles/:id
+// @access  Private
 const getArticleById = asyncHandler(async (req, res) => {
   const article = await Article.findById(req.params.id)
-    .populate("authorId", "firstName lastName email")
-    .populate("approverId", "firstName lastName");
+    .populate("authorId", "firstName lastName avatar");
 
-  if (
-    article &&
-    article.companyId.toString() === req.user.companyId.toString() &&
-    article.department.includes(req.user.department)
-  ) {
-    article.viewCount += 1;
-    await article.save();
-
-    res.json(article);
-  } else {
+  if (!article) {
     res.status(404);
-    throw new Error("Article not found or access denied");
+    throw new Error("Article not found");
   }
+
+  // UPDATED: Check if the user's company array contains the article's companyId
+  const hasCompanyAccess = req.user.companyId.some(
+    id => id.toString() === article.companyId.toString()
+  );
+
+  if (!hasCompanyAccess) {
+    res.status(403);
+    throw new Error("Not authorized to view this article");
+  }
+
+  res.json(article);
 });
 
 /**
@@ -145,22 +95,26 @@ const updateArticle = asyncHandler(async (req, res) => {
   res.json(updatedArticle);
 });
 
-/**
- * @desc    Approve or Reject an article
- * @route   PATCH /api/articles/:id/status
- * @access  Private (Manager/Admin Only)
- */
+// @desc    Approve or Reject an article
+// @route   PATCH /api/articles/:id/status
+// @access  Private (Manager/Admin Only)
 const approveRejectArticle = asyncHandler(async (req, res) => {
   const { status, rejectionReason } = req.body;
   const article = await Article.findById(req.params.id);
 
-  if (
-    !article ||
-    article.companyId.toString() !== req.user.companyId.toString() ||
-    !article.department.some((d) => req.user.department.includes(d))
-  ) {
+  if (!article) {
     res.status(404);
-    throw new Error("Article not found or out of scope");
+    throw new Error("Article not found");
+  }
+
+  // UPDATED: Array verification for security
+  const hasCompanyAccess = req.user.companyId.some(
+    id => id.toString() === article.companyId.toString()
+  );
+
+  if (!hasCompanyAccess) {
+    res.status(403);
+    throw new Error("Not authorized to modify this article");
   }
 
   article.status = status;
@@ -173,40 +127,6 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   }
 
   const reviewedArticle = await article.save();
-
-  // --- THE FIX: Clear old "Approval_Needed" notifications for ALL managers ---
-  await Notification.deleteMany({
-    referenceId: article._id,
-    type: "Approval_Needed",
-  });
-  // -------------------------------------------------------------------------
-
-  const message = `Your article "${article.title}" has been ${article.status.toLowerCase()}.`;
-
-  // Inject Notification for Author
-  await Notification.create({
-    recipientId: article.authorId,
-    message,
-    type: "Status_Update",
-    referenceId: article._id,
-  });
-
-  const io = req.app.get("io");
-  if (io) {
-    // Retain existing event for backward compatibility if needed, add new_notification
-    io.to(article.authorId.toString()).emit("article_status_update", {
-      articleId: article._id,
-      title: article.title,
-      status: article.status,
-      message,
-    });
-    io.to(article.authorId.toString()).emit("new_notification", { message });
-
-    // Optional: You can emit a broadcast event here to tell all connected managers
-    // to refresh their notification bell so the number instantly drops without a page reload.
-    io.emit("refresh_notifications");
-  }
-
   res.json(reviewedArticle);
 });
 
