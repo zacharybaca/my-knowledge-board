@@ -17,11 +17,44 @@ const SearchResults = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [companyDetails, setCompanyDetails] = useState({ name: 'your organization', imageUrl: null });
+
   const { fetcher } = useFetcher();
   const { user } = useAuth();
 
-  const companyName = user?.companyId?.name || 'your organization';
-  const companyLogoUrl = user?.companyId?.imageUrl;
+  useEffect(() => {
+    const fetchCompanyInfo = async () => {
+      if (!user?.companyId || user.companyId.length === 0) return;
+
+      // Extract the active company (first one in the array for now)
+      const activeCompany = Array.isArray(user.companyId) ? user.companyId[0] : user.companyId;
+
+      // Scenario A: Object is populated
+      if (typeof activeCompany === 'object' && activeCompany.name) {
+        setCompanyDetails({
+          name: activeCompany.name,
+          imageUrl: activeCompany.imageUrl
+        });
+        return;
+      }
+
+      // Scenario B: We just have the ID string
+      try {
+        const idToFetch = typeof activeCompany === 'string' ? activeCompany : activeCompany._id;
+        const response = await fetcher(`/api/companies/${idToFetch}`);
+        if (response.success && response.data) {
+          setCompanyDetails({
+            name: response.data.name,
+            imageUrl: response.data.imageUrl
+          });
+        }
+      } catch (err) {
+        console.error("Could not fetch company details", err);
+      }
+    };
+
+    fetchCompanyInfo();
+  }, [user, fetcher]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -66,12 +99,11 @@ const SearchResults = () => {
 
   return (
     <div className="search-page-container">
-      {/* Company Jumbotron Section */}
-      {companyLogoUrl && (
+      {companyDetails.imageUrl && (
         <div className="company-jumbotron">
           <img
-            src={companyLogoUrl}
-            alt={`${companyName} Logo`}
+            src={companyDetails.imageUrl}
+            alt={`${companyDetails.name} Logo`}
             className="jumbotron-logo"
           />
         </div>
@@ -81,12 +113,12 @@ const SearchResults = () => {
         <h1>{user ? `Welcome, ${user.firstName}!` : 'Knowledge Base'}</h1>
         <h2>
           {user
-            ? `You are part of ${companyName}'s workspace.`
+            ? `You are part of ${companyDetails.name}'s workspace.`
             : 'Explore the knowledge base.'}
         </h2>
         <p>
           {user
-            ? `Search across ${companyName}'s policies, process guides, and technical documentation.`
+            ? `Search across ${companyDetails.name}'s policies, process guides, and technical documentation.`
             : 'Search across organizational policies, process guides, and technical documentation.'}
         </p>
       </div>
