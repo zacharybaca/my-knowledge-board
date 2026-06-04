@@ -5,11 +5,7 @@ import crypto from "crypto";
 
 const userSchema = mongoose.Schema(
   {
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-      required: true,
-    },
+    companyId: [{ type: mongoose.Schema.Types.ObjectId, ref: "Company" }], // Updated to an array to support multiple companies
     department: {
       type: String,
       required: true,
