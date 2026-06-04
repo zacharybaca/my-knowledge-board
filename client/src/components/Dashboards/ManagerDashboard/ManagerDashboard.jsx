@@ -177,14 +177,13 @@ const ManagerDashboard = () => {
           <div className="card-header" style={{ flexWrap: 'wrap' }}>
             <FileText size={20} className="card-icon" />
             <h2 style={{ flexGrow: 1 }}>My Submissions</h2>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <Link to="/articles/new" className="action-link">
                 Write Article
               </Link>
               <Link to="/user-management" className="btn-secondary">
                 Manage Users
               </Link>
-              {/* NEW LINK TO SESSION LOGS */}
               <Link
                 to="/session-logs"
                 className="btn-secondary"
@@ -193,6 +192,17 @@ const ManagerDashboard = () => {
                 <Clock size={16} />
                 View Access Logs
               </Link>
+
+              {/* NEW: Workspace Management Link (Admins Only) */}
+              {(Array.isArray(user.role) ? user.role.includes('Admin') : user.role === 'Admin') && (
+                <Link
+                  to="/workspaces"
+                  className="btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', borderColor: '#ef4444' }}
+                >
+                  Manage Workspaces
+                </Link>
+              )}
             </div>
           </div>
           <div className="card-content">
