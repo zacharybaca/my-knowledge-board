@@ -8,6 +8,7 @@ import { v2 as cloudinary } from "cloudinary";
  * @access  Private
  */
 const getUserProfile = asyncHandler(async (req, res) => {
+  // Mongoose handles populating arrays of ObjectIds natively
   const user = await User.findById(req.user._id)
     .populate("companyId", "name imageUrl")
     .populate("managerId", "firstName lastName email")
@@ -70,7 +71,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getCompanyDirectory = asyncHandler(async (req, res) => {
-  const users = await User.find({ companyId: req.user.companyId })
+  // UPDATED: Assuming we want users in the current active workspace
+  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+
+  // Use $in to find users whose companyId array contains the active workspace
+  const users = await User.find({ companyId: { $in: [activeCompanyId] } })
     .select("firstName lastName email role avatar")
     .sort({ lastName: 1 });
 
@@ -83,8 +88,11 @@ const getCompanyDirectory = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getCompanyManagers = asyncHandler(async (req, res) => {
+  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+
+  // UPDATED: Array search for companyId
   const managers = await User.find({
-    companyId: req.user.companyId,
+    companyId: { $in: [activeCompanyId] },
     role: "Manager",
   }).select("firstName lastName _id");
 
@@ -164,12 +172,15 @@ const createElevatedUser = asyncHandler(async (req, res) => {
     throw new Error("An account with this email already exists");
   }
 
+  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+
+  // UPDATED: Assign the new user to the active company inside an array
   const user = await User.create({
     firstName,
     lastName,
     email,
     password,
-    companyId: req.user.companyId,
+    companyId: [activeCompanyId],
     department,
     role: rolesArray,
     isVerified: true,
@@ -206,7 +217,12 @@ const updateUserStatus = asyncHandler(async (req, res) => {
 
   const user = await User.findById(req.params.id);
 
-  if (!user || user.companyId.toString() !== req.user.companyId.toString()) {
+  // UPDATED: Check if the Manager and the Target User share at least one company workspace
+  const hasSharedCompany = user?.companyId.some(id =>
+    req.user.companyId.some(reqId => reqId.toString() === id.toString())
+  );
+
+  if (!user || !hasSharedCompany) {
     res.status(404);
     throw new Error("User not found or access denied");
   }
@@ -238,7 +254,12 @@ const deleteUserById = asyncHandler(async (req, res) => {
 
   const user = await User.findById(req.params.id);
 
-  if (!user || user.companyId.toString() !== req.user.companyId.toString()) {
+  // UPDATED: Same shared workspace validation as above
+  const hasSharedCompany = user?.companyId.some(id =>
+    req.user.companyId.some(reqId => reqId.toString() === id.toString())
+  );
+
+  if (!user || !hasSharedCompany) {
     res.status(404);
     throw new Error("User not found or access denied");
   }
