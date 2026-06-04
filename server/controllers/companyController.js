@@ -6,10 +6,17 @@ import sendEmail from "../utils/sendEmail.js";
 // @desc    Register a new company and initial Admin user
 // @route   POST /api/companies/register
 const registerCompany = asyncHandler(async (req, res) => {
-  const { companyName, emailDomain, firstName, lastName, email, password } =
+  // 1. EXTRACT DEPARTMENT FROM REQ.BODY
+  const { companyName, emailDomain, firstName, lastName, email, password, department } =
     req.body;
 
-  // 1. Organization Name Verification (Blocklist)
+  // 1a. Validate department is provided
+  if (!department) {
+    res.status(400);
+    throw new Error("Please select a department for the admin user.");
+  }
+
+  // 2. Organization Name Verification (Blocklist)
   const reservedNames = [
     "admin",
     "system",
@@ -32,7 +39,7 @@ const registerCompany = asyncHandler(async (req, res) => {
     throw new Error("Company name or domain is already registered");
   }
 
-  // 2. Admin Email Verification (Domain Match)
+  // 3. Admin Email Verification (Domain Match)
   const providedEmailDomain = email.split("@")[1];
   if (providedEmailDomain !== emailDomain) {
     res.status(400);
@@ -56,7 +63,7 @@ const registerCompany = asyncHandler(async (req, res) => {
     imagePublicId = req.file.filename;
   }
 
-  // 3. Create Pending Company
+  // 4. Create Pending Company
   const company = await Company.create({
     name: companyName,
     emailDomain,
@@ -66,14 +73,15 @@ const registerCompany = asyncHandler(async (req, res) => {
     isActive: false,
   });
 
-  // 4. Create Pending Admin User
+  // 5. Create Pending Admin User
   const adminUser = await User.create({
     firstName,
     lastName,
     email,
     password,
+    department, // Pass the department here
     companyId: company._id,
-    role: "Admin",
+    role: ["Admin"], // Explicitly set role as an array to match updated schema
     isAdmin: true,
     isVerified: false,
   });
@@ -81,7 +89,7 @@ const registerCompany = asyncHandler(async (req, res) => {
   company.createdBy = adminUser._id;
   await company.save();
 
-  // 5. The Token Loop: Generate and Send Email
+  // 6. The Token Loop: Generate and Send Email
   const verifyToken = adminUser.getVerificationToken();
   await adminUser.save({ validateBeforeSave: false });
 
