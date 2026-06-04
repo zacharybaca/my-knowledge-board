@@ -20,6 +20,7 @@ import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import Chatbot from './components/Chatbot/Chatbot';
 import UserManagement from './components/UserManagement/UserManagement';
 import SessionLogs from './components/Admin/SessionLogs'; // <-- NEW IMPORT
+import WorkspaceManagement from './components/Admin/WorkspaceManagement/WorkspaceManagement'; // Adjust path based on where you saved it
 import './App.css';
 
 const Layout = () => {
@@ -64,7 +65,7 @@ function App() {
           <Route path="create-user" element={<CreateElevatedUser />} />
           <Route path="user-management" element={<UserManagement />} />
           <Route path="session-logs" element={<SessionLogs />} />{' '}
-          {/* <-- NEW ROUTE */}
+          <Route path="workspaces" element={<WorkspaceManagement />} /> {/* <-- NEW ROUTE */}
         </Route>
 
         {/* 404 Fallback */}
