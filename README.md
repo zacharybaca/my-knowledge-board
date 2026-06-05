@@ -365,6 +365,29 @@ The client application is built with React and Vite, utilizing a feature-based d
             |-- generateToken.js
             `-- sendEmail.js
 
+### Project Structure
+
+#### Client (`/client/src`)
+| Directory | Key Contents |
+| :--- | :--- |
+| **`components/Admin`** | `WorkspaceManagement`, `SessionLogs` |
+| **`components/Article`** | `ApprovalQueue`, `ArticleEditor`, `ArticleReview`, `ArticleView`, `ArticleCard` |
+| **`components/Auth`** | `Login`, `Register`, `ProfileSettings`, `VerifyWorkspace`, `CreateElevatedUser` |
+| **`components/Dashboards`** | `EmployeeDashboard`, `ManagerDashboard`, `ReviewQueue` |
+| **`components/Layout`** | `NavBar`, `SideBar`, `Header`, `Footer`, `Toast` |
+| **`components/Search`** | `SearchBar`, `SearchResults`, `TagFilter` |
+| **`contexts`** | Auth, Company, Fetcher, and Socket State Providers |
+| **`hooks`** | Custom hooks for Auth, Company, Fetcher, and Socket |
+
+#### Server (`/server`)
+| Directory | Key Contents |
+| :--- | :--- |
+| **`controllers`** | Logic for `article`, `auth`, `chat`, `company`, `session`, and `user` |
+| **`models`** | Database schemas (`Article`, `Company`, `Notification`, `SessionLog`, `User`) |
+| **`routes`** | API endpoint definitions |
+| **`middleware`** | `authMiddleware`, `cloudinary` integration, `errorHandler` |
+| **`utils`** | Helper functions (`sendEmail`, `generateToken`) |
+
 ### Component Breakdown
 
 - Article: Manages the core knowledge base content lifecycle. Includes the editor interface, standardized card displays, detailed viewing, and the manager-specific approval queue interface.
