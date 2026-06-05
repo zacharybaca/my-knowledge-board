@@ -1,0 +1,604 @@
+{
+  "collections": {
+    "MyKnowledgeBoard.articles": {
+      "ns": "MyKnowledgeBoard.articles",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "__v",
+          "approverId",
+          "authorId",
+          "companyId",
+          "content",
+          "createdAt",
+          "department",
+          "rejectionReason",
+          "status",
+          "tags",
+          "title",
+          "updatedAt",
+          "viewCount"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "__v": {
+            "bsonType": "int"
+          },
+          "approverId": {
+            "bsonType": [
+              "null",
+              "objectId"
+            ]
+          },
+          "authorId": {
+            "bsonType": "objectId"
+          },
+          "companyId": {
+            "bsonType": "objectId"
+          },
+          "content": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "bsonType": "array",
+                "items": {
+                  "bsonType": "string"
+                }
+              },
+              {
+                "bsonType": "string"
+              }
+            ]
+          },
+          "downvotes": {
+            "bsonType": "array"
+          },
+          "expiresAt": {
+            "bsonType": "date"
+          },
+          "feedback": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "object",
+              "properties": {
+                "_id": {
+                  "bsonType": "objectId"
+                },
+                "comment": {
+                  "bsonType": "string"
+                },
+                "isHelpful": {
+                  "bsonType": "bool"
+                },
+                "submittedAt": {
+                  "bsonType": "date"
+                },
+                "userId": {
+                  "bsonType": "objectId"
+                }
+              },
+              "required": [
+                "_id",
+                "comment",
+                "isHelpful",
+                "submittedAt",
+                "userId"
+              ]
+            }
+          },
+          "lastReviewedAt": {
+            "bsonType": "date"
+          },
+          "rejectionReason": {
+            "bsonType": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "bsonType": "string"
+          },
+          "tags": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "string"
+            }
+          },
+          "title": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          },
+          "upvotes": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "objectId"
+            }
+          },
+          "viewCount": {
+            "bsonType": "int"
+          }
+        }
+      }
+    },
+    "MyKnowledgeBoard.companies": {
+      "ns": "MyKnowledgeBoard.companies",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "__v",
+          "createdAt",
+          "createdBy",
+          "emailDomain",
+          "imagePublicId",
+          "imageUrl",
+          "isActive",
+          "name",
+          "status",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "__v": {
+            "bsonType": "int"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "createdBy": {
+            "bsonType": "objectId"
+          },
+          "emailDomain": {
+            "bsonType": "string"
+          },
+          "imagePublicId": {
+            "bsonType": "string"
+          },
+          "imageUrl": {
+            "bsonType": "string"
+          },
+          "isActive": {
+            "bsonType": "bool"
+          },
+          "name": {
+            "bsonType": "string"
+          },
+          "status": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "MyKnowledgeBoard.notifications": {
+      "ns": "MyKnowledgeBoard.notifications",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "__v",
+          "createdAt",
+          "isRead",
+          "message",
+          "recipientId",
+          "referenceId",
+          "type",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "__v": {
+            "bsonType": "int"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "isRead": {
+            "bsonType": "bool"
+          },
+          "message": {
+            "bsonType": "string"
+          },
+          "recipientId": {
+            "bsonType": "objectId"
+          },
+          "referenceId": {
+            "bsonType": "objectId"
+          },
+          "type": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "MyKnowledgeBoard.sessionlogs": {
+      "ns": "MyKnowledgeBoard.sessionlogs",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "__v",
+          "createdAt",
+          "durationMinutes",
+          "loginTime",
+          "logoutTime",
+          "updatedAt",
+          "userId"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "__v": {
+            "bsonType": "int"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "durationMinutes": {
+            "bsonType": "int"
+          },
+          "loginTime": {
+            "bsonType": "date"
+          },
+          "logoutTime": {
+            "bsonType": [
+              "date",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          },
+          "userId": {
+            "bsonType": "objectId"
+          }
+        }
+      }
+    },
+    "MyKnowledgeBoard.users": {
+      "ns": "MyKnowledgeBoard.users",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "__v",
+          "avatarPublicId",
+          "companyId",
+          "createdAt",
+          "department",
+          "email",
+          "favoriteArticles",
+          "firstName",
+          "isAdmin",
+          "isVerified",
+          "lastName",
+          "managerId",
+          "password",
+          "role",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "__v": {
+            "bsonType": "int"
+          },
+          "avatar": {
+            "bsonType": "string"
+          },
+          "avatarPublicId": {
+            "bsonType": "string"
+          },
+          "companyId": {
+            "bsonType": "objectId"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "department": {
+            "bsonType": "string"
+          },
+          "email": {
+            "bsonType": "string"
+          },
+          "favoriteArticles": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "objectId"
+            }
+          },
+          "firstName": {
+            "bsonType": "string"
+          },
+          "isAdmin": {
+            "bsonType": "bool"
+          },
+          "isSuspended": {
+            "bsonType": "bool"
+          },
+          "isVerified": {
+            "bsonType": "bool"
+          },
+          "lastName": {
+            "bsonType": "string"
+          },
+          "managerId": {
+            "bsonType": "null"
+          },
+          "password": {
+            "bsonType": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "bsonType": "string"
+              },
+              {
+                "bsonType": "array",
+                "items": {
+                  "bsonType": "string"
+                }
+              }
+            ]
+          },
+          "suspensionReason": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          },
+          "verificationExpire": {
+            "bsonType": "date"
+          },
+          "verificationToken": {
+            "bsonType": "string"
+          }
+        }
+      }
+    }
+  },
+  "relationships": [
+    {
+      "id": "92cbda33-16cb-4887-bf1f-31372c5d698a",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.notifications",
+          "fields": [
+            "referenceId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "750e64c8-d7e1-4e93-b3e7-5c70007736c9",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "favoriteArticles"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "813c0b78-e950-42c5-b4d6-454ae3292a7a",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "companyId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.companies",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "65609275-48e1-495b-bb70-fbe9854a7743",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "companyId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.companies",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "d0eedb2e-10b6-426a-97ed-f31cf9b3b631",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "approverId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "7dc68f39-3ee5-4eb8-83e4-6df246685860",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "authorId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "7bad54aa-2043-492c-8f20-cf00e3d14f06",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "feedback",
+            "userId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "36591203-d288-452a-bfac-7dbcc533882d",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.articles",
+          "fields": [
+            "upvotes"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "5ea0b471-0ed0-4705-9927-3ae0eb2025c5",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.companies",
+          "fields": [
+            "createdBy"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "0d141abf-b295-457b-a52a-62fb4549a9c0",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.notifications",
+          "fields": [
+            "recipientId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "7f70db98-213d-48d5-a5dd-e2504097f926",
+      "relationship": [
+        {
+          "ns": "MyKnowledgeBoard.sessionlogs",
+          "fields": [
+            "userId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "MyKnowledgeBoard.users",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    }
+  ]
+}
