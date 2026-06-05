@@ -6,3 +6,33 @@
   border-radius: 12px;
   border: 2px solid black;
 }
+
+/* Layout the Hero as a grid or flexbox */
+.hero-layout {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.hero-text {
+  flex: 1;
+}
+
+.hero-video-container {
+  flex: 1;
+}
+
+.intro-video {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Responsive: Stack elements */
+@media (max-width: 768px) {
+  .hero-layout {
+    flex-direction: column;
+    text-align: center;
+  }
+}
