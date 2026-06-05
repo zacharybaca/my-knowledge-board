@@ -29,7 +29,7 @@ const Home = () => {
               className="intro-video"
             >
               <source
-                src="https://res.cloudinary.com/djud9gkxx/video/upload/f_auto,q_auto/my-knowledgeboard-intro_tihbdg.mp4"
+                src="https://res.cloudinary.com/djud9gkxx/video/upload/bo_1px_solid_rgb:33b533,dpr_auto,e_upscale,f_auto,q_auto:best,r_0/v1780680876/MyKnowledgeBoard_Video_tiusj0.mp4"
                 type="video/mp4"
               />
               Your browser does not support the video tag.
