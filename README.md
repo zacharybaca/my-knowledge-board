@@ -191,6 +191,9 @@ The client application is built with React and Vite, utilizing a feature-based d
     |   |   |-- App.jsx
     |   |   |-- components
     |   |   |   |-- Admin
+                    |-- WorkspaceManagement
+                        |-- WorkspaceManagement.jsx
+                        `-- workspace-management.css
     |   |   |   |   |-- SessionLogs.jsx
     |   |   |   |   `-- session-logs.css
     |   |   |   |-- Article
