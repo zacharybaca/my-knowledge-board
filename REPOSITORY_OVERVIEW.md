@@ -16,6 +16,17 @@ My Knowledge Board is a multi-tenant internal knowledge platform built with the 
 | Integrations | Google Generative AI, Cloudinary, SendGrid, Nodemailer |
 | Tooling | ESLint, Prettier, Husky, lint-staged, nodemon, concurrently |
 
+## Architecture Diagram
+
+```mermaid
+graph TD
+    Client[React Frontend] -->|REST API & Socket.IO| Server[Express Backend]
+    Server -->|Mongoose| DB[(MongoDB)]
+    Server -->|Gemini API| AI[Google Generative AI]
+    Server -->|SMTP| Email[SendGrid / Nodemailer]
+    Server -->|Uploads| Cloudinary[Cloudinary]
+```
+
 ## High-level codebase structure
 
 ```text
