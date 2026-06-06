@@ -23,7 +23,7 @@ graph TD
     Client[React Frontend] -->|REST API & Socket.IO| Server[Express Backend]
     Server -->|Mongoose| DB[(MongoDB)]
     Server -->|Gemini API| AI[Google Generative AI]
-    Server -->|SMTP| Email[SendGrid / Nodemailer]
+    Server -->|SendGrid API| Email[SendGrid]
     Server -->|Uploads| Cloudinary[Cloudinary]
 ```
 
