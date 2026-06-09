@@ -62,7 +62,10 @@ const articleSchema = new mongoose.Schema(
       },
     ],
     title: { type: String, required: true },
-    content: { type: String, required: true },
+    contentEmbedding: {
+    type: [Number], // Array of floats
+    select: false,  // Hide by default to save bandwidth on normal queries
+  },
     tags: [{ type: String }],
     status: {
       type: String,
