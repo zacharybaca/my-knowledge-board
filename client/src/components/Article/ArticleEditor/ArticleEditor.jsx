@@ -4,7 +4,7 @@ import { Editor } from '@tinymce/tinymce-react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
-import { Wand2 } from 'lucide-react';
+import { Wand2, Type, ListOrdered } from 'lucide-react'; // Added icons for the new buttons
 import './article-editor.css';
 
 const ArticleEditor = () => {
@@ -33,7 +33,7 @@ const ArticleEditor = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    departments: [], // Changed to array
+    departments: [],
     content: '',
     summary: '',
     tags: '',
@@ -42,6 +42,7 @@ const ArticleEditor = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false); // NEW STATE FOR TEXT ENHANCEMENT
   const [toastConfig, setToastConfig] = useState(null);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ const ArticleEditor = () => {
         if (response.success) {
           setFormData({
             title: response.data.title || '',
-            departments: response.data.department || [], // Map the array
+            departments: response.data.department || [],
             content: response.data.content || '',
             summary: response.data.summary || '',
             tags: response.data.tags ? response.data.tags.join(', ') : '',
@@ -74,7 +75,6 @@ const ArticleEditor = () => {
     setFormData((prev) => ({ ...prev, content }));
   };
 
-  // Multi-select handler for departments
   const handleDepartmentChange = (e) => {
     const options = e.target.options;
     const selectedDepartments = [];
@@ -86,8 +86,52 @@ const ArticleEditor = () => {
     setFormData((prev) => ({ ...prev, departments: selectedDepartments }));
   };
 
+  // --- NEW AI DRAFT ENHANCEMENT HANDLER ---
+  const handleAIEnhance = async (promptType) => {
+    // We strip HTML tags roughly just to check if there is actual text content
+    const plainText = formData.content.replace(/<[^>]*>?/gm, '').trim();
+    if (!plainText) {
+      setToastConfig({
+        type: 'error',
+        message: 'Please write some content in the editor first before using AI enhancement.',
+      });
+      return;
+    }
+
+    setIsEnhancing(true);
+    setToastConfig({ type: 'success', message: 'AI is enhancing your text. Please wait...' });
+
+    const response = await fetcher('/api/ai/enhance-text', {
+      method: 'POST',
+      body: JSON.stringify({ text: formData.content, promptType })
+    });
+
+    if (response.success) {
+      // We assume the AI returns markdown or plain text, we format it slightly
+      // In a robust implementation, the AI should be instructed to return HTML
+      let formattedContent = response.enhancedText;
+      
+      // Basic formatting if the AI returns markdown instead of HTML
+      if (!formattedContent.includes('<p>')) {
+        formattedContent = formattedContent
+          .split('\n')
+          .map(line => line.trim() ? `<p>${line}</p>` : '')
+          .join('');
+      }
+
+      setFormData((prev) => ({ ...prev, content: formattedContent }));
+      setToastConfig({ type: 'success', message: 'Text enhanced successfully!' });
+    } else {
+      setToastConfig({ type: 'error', message: response.error || 'Failed to enhance text.' });
+    }
+    
+    setIsEnhancing(false);
+  };
+  // ----------------------------------------
+
   const handleAIAnalysis = async () => {
-    if (!formData.content || formData.content.length < 50) {
+    const plainText = formData.content.replace(/<[^>]*>?/gm, '').trim();
+    if (!plainText || plainText.length < 50) {
       setToastConfig({
         type: 'error',
         message: 'Insufficient content for AI analysis. Please write more.',
@@ -125,7 +169,6 @@ const ArticleEditor = () => {
     setIsSubmitting(true);
     setToastConfig(null);
 
-    // Ensure at least one department is selected
     if (formData.departments.length === 0) {
       setToastConfig({
         type: 'error',
@@ -137,7 +180,7 @@ const ArticleEditor = () => {
 
     const payload = {
       title: formData.title,
-      departments: formData.departments, // Send the array
+      departments: formData.departments,
       content: formData.content,
       summary: formData.summary,
       tags: formData.tags
@@ -208,8 +251,8 @@ const ArticleEditor = () => {
           <select
             id="departments"
             name="departments"
-            multiple // Enable multiple selection
-            size="5" // Show a few options without scrolling
+            multiple 
+            size="5" 
             value={formData.departments}
             onChange={handleDepartmentChange}
             required
@@ -224,7 +267,57 @@ const ArticleEditor = () => {
         </div>
 
         <div className="form-group editor-container">
-          <label>Content</label>
+          <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+            <span>Content</span>
+            
+            {/* NEW AI WRITING ASSISTANT TOOLBAR */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                type="button"
+                onClick={() => handleAIEnhance('professional')} 
+                disabled={isEnhancing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
+                  padding: '4px 8px', borderRadius: '4px', cursor: isEnhancing ? 'wait' : 'pointer',
+                  fontSize: '0.8rem', fontWeight: '500'
+                }}
+              >
+                <Type size={14} color="#10b981" /> 
+                {isEnhancing ? 'Rewriting...' : 'Make Professional'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleAIEnhance('simplify')} 
+                disabled={isEnhancing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
+                  padding: '4px 8px', borderRadius: '4px', cursor: isEnhancing ? 'wait' : 'pointer',
+                  fontSize: '0.8rem', fontWeight: '500'
+                }}
+              >
+                <Wand2 size={14} color="#3b82f6" /> 
+                Simplify
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleAIEnhance('step-by-step')} 
+                disabled={isEnhancing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
+                  padding: '4px 8px', borderRadius: '4px', cursor: isEnhancing ? 'wait' : 'pointer',
+                  fontSize: '0.8rem', fontWeight: '500'
+                }}
+              >
+                <ListOrdered size={14} color="#f59e0b" /> 
+                Format as Steps
+              </button>
+            </div>
+            {/* ------------------------------------- */}
+            
+          </label>
           <Editor
             apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
             onInit={(evt, editor) => (editorRef.current = editor)}
@@ -234,24 +327,9 @@ const ArticleEditor = () => {
               height: 500,
               menubar: true,
               plugins: [
-                'advlist',
-                'autolink',
-                'lists',
-                'link',
-                'image',
-                'charmap',
-                'preview',
-                'anchor',
-                'searchreplace',
-                'visualblocks',
-                'code',
-                'fullscreen',
-                'insertdatetime',
-                'media',
-                'table',
-                'code',
-                'help',
-                'wordcount',
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
               ],
               toolbar:
                 'undo redo | blocks | ' +
@@ -351,14 +429,14 @@ const ArticleEditor = () => {
             type="button"
             className="btn-cancel"
             onClick={() => navigate(-1)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isEnhancing}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="btn-submit"
-            disabled={isSubmitting || !formData.content.trim()}
+            disabled={isSubmitting || isEnhancing || !formData.content.trim()}
           >
             {isSubmitting
               ? 'Saving...'
