@@ -13,6 +13,7 @@ import {
   submitArticleFeedback,
   getReviewQueue,
   certifyArticle,
+  checkDuplicateArticle
 } from "../controllers/articleController.js";
 import { protect } from "../middleware/authMiddleware.js"; // Ensure your auth middleware is imported
 
@@ -29,6 +30,7 @@ router.route("/review-queue").get(protect, getReviewQueue);
 router.get("/favorites", protect, getFavoriteArticles);
 
 // 2. Dynamic Routes (/:id catches everything else)
+router.post("/check-duplicate", protect, checkDuplicateArticle);
 router.route("/:id").get(protect, getArticleById).put(protect, updateArticle);
 router.route("/:id/feedback").post(protect, submitArticleFeedback);
 router.route("/:id/certify").patch(protect, certifyArticle);
