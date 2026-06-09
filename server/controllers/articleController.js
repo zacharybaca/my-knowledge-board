@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import Article from "../models/Article.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
+import { generateEmbedding } from "./aiController.js";
 
 // @desc    Create new article
 // @route   POST /api/articles
@@ -9,8 +10,18 @@ import Notification from "../models/Notification.js";
 const createArticle = asyncHandler(async (req, res) => {
   const { title, content, tags, department } = req.body;
 
-  // UPDATED: Assign article to the user's first active workspace
+  // Assign article to the user's first active workspace
   const activeCompanyId = req.body.companyId || req.user.companyId[0];
+
+  // 1. Generate the vector embedding for duplicate detection
+  const textToEmbed = `Title: ${title}\nContent: ${content}`;
+  let embedding = [];
+  try {
+    embedding = await generateEmbedding(textToEmbed);
+  } catch (error) {
+    console.error("Failed to generate embedding during article creation:", error);
+    // We continue creating the article even if embedding fails, it just won't be searchable by vector
+  }
 
   const article = await Article.create({
     title,
@@ -19,17 +30,66 @@ const createArticle = asyncHandler(async (req, res) => {
     department,
     authorId: req.user._id,
     companyId: activeCompanyId,
+    contentEmbedding: embedding, // Save the generated vector
     status: "Pending", // Requires Manager/Admin approval
   });
 
   res.status(201).json(article);
 });
 
+// @desc    Check if drafted article is a duplicate
+// @route   POST /api/articles/check-duplicate
+// @access  Private
+const checkDuplicateArticle = asyncHandler(async (req, res) => {
+  const { title, content } = req.body;
+  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+
+  const textToEmbed = `Title: ${title}\nContent: ${content}`;
+  
+  let queryEmbedding;
+  try {
+    queryEmbedding = await generateEmbedding(textToEmbed);
+  } catch (error) {
+    res.status(500);
+    throw new Error("Failed to generate embedding for duplicate check");
+  }
+
+  // Use MongoDB Atlas Vector Search Aggregation Pipeline
+  const duplicates = await Article.aggregate([
+    {
+      $vectorSearch: {
+        index: "vector_index", // IMPORTANT: You must create an Atlas Vector Search index named "vector_index"
+        path: "contentEmbedding",
+        queryVector: queryEmbedding,
+        numCandidates: 10,
+        limit: 3,
+        filter: { companyId: activeCompanyId } // Only check within their company
+      }
+    },
+    {
+      $project: {
+        title: 1,
+        status: 1,
+        score: { $meta: "vectorSearchScore" } // Get the similarity score
+      }
+    }
+  ]);
+
+  // If the score is higher than a certain threshold (e.g., 0.85 out of 1.0), it's a likely duplicate
+  const strongMatches = duplicates.filter(doc => doc.score > 0.85);
+
+  res.json({
+    success: true,
+    isLikelyDuplicate: strongMatches.length > 0,
+    similarArticles: strongMatches
+  });
+});
+
 // @desc    Get all articles for a company
 // @route   GET /api/articles
 // @access  Private
 const getArticles = asyncHandler(async (req, res) => {
-  // UPDATED: Find articles where companyId is IN the user's company array
+  // Find articles where companyId is IN the user's company array
   const articles = await Article.find({
     companyId: { $in: req.user.companyId },
     status: "Approved",
@@ -54,7 +114,7 @@ const getArticleById = asyncHandler(async (req, res) => {
     throw new Error("Article not found");
   }
 
-  // UPDATED: Check if the user's company array contains the article's companyId
+  // Check if the user's company array contains the article's companyId
   const hasCompanyAccess = req.user.companyId.some(
     (id) => id.toString() === article.companyId.toString(),
   );
@@ -93,6 +153,17 @@ const updateArticle = asyncHandler(async (req, res) => {
   article.tags = req.body.tags || article.tags;
   article.department = req.body.departments || article.department;
 
+  // Re-generate embedding if title or content changed
+  if (req.body.title || req.body.content) {
+    try {
+      const textToEmbed = `Title: ${article.title}\nContent: ${article.content}`;
+      const newEmbedding = await generateEmbedding(textToEmbed);
+      article.contentEmbedding = newEmbedding;
+    } catch (error) {
+      console.error("Failed to update embedding:", error);
+    }
+  }
+
   const updatedArticle = await article.save();
   res.json(updatedArticle);
 });
@@ -109,7 +180,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
     throw new Error("Article not found");
   }
 
-  // UPDATED: Array verification for security
+  // Array verification for security
   const hasCompanyAccess = req.user.companyId.some(
     (id) => id.toString() === article.companyId.toString(),
   );
@@ -151,8 +222,8 @@ const getUserArticles = asyncHandler(async (req, res) => {
  */
 const getPendingArticles = asyncHandler(async (req, res) => {
   const articles = await Article.find({
-    companyId: req.user.companyId,
-    department: req.user.department,
+    companyId: { $in: req.user.companyId },
+    department: { $in: req.user.department },
     status: "Pending",
   }).populate("authorId", "firstName lastName");
 
@@ -185,7 +256,10 @@ const getFavoriteArticles = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getTopArticles = asyncHandler(async (req, res) => {
-  const articles = await Article.find({ status: "Approved" })
+  const articles = await Article.find({ 
+    companyId: { $in: req.user.companyId },
+    status: "Approved" 
+  })
     .sort({ viewCount: -1 })
     .limit(5)
     .populate("authorId", "firstName lastName")
@@ -250,7 +324,11 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
     throw new Error("Article not found");
   }
 
-  if (article.companyId.toString() !== req.user.companyId.toString()) {
+  const hasCompanyAccess = req.user.companyId.some(
+    (id) => id.toString() === article.companyId.toString(),
+  );
+
+  if (!hasCompanyAccess) {
     res.status(403);
     throw new Error("Access denied");
   }
@@ -293,7 +371,7 @@ const getReviewQueue = asyncHandler(async (req, res) => {
   const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   const articles = await Article.find({
-    companyId: req.user.companyId,
+    companyId: { $in: req.user.companyId },
     status: "Approved",
     expiresAt: { $lte: thirtyDaysFromNow },
   })
@@ -317,12 +395,18 @@ const certifyArticle = asyncHandler(async (req, res) => {
 
   const article = await Article.findById(req.params.id);
 
-  if (
-    !article ||
-    article.companyId.toString() !== req.user.companyId.toString()
-  ) {
+  if (!article) {
     res.status(404);
     throw new Error("Article not found");
+  }
+
+  const hasCompanyAccess = req.user.companyId.some(
+    (id) => id.toString() === article.companyId.toString(),
+  );
+
+  if (!hasCompanyAccess) {
+    res.status(403);
+    throw new Error("Not authorized to modify this article");
   }
 
   article.expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
@@ -338,6 +422,7 @@ const certifyArticle = asyncHandler(async (req, res) => {
 
 export {
   createArticle,
+  checkDuplicateArticle,
   getArticles,
   getArticleById,
   updateArticle,
