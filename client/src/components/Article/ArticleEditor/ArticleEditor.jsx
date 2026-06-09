@@ -4,7 +4,7 @@ import { Editor } from '@tinymce/tinymce-react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
-import { Wand2, Type, ListOrdered } from 'lucide-react'; // Added icons for the new buttons
+import { Wand2, Type, ListOrdered } from 'lucide-react';
 import './article-editor.css';
 
 const ArticleEditor = () => {
@@ -42,7 +42,7 @@ const ArticleEditor = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false); // NEW STATE FOR TEXT ENHANCEMENT
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [toastConfig, setToastConfig] = useState(null);
 
   useEffect(() => {
@@ -86,9 +86,8 @@ const ArticleEditor = () => {
     setFormData((prev) => ({ ...prev, departments: selectedDepartments }));
   };
 
-  // --- NEW AI DRAFT ENHANCEMENT HANDLER ---
+  // --- AI DRAFT ENHANCEMENT HANDLER ---
   const handleAIEnhance = async (promptType) => {
-    // We strip HTML tags roughly just to check if there is actual text content
     const plainText = formData.content.replace(/<[^>]*>?/gm, '').trim();
     if (!plainText) {
       setToastConfig({
@@ -107,11 +106,8 @@ const ArticleEditor = () => {
     });
 
     if (response.success) {
-      // We assume the AI returns markdown or plain text, we format it slightly
-      // In a robust implementation, the AI should be instructed to return HTML
       let formattedContent = response.enhancedText;
       
-      // Basic formatting if the AI returns markdown instead of HTML
       if (!formattedContent.includes('<p>')) {
         formattedContent = formattedContent
           .split('\n')
@@ -127,7 +123,6 @@ const ArticleEditor = () => {
     
     setIsEnhancing(false);
   };
-  // ----------------------------------------
 
   const handleAIAnalysis = async () => {
     const plainText = formData.content.replace(/<[^>]*>?/gm, '').trim();
@@ -177,6 +172,31 @@ const ArticleEditor = () => {
       setIsSubmitting(false);
       return;
     }
+
+    // --- NEW DUPLICATE DETECTION CHECK ---
+    // Only check for duplicates if it's a new article (to save API calls on edits)
+    if (!isEditing) {
+      try {
+        const dupRes = await fetcher('/api/articles/check-duplicate', {
+          method: 'POST',
+          body: JSON.stringify({ title: formData.title, content: formData.content })
+        });
+
+        if (dupRes.success && dupRes.isLikelyDuplicate) {
+          const confirmMsg = `Wait! We found similar articles in your organization's database:\n\n` +
+            dupRes.similarArticles.map(a => `- ${a.title}`).join('\n') +
+            `\n\nAre you sure you want to submit this new article anyway?`;
+            
+          if (!window.confirm(confirmMsg)) {
+            setIsSubmitting(false);
+            return; // Abort submission
+          }
+        }
+      } catch (err) {
+        console.warn("Duplicate check failed, proceeding anyway.", err);
+      }
+    }
+    // -------------------------------------
 
     const payload = {
       title: formData.title,
@@ -270,7 +290,7 @@ const ArticleEditor = () => {
           <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
             <span>Content</span>
             
-            {/* NEW AI WRITING ASSISTANT TOOLBAR */}
+            {/* AI WRITING ASSISTANT TOOLBAR */}
             <div style={{ display: 'flex', gap: '8px' }}>
               <button 
                 type="button"
@@ -315,8 +335,6 @@ const ArticleEditor = () => {
                 Format as Steps
               </button>
             </div>
-            {/* ------------------------------------- */}
-            
           </label>
           <Editor
             apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
