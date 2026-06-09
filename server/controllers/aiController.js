@@ -50,3 +50,45 @@ export const generateArticleMetadata = asyncHandler(async (req, res) => {
     );
   }
 });
+
+// @desc    Enhance drafted article text
+// @route   POST /api/ai/enhance-text
+// @access  Private
+export const enhanceArticleText = asyncHandler(async (req, res) => {
+  const { text, promptType } = req.body;
+
+  if (!text) {
+    res.status(400);
+    throw new Error("No text provided for enhancement");
+  }
+
+  // Define how the AI should rewrite the text based on the user's request
+  let systemPrompt = "";
+  switch (promptType) {
+    case "professional":
+      systemPrompt = "Rewrite the following text to sound highly professional, objective, and suitable for a corporate policy or procedure manual. Fix any grammatical errors.";
+      break;
+    case "simplify":
+      systemPrompt = "Rewrite the following text to be as simple and clear as possible. Remove jargon and make it easy for a beginner to understand.";
+      break;
+    case "step-by-step":
+      systemPrompt = "Format the following text into a clear, numbered step-by-step guide. Ensure the flow is logical.";
+      break;
+    default:
+      systemPrompt = "Proofread and improve the clarity and grammar of the following text.";
+  }
+
+  const fullPrompt = `${systemPrompt}\n\nHere is the text:\n"""\n${text}\n"""`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(fullPrompt);
+    const responseText = result.response.text();
+
+    res.json({ success: true, enhancedText: responseText });
+  } catch (error) {
+    console.error("AI Enhancement Error:", error);
+    res.status(500);
+    throw new Error("Failed to generate AI enhancement");
+  }
+});
