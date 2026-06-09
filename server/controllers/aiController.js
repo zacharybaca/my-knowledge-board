@@ -92,3 +92,10 @@ export const enhanceArticleText = asyncHandler(async (req, res) => {
     throw new Error("Failed to generate AI enhancement");
   }
 });
+
+export const generateEmbedding = async (text) => {
+  // Use Gemini's embedding model
+  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+  const result = await model.embedContent(text);
+  return result.embedding.values;
+};
