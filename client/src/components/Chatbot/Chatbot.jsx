@@ -48,8 +48,9 @@ const Chatbot = () => {
         ...prev,
         {
           sender: 'bot',
+          // UPDATED: Correctly accessing the fetcher's wrapper 'data' object
           text: response.data.answer,
-          sources: response.data.sources || [] // Capture the RAG citations
+          sources: response.data.sources || []
         },
       ]);
     } else {
