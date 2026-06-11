@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFetcher } from '../../hooks/useFetcher';
-import { X, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { X, Send, FileText } from 'lucide-react'; // Added FileText for the citation icon
 import './chatbot.css';
 
 const Chatbot = () => {
@@ -9,6 +10,7 @@ const Chatbot = () => {
     {
       sender: 'bot',
       text: 'Hello. I can answer questions regarding company policies and procedures. How can I help?',
+      sources: [] // Added empty sources array for the initial message
     },
   ]);
   const [input, setInput] = useState('');
@@ -34,15 +36,21 @@ const Chatbot = () => {
     setInput('');
     setIsLoading(true);
 
-    const response = await fetcher('/api/chat/ask', {
+    // Make sure your endpoint matches what you defined in chatRoutes.js
+    // If you changed it to '/' or '/ask', make sure it aligns here.
+    const response = await fetcher('/api/chat', {
       method: 'POST',
       body: JSON.stringify({ question: userMessage }),
     });
 
-    if (response.success) {
+    if (response.success && response.data) {
       setMessages((prev) => [
         ...prev,
-        { sender: 'bot', text: response.data.answer },
+        {
+          sender: 'bot',
+          text: response.data.answer,
+          sources: response.data.sources || [] // Capture the RAG citations
+        },
       ]);
     } else {
       setMessages((prev) => [
@@ -50,6 +58,7 @@ const Chatbot = () => {
         {
           sender: 'bot',
           text: response.error || 'Error connecting to the knowledge base.',
+          sources: []
         },
       ]);
     }
@@ -59,7 +68,7 @@ const Chatbot = () => {
 
   return (
     <>
-      {/* Trigger Button with Logo SVG */}
+      {/* Trigger Button with Custom Logo SVG */}
       {!isOpen && (
         <button className="chatbot-trigger" onClick={() => setIsOpen(true)}>
           <svg
@@ -112,9 +121,42 @@ const Chatbot = () => {
           <div className="chatbot-messages">
             {messages.map((msg, idx) => (
               <div key={idx} className={`message-bubble ${msg.sender}`}>
-                {msg.text}
+                {/* Main LLM Text */}
+                <div className="message-text">{msg.text}</div>
+
+                {/* Citations / Sources Block */}
+                {msg.sources && msg.sources.length > 0 && (
+                  <div
+                    className="citation-container"
+                    style={{
+                      marginTop: '10px',
+                      paddingTop: '10px',
+                      borderTop: '1px solid rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+                      Sources:
+                    </span>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {msg.sources.map((source) => (
+                        <li key={source.id}>
+                          <Link
+                            to={`/articles/${source.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none' }}
+                          >
+                            <FileText size={12} />
+                            [{source.citationNumber}] {source.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
+
             {isLoading && (
               <div className="message-bubble bot typing-indicator">
                 <span>.</span>
