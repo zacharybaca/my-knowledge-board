@@ -16,10 +16,14 @@ const app = express();
 const corsOptions = {
   origin: [
     process.env.CLIENT_URL,
+    "https://myknowledgeboard.online", // Hardcoded fallback for your production domain
     "http://localhost:5173",
     "http://127.0.0.1:5173",
   ].filter(Boolean),
   credentials: true,
+  // ADDED: Explicitly define allowed methods and headers to fix the OPTIONS preflight failure
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
 
 app.use(cors(corsOptions));

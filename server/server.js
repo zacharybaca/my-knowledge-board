@@ -21,6 +21,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       process.env.CLIENT_URL,
+      "https://myknowledgeboard.online", // Matching the app.js explicitly
       "http://localhost:5173",
       "http://127.0.0.1:5173",
     ].filter(Boolean),
