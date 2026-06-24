@@ -19,6 +19,11 @@ const ProfileSettings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastConfig, setToastConfig] = useState(null);
 
+  // Custom Cursor State
+  const [useCustomCursor, setUseCustomCursor] = useState(() => {
+    return localStorage.getItem('customCursor') === 'true';
+  });
+
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -32,6 +37,17 @@ const ProfileSettings = () => {
       }
     }
   }, [user]);
+
+  // Handle Custom Cursor Side Effect
+  useEffect(() => {
+    if (useCustomCursor) {
+      document.body.classList.add('theme-custom-cursor');
+      localStorage.setItem('customCursor', 'true');
+    } else {
+      document.body.classList.remove('theme-custom-cursor');
+      localStorage.setItem('customCursor', 'false');
+    }
+  }, [useCustomCursor]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -233,6 +249,28 @@ const ProfileSettings = () => {
               onChange={handleChange}
               minLength="6"
             />
+          </div>
+
+          {/* CUSTOM CURSOR TOGGLE */}
+          <hr
+            style={{
+              margin: '30px 0',
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            }}
+          />
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={useCustomCursor}
+                onChange={(e) => setUseCustomCursor(e.target.checked)}
+                style={{ width: 'auto', margin: 0 }}
+              />
+              Enable Themed Cursors
+            </label>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+              Replaces the default system cursor with custom designs tailored for the Knowledge Base.
+            </span>
           </div>
 
           <button
