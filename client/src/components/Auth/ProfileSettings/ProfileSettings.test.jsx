@@ -63,11 +63,11 @@ describe('ProfileSettings', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<ProfileSettings />)
+    const { container } = render(<ProfileSettings />)
 
-    await userEvent.type(screen.getByLabelText(/new password/i), 'abc123')
+    await userEvent.type(container.querySelector('input[name="password"]'), 'abc123')
     await userEvent.type(
-      screen.getByLabelText(/confirm new password/i),
+      container.querySelector('input[name="confirmPassword"]'),
       'different'
     )
     await userEvent.click(
