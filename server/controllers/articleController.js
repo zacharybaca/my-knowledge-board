@@ -19,7 +19,10 @@ const createArticle = asyncHandler(async (req, res) => {
   try {
     embedding = await generateEmbedding(textToEmbed);
   } catch (error) {
-    console.error("Failed to generate embedding during article creation:", error);
+    console.error(
+      "Failed to generate embedding during article creation:",
+      error,
+    );
     // We continue creating the article even if embedding fails, it just won't be searchable by vector
   }
 
@@ -45,7 +48,7 @@ const checkDuplicateArticle = asyncHandler(async (req, res) => {
   const activeCompanyId = req.body.companyId || req.user.companyId[0];
 
   const textToEmbed = `Title: ${title}\nContent: ${content}`;
-  
+
   let queryEmbedding;
   try {
     queryEmbedding = await generateEmbedding(textToEmbed);
@@ -63,25 +66,25 @@ const checkDuplicateArticle = asyncHandler(async (req, res) => {
         queryVector: queryEmbedding,
         numCandidates: 10,
         limit: 3,
-        filter: { companyId: activeCompanyId } // Only check within their company
-      }
+        filter: { companyId: activeCompanyId }, // Only check within their company
+      },
     },
     {
       $project: {
         title: 1,
         status: 1,
-        score: { $meta: "vectorSearchScore" } // Get the similarity score
-      }
-    }
+        score: { $meta: "vectorSearchScore" }, // Get the similarity score
+      },
+    },
   ]);
 
   // If the score is higher than a certain threshold (e.g., 0.85 out of 1.0), it's a likely duplicate
-  const strongMatches = duplicates.filter(doc => doc.score > 0.85);
+  const strongMatches = duplicates.filter((doc) => doc.score > 0.85);
 
   res.json({
     success: true,
     isLikelyDuplicate: strongMatches.length > 0,
-    similarArticles: strongMatches
+    similarArticles: strongMatches,
   });
 });
 
@@ -256,9 +259,9 @@ const getFavoriteArticles = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getTopArticles = asyncHandler(async (req, res) => {
-  const articles = await Article.find({ 
+  const articles = await Article.find({
     companyId: { $in: req.user.companyId },
-    status: "Approved" 
+    status: "Approved",
   })
     .sort({ viewCount: -1 })
     .limit(5)

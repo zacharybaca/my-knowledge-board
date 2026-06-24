@@ -23,7 +23,12 @@ const corsOptions = {
   credentials: true,
   // ADDED: Explicitly define allowed methods and headers to fix the OPTIONS preflight failure
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+  ],
 };
 
 app.use(cors(corsOptions));

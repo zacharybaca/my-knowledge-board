@@ -258,8 +258,18 @@ const ProfileSettings = () => {
               borderColor: 'rgba(255, 255, 255, 0.1)',
             }}
           />
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          <div
+            className="form-group"
+            style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+          >
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+              }}
+            >
               <input
                 type="checkbox"
                 checked={useCustomCursor}
@@ -269,7 +279,8 @@ const ProfileSettings = () => {
               Enable Themed Cursors
             </label>
             <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-              Replaces the default system cursor with custom designs tailored for the Knowledge Base.
+              Replaces the default system cursor with custom designs tailored
+              for the Knowledge Base.
             </span>
           </div>
 

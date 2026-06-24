@@ -10,7 +10,7 @@ const Chatbot = () => {
     {
       sender: 'bot',
       text: 'Hello. I can answer questions regarding company policies and procedures. How can I help?',
-      sources: [] // Added empty sources array for the initial message
+      sources: [], // Added empty sources array for the initial message
     },
   ]);
   const [input, setInput] = useState('');
@@ -50,7 +50,7 @@ const Chatbot = () => {
           sender: 'bot',
           // UPDATED: Correctly accessing the fetcher's wrapper 'data' object
           text: response.data.answer,
-          sources: response.data.sources || []
+          sources: response.data.sources || [],
         },
       ]);
     } else {
@@ -59,7 +59,7 @@ const Chatbot = () => {
         {
           sender: 'bot',
           text: response.error || 'Error connecting to the knowledge base.',
-          sources: []
+          sources: [],
         },
       ]);
     }
@@ -132,23 +132,47 @@ const Chatbot = () => {
                     style={{
                       marginTop: '10px',
                       paddingTop: '10px',
-                      borderTop: '1px solid rgba(0,0,0,0.1)'
+                      borderTop: '1px solid rgba(0,0,0,0.1)',
                     }}
                   >
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        color: '#64748b',
+                        display: 'block',
+                        marginBottom: '4px',
+                      }}
+                    >
                       Sources:
                     </span>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                      }}
+                    >
                       {msg.sources.map((source) => (
                         <li key={source.id}>
                           <Link
                             to={`/articles/${source.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none' }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.8rem',
+                              color: '#3b82f6',
+                              textDecoration: 'none',
+                            }}
                           >
-                            <FileText size={12} />
-                            [{source.citationNumber}] {source.title}
+                            <FileText size={12} />[{source.citationNumber}]{' '}
+                            {source.title}
                           </Link>
                         </li>
                       ))}

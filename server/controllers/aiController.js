@@ -66,16 +66,20 @@ export const enhanceArticleText = asyncHandler(async (req, res) => {
   let systemPrompt = "";
   switch (promptType) {
     case "professional":
-      systemPrompt = "Rewrite the following text to sound highly professional, objective, and suitable for a corporate policy or procedure manual. Fix any grammatical errors.";
+      systemPrompt =
+        "Rewrite the following text to sound highly professional, objective, and suitable for a corporate policy or procedure manual. Fix any grammatical errors.";
       break;
     case "simplify":
-      systemPrompt = "Rewrite the following text to be as simple and clear as possible. Remove jargon and make it easy for a beginner to understand.";
+      systemPrompt =
+        "Rewrite the following text to be as simple and clear as possible. Remove jargon and make it easy for a beginner to understand.";
       break;
     case "step-by-step":
-      systemPrompt = "Format the following text into a clear, numbered step-by-step guide. Ensure the flow is logical.";
+      systemPrompt =
+        "Format the following text into a clear, numbered step-by-step guide. Ensure the flow is logical.";
       break;
     default:
-      systemPrompt = "Proofread and improve the clarity and grammar of the following text.";
+      systemPrompt =
+        "Proofread and improve the clarity and grammar of the following text.";
   }
 
   const fullPrompt = `${systemPrompt}\n\nHere is the text:\n"""\n${text}\n"""`;

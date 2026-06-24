@@ -1,5 +1,8 @@
 import express from "express";
-import { generateArticleMetadata, enhanceArticleText } from "../controllers/aiController.js";
+import {
+  generateArticleMetadata,
+  enhanceArticleText,
+} from "../controllers/aiController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();

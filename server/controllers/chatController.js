@@ -31,12 +31,13 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   // Base filter: Must belong to their company and be Approved
   const searchFilter = {
     companyId: { $eq: companyObjectId },
-    status: "Approved"
+    status: "Approved",
   };
 
   // --- Role-Based Access Control (RBAC) Logic ---
   // If the user is an Employee, they can ONLY see articles mapped to their specific department(s) or "Public"/"Other"
-  const isElevated = req.user.role.includes("Admin") || req.user.role.includes("Manager");
+  const isElevated =
+    req.user.role.includes("Admin") || req.user.role.includes("Manager");
   if (!isElevated) {
     searchFilter.department = { $in: req.user.department };
   }
@@ -50,24 +51,25 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
         queryVector: queryEmbedding,
         numCandidates: 20,
         limit: 4, // Retrieve the top 4 most relevant articles
-        filter: searchFilter
-      }
+        filter: searchFilter,
+      },
     },
     {
       $project: {
         _id: 1,
         title: 1,
         content: 1,
-        score: { $meta: "vectorSearchScore" }
-      }
-    }
+        score: { $meta: "vectorSearchScore" },
+      },
+    },
   ]);
 
   // If no articles are found or relevance is too low, fallback
   if (relevantArticles.length === 0 || relevantArticles[0].score < 0.6) {
     return res.json({
-      answer: "I couldn't find any specific information regarding that in our active policies. Please try rephrasing your question or consult your manager.",
-      sources: []
+      answer:
+        "I couldn't find any specific information regarding that in our active policies. Please try rephrasing your question or consult your manager.",
+      sources: [],
     });
   }
 
@@ -77,7 +79,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
   relevantArticles.forEach((article, index) => {
     // Strip HTML tags from the content so the LLM processes raw text cleanly
-    const cleanContent = article.content.replace(/<[^>]*>?/gm, '').trim();
+    const cleanContent = article.content.replace(/<[^>]*>?/gm, "").trim();
 
     contextData += `[Source ${index + 1}] Title: ${article.title}\nContent: ${cleanContent}\n\n`;
 
@@ -85,7 +87,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     sources.push({
       id: article._id,
       title: article.title,
-      citationNumber: index + 1
+      citationNumber: index + 1,
     });
   });
 
@@ -110,7 +112,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
     res.json({
       answer,
-      sources // Pass the sources array back to the client
+      sources, // Pass the sources array back to the client
     });
   } catch (error) {
     if (error.status === 503) {

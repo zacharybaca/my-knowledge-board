@@ -13,7 +13,7 @@ import {
   submitArticleFeedback,
   getReviewQueue,
   certifyArticle,
-  checkDuplicateArticle
+  checkDuplicateArticle,
 } from "../controllers/articleController.js";
 import { protect } from "../middleware/authMiddleware.js"; // Ensure your auth middleware is imported
 

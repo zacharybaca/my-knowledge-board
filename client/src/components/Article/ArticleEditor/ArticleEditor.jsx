@@ -92,35 +92,45 @@ const ArticleEditor = () => {
     if (!plainText) {
       setToastConfig({
         type: 'error',
-        message: 'Please write some content in the editor first before using AI enhancement.',
+        message:
+          'Please write some content in the editor first before using AI enhancement.',
       });
       return;
     }
 
     setIsEnhancing(true);
-    setToastConfig({ type: 'success', message: 'AI is enhancing your text. Please wait...' });
+    setToastConfig({
+      type: 'success',
+      message: 'AI is enhancing your text. Please wait...',
+    });
 
     const response = await fetcher('/api/ai/enhance-text', {
       method: 'POST',
-      body: JSON.stringify({ text: formData.content, promptType })
+      body: JSON.stringify({ text: formData.content, promptType }),
     });
 
     if (response.success) {
       let formattedContent = response.enhancedText;
-      
+
       if (!formattedContent.includes('<p>')) {
         formattedContent = formattedContent
           .split('\n')
-          .map(line => line.trim() ? `<p>${line}</p>` : '')
+          .map((line) => (line.trim() ? `<p>${line}</p>` : ''))
           .join('');
       }
 
       setFormData((prev) => ({ ...prev, content: formattedContent }));
-      setToastConfig({ type: 'success', message: 'Text enhanced successfully!' });
+      setToastConfig({
+        type: 'success',
+        message: 'Text enhanced successfully!',
+      });
     } else {
-      setToastConfig({ type: 'error', message: response.error || 'Failed to enhance text.' });
+      setToastConfig({
+        type: 'error',
+        message: response.error || 'Failed to enhance text.',
+      });
     }
-    
+
     setIsEnhancing(false);
   };
 
@@ -179,21 +189,25 @@ const ArticleEditor = () => {
       try {
         const dupRes = await fetcher('/api/articles/check-duplicate', {
           method: 'POST',
-          body: JSON.stringify({ title: formData.title, content: formData.content })
+          body: JSON.stringify({
+            title: formData.title,
+            content: formData.content,
+          }),
         });
 
         if (dupRes.success && dupRes.isLikelyDuplicate) {
-          const confirmMsg = `Wait! We found similar articles in your organization's database:\n\n` +
-            dupRes.similarArticles.map(a => `- ${a.title}`).join('\n') +
+          const confirmMsg =
+            `Wait! We found similar articles in your organization's database:\n\n` +
+            dupRes.similarArticles.map((a) => `- ${a.title}`).join('\n') +
             `\n\nAre you sure you want to submit this new article anyway?`;
-            
+
           if (!window.confirm(confirmMsg)) {
             setIsSubmitting(false);
             return; // Abort submission
           }
         }
       } catch (err) {
-        console.warn("Duplicate check failed, proceeding anyway.", err);
+        console.warn('Duplicate check failed, proceeding anyway.', err);
       }
     }
     // -------------------------------------
@@ -271,8 +285,8 @@ const ArticleEditor = () => {
           <select
             id="departments"
             name="departments"
-            multiple 
-            size="5" 
+            multiple
+            size="5"
             value={formData.departments}
             onChange={handleDepartmentChange}
             required
@@ -287,51 +301,79 @@ const ArticleEditor = () => {
         </div>
 
         <div className="form-group editor-container">
-          <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+          <label
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              marginBottom: '8px',
+            }}
+          >
             <span>Content</span>
-            
+
             {/* AI WRITING ASSISTANT TOOLBAR */}
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
+              <button
                 type="button"
-                onClick={() => handleAIEnhance('professional')} 
+                onClick={() => handleAIEnhance('professional')}
                 disabled={isEnhancing}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
-                  padding: '4px 8px', borderRadius: '4px', cursor: isEnhancing ? 'wait' : 'pointer',
-                  fontSize: '0.8rem', fontWeight: '500'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#f1f5f9',
+                  color: '#334155',
+                  border: '1px solid #cbd5e1',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: isEnhancing ? 'wait' : 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '500',
                 }}
               >
-                <Type size={14} color="#10b981" /> 
+                <Type size={14} color="#10b981" />
                 {isEnhancing ? 'Rewriting...' : 'Make Professional'}
               </button>
-              <button 
+              <button
                 type="button"
-                onClick={() => handleAIEnhance('simplify')} 
+                onClick={() => handleAIEnhance('simplify')}
                 disabled={isEnhancing}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
-                  padding: '4px 8px', borderRadius: '4px', cursor: isEnhancing ? 'wait' : 'pointer',
-                  fontSize: '0.8rem', fontWeight: '500'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#f1f5f9',
+                  color: '#334155',
+                  border: '1px solid #cbd5e1',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: isEnhancing ? 'wait' : 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '500',
                 }}
               >
-                <Wand2 size={14} color="#3b82f6" /> 
+                <Wand2 size={14} color="#3b82f6" />
                 Simplify
               </button>
-              <button 
+              <button
                 type="button"
-                onClick={() => handleAIEnhance('step-by-step')} 
+                onClick={() => handleAIEnhance('step-by-step')}
                 disabled={isEnhancing}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
-                  padding: '4px 8px', borderRadius: '4px', cursor: isEnhancing ? 'wait' : 'pointer',
-                  fontSize: '0.8rem', fontWeight: '500'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#f1f5f9',
+                  color: '#334155',
+                  border: '1px solid #cbd5e1',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: isEnhancing ? 'wait' : 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '500',
                 }}
               >
-                <ListOrdered size={14} color="#f59e0b" /> 
+                <ListOrdered size={14} color="#f59e0b" />
                 Format as Steps
               </button>
             </div>
@@ -345,9 +387,24 @@ const ArticleEditor = () => {
               height: 500,
               menubar: true,
               plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
+                'advlist',
+                'autolink',
+                'lists',
+                'link',
+                'image',
+                'charmap',
+                'preview',
+                'anchor',
+                'searchreplace',
+                'visualblocks',
+                'code',
+                'fullscreen',
+                'insertdatetime',
+                'media',
+                'table',
+                'code',
+                'help',
+                'wordcount',
               ],
               toolbar:
                 'undo redo | blocks | ' +
