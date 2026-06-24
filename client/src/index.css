@@ -40,3 +40,21 @@ button {
 button:hover {
   background-color: #1e293b;
 }
+
+/* Custom Cursor Theme: 'Tech Modern' */
+body.theme-custom-cursor {
+  /* The numbers (2 2) represent the 'hotspot' coordinates (X, Y) of the cursor */
+  cursor: url('/cursors/cursor-standard.svg') 2 2, auto;
+}
+
+body.theme-custom-cursor a,
+body.theme-custom-cursor button,
+body.theme-custom-cursor .clickable {
+  cursor: url('/cursors/cursor-pointer.svg') 12 4, pointer;
+}
+
+/* Specific cursor for AI tools in your application */
+body.theme-custom-cursor .ai-assist-section,
+body.theme-custom-cursor .chatbot-trigger {
+  cursor: url('/cursors/cursor-ai.svg') 4 19, pointer;
+}
