@@ -6,6 +6,11 @@ export default defineConfig({
   base: '/', // Ensure correct asset paths in production
   plugins: [react(),
   ],
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    setupFiles: './src/__tests__/setup.js',
+  },
   server: {
     port: 5173,
     // --- ADD THIS PROXY SECTION ---
