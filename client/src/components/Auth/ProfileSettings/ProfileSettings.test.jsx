@@ -66,12 +66,17 @@ describe('ProfileSettings', () => {
   it('blocks profile submission when password confirmation mismatches', async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
-    render(<ProfileSettings />);
+    const { container } = render(<ProfileSettings />);
 
-    fireEvent.change(screen.getByLabelText(/new password/i), {
+    const passwordInput = container.querySelector('input[name="password"]');
+    const confirmPasswordInput = container.querySelector(
+      'input[name="confirmPassword"]',
+    );
+
+    fireEvent.change(passwordInput, {
       target: { value: 'password123' },
     });
-    fireEvent.change(screen.getByLabelText(/confirm new password/i), {
+    fireEvent.change(confirmPasswordInput, {
       target: { value: 'password456' },
     });
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
