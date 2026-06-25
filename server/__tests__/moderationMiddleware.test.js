@@ -25,7 +25,10 @@ describe("moderateContent", () => {
 
   it("allows clean content through", async () => {
     await moderateContent(
-      makeReq({ title: "How to reset a password", content: "Follow these steps." }),
+      makeReq({
+        title: "How to reset a password",
+        content: "Follow these steps.",
+      }),
       makeRes(),
       next,
     );

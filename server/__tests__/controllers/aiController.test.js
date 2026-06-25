@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Use vi.hoisted so mock fns are available when the factory runs ──────────
-const { mockGenerateContent, mockEmbedContent, mockGetGenerativeModel } = vi.hoisted(() => ({
-  mockGenerateContent: vi.fn(),
-  mockEmbedContent: vi.fn(),
-  mockGetGenerativeModel: vi.fn(),
-}));
+const { mockGenerateContent, mockEmbedContent, mockGetGenerativeModel } =
+  vi.hoisted(() => ({
+    mockGenerateContent: vi.fn(),
+    mockEmbedContent: vi.fn(),
+    mockGetGenerativeModel: vi.fn(),
+  }));
 
 vi.mock("@google/generative-ai", () => ({
   GoogleGenerativeAI: class {
@@ -15,7 +16,10 @@ vi.mock("@google/generative-ai", () => ({
   },
 }));
 
-import { enhanceArticleText, generateEmbedding } from "../../controllers/aiController.js";
+import {
+  enhanceArticleText,
+  generateEmbedding,
+} from "../../controllers/aiController.js";
 
 const makeRes = () => {
   const res = { statusCode: 200 };
@@ -31,7 +35,9 @@ const makeRes = () => {
 describe("enhanceArticleText", () => {
   beforeEach(() => {
     mockGenerateContent.mockReset();
-    mockGetGenerativeModel.mockReturnValue({ generateContent: mockGenerateContent });
+    mockGetGenerativeModel.mockReturnValue({
+      generateContent: mockGenerateContent,
+    });
   });
 
   it("forwards 400 via next when no text is provided", async () => {
@@ -52,12 +58,19 @@ describe("enhanceArticleText", () => {
     });
     const res = makeRes();
 
-    await enhanceArticleText({ body: { text: "hello world", promptType: "professional" } }, res, vi.fn());
+    await enhanceArticleText(
+      { body: { text: "hello world", promptType: "professional" } },
+      res,
+      vi.fn(),
+    );
 
     const [fullPrompt] = mockGenerateContent.mock.calls[0];
     expect(fullPrompt).toMatch(/corporate policy or procedure manual/i);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: true, enhancedText: "Professional text" }),
+      expect.objectContaining({
+        success: true,
+        enhancedText: "Professional text",
+      }),
     );
   });
 
@@ -66,7 +79,11 @@ describe("enhanceArticleText", () => {
       response: { text: () => "Simple text" },
     });
 
-    await enhanceArticleText({ body: { text: "complex jargon", promptType: "simplify" } }, makeRes(), vi.fn());
+    await enhanceArticleText(
+      { body: { text: "complex jargon", promptType: "simplify" } },
+      makeRes(),
+      vi.fn(),
+    );
 
     const [fullPrompt] = mockGenerateContent.mock.calls[0];
     expect(fullPrompt).toMatch(/jargon/i);
@@ -77,7 +94,11 @@ describe("enhanceArticleText", () => {
       response: { text: () => "1. Step one" },
     });
 
-    await enhanceArticleText({ body: { text: "do the thing", promptType: "step-by-step" } }, makeRes(), vi.fn());
+    await enhanceArticleText(
+      { body: { text: "do the thing", promptType: "step-by-step" } },
+      makeRes(),
+      vi.fn(),
+    );
 
     const [fullPrompt] = mockGenerateContent.mock.calls[0];
     expect(fullPrompt).toMatch(/numbered step-by-step/i);
@@ -88,7 +109,11 @@ describe("enhanceArticleText", () => {
       response: { text: () => "Improved text" },
     });
 
-    await enhanceArticleText({ body: { text: "some text", promptType: "unknown" } }, makeRes(), vi.fn());
+    await enhanceArticleText(
+      { body: { text: "some text", promptType: "unknown" } },
+      makeRes(),
+      vi.fn(),
+    );
 
     const [fullPrompt] = mockGenerateContent.mock.calls[0];
     expect(fullPrompt).toMatch(/proofread/i);
@@ -99,7 +124,11 @@ describe("enhanceArticleText", () => {
       response: { text: () => "Better text" },
     });
 
-    await enhanceArticleText({ body: { text: "raw text" } }, makeRes(), vi.fn());
+    await enhanceArticleText(
+      { body: { text: "raw text" } },
+      makeRes(),
+      vi.fn(),
+    );
 
     const [fullPrompt] = mockGenerateContent.mock.calls[0];
     expect(fullPrompt).toMatch(/proofread/i);
@@ -110,7 +139,11 @@ describe("enhanceArticleText", () => {
     const next = vi.fn();
     const res = makeRes();
 
-    await enhanceArticleText({ body: { text: "some text", promptType: "professional" } }, res, next);
+    await enhanceArticleText(
+      { body: { text: "some text", promptType: "professional" } },
+      res,
+      next,
+    );
 
     const errorArg = next.mock.calls[0]?.[0];
     expect(errorArg).toBeInstanceOf(Error);

@@ -48,9 +48,14 @@ describe("protect middleware", () => {
   it("passes when a valid token resolves to a user", async () => {
     const fakeUser = { _id: "u1", firstName: "Alice" };
     jwt.verify.mockReturnValue({ userId: "u1" });
-    User.findById.mockReturnValue({ select: vi.fn().mockResolvedValue(fakeUser) });
+    User.findById.mockReturnValue({
+      select: vi.fn().mockResolvedValue(fakeUser),
+    });
 
-    const req = { cookies: { jwt: "valid.token" }, originalUrl: "/api/articles" };
+    const req = {
+      cookies: { jwt: "valid.token" },
+      originalUrl: "/api/articles",
+    };
     const res = makeRes();
 
     const { nextArgs } = await run(protect, req, res);
@@ -111,7 +116,10 @@ describe("protect middleware", () => {
     jwt.verify.mockReturnValue({ userId: "ghost" });
     User.findById.mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
 
-    const req = { cookies: { jwt: "valid.token" }, originalUrl: "/api/articles" };
+    const req = {
+      cookies: { jwt: "valid.token" },
+      originalUrl: "/api/articles",
+    };
     const res = makeRes();
 
     const { nextArgs } = await run(protect, req, res);

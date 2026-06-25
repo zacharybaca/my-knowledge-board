@@ -221,7 +221,10 @@ describe("updateUserStatus", () => {
   });
 
   it("restores a suspended user", async () => {
-    const target = makeTargetUser({ isSuspended: true, suspensionReason: "Old reason" });
+    const target = makeTargetUser({
+      isSuspended: true,
+      suspensionReason: "Old reason",
+    });
     User.findById.mockResolvedValue(target);
 
     const req = {
@@ -246,7 +249,13 @@ describe("createElevatedUser", () => {
   it("returns 403 when caller is an Employee", async () => {
     const req = {
       user: { role: ["Employee"], companyId: ["company1"] },
-      body: { firstName: "Jane", lastName: "Doe", email: "jane@test.com", password: "pass", role: "Manager" },
+      body: {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@test.com",
+        password: "pass",
+        role: "Manager",
+      },
     };
     const res = makeRes();
 

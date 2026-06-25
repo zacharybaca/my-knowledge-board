@@ -5,7 +5,11 @@ import React from 'react';
 // Stable user reference — avoids an infinite useEffect([user]) loop that would
 // otherwise occur when the mock creates a new object on every useAuth() call.
 vi.mock('../hooks/useAuth.js', () => {
-  const user = { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com' };
+  const user = {
+    firstName: 'Jane',
+    lastName: 'Doe',
+    email: 'jane@example.com',
+  };
   return { useAuth: () => ({ user, checkUserAuth: vi.fn() }) };
 });
 
@@ -20,7 +24,7 @@ vi.mock('../components/Auth/auth-forms.css', () => ({}));
 // wired, causing a hang. Dynamic import defers module resolution to test time.
 const loadPS = () =>
   import('../components/Auth/ProfileSettings/ProfileSettings.jsx').then(
-    (m) => m.default,
+    (m) => m.default
   );
 
 describe('ProfileSettings — custom cursor toggle', () => {
@@ -37,7 +41,9 @@ describe('ProfileSettings — custom cursor toggle', () => {
   it('reads initial toggle state from localStorage (false by default)', async () => {
     const ProfileSettings = await loadPS();
     render(<ProfileSettings />);
-    const checkbox = screen.getByRole('checkbox', { name: /enable themed cursors/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /enable themed cursors/i,
+    });
     expect(checkbox).not.toBeChecked();
   });
 
@@ -45,14 +51,18 @@ describe('ProfileSettings — custom cursor toggle', () => {
     localStorage.setItem('customCursor', 'true');
     const ProfileSettings = await loadPS();
     render(<ProfileSettings />);
-    const checkbox = screen.getByRole('checkbox', { name: /enable themed cursors/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /enable themed cursors/i,
+    });
     expect(checkbox).toBeChecked();
   });
 
   it('adds theme-custom-cursor class to body when toggled on', async () => {
     const ProfileSettings = await loadPS();
     render(<ProfileSettings />);
-    const checkbox = screen.getByRole('checkbox', { name: /enable themed cursors/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /enable themed cursors/i,
+    });
 
     fireEvent.click(checkbox);
 
@@ -63,7 +73,9 @@ describe('ProfileSettings — custom cursor toggle', () => {
     localStorage.setItem('customCursor', 'true');
     const ProfileSettings = await loadPS();
     render(<ProfileSettings />);
-    const checkbox = screen.getByRole('checkbox', { name: /enable themed cursors/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /enable themed cursors/i,
+    });
 
     fireEvent.click(checkbox);
 
@@ -73,7 +85,9 @@ describe('ProfileSettings — custom cursor toggle', () => {
   it('persists cursor preference to localStorage when toggled on', async () => {
     const ProfileSettings = await loadPS();
     render(<ProfileSettings />);
-    const checkbox = screen.getByRole('checkbox', { name: /enable themed cursors/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /enable themed cursors/i,
+    });
 
     fireEvent.click(checkbox);
 
@@ -84,7 +98,9 @@ describe('ProfileSettings — custom cursor toggle', () => {
     localStorage.setItem('customCursor', 'true');
     const ProfileSettings = await loadPS();
     render(<ProfileSettings />);
-    const checkbox = screen.getByRole('checkbox', { name: /enable themed cursors/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /enable themed cursors/i,
+    });
 
     fireEvent.click(checkbox);
 

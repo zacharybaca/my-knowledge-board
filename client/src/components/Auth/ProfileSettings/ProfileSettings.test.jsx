@@ -18,7 +18,7 @@ const renderWithAuth = (user = mockUser) =>
   render(
     <AuthContext.Provider value={{ user, checkUserAuth: mockCheckUserAuth }}>
       <ProfileSettings />
-    </AuthContext.Provider>,
+    </AuthContext.Provider>
   );
 
 beforeEach(() => {
@@ -125,7 +125,7 @@ describe('ProfileSettings – password validation', () => {
     fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
 
     expect(
-      await screen.findByText(/Passwords do not match/i),
+      await screen.findByText(/Passwords do not match/i)
     ).toBeInTheDocument();
   });
 });

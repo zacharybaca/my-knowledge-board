@@ -44,11 +44,7 @@ describe("protect middleware", () => {
     });
     const next = vi.fn();
     const res = makeRes();
-    await protect(
-      makeReq({ cookies: { jwt: "bad.token.here" } }),
-      res,
-      next,
-    );
+    await protect(makeReq({ cookies: { jwt: "bad.token.here" } }), res, next);
     expect(res.status).toHaveBeenCalledWith(401);
     const err = next.mock.calls[0][0];
     expect(err.message).toMatch(/token failed/i);
@@ -76,7 +72,9 @@ describe("protect middleware", () => {
     const fakeUser = { _id: "u1", role: ["Employee"] };
     jwt.verify.mockReturnValue({ userId: "u1" });
     // findById returns a Mongoose-style query object with .select()
-    User.findById.mockReturnValue({ select: vi.fn().mockResolvedValue(fakeUser) });
+    User.findById.mockReturnValue({
+      select: vi.fn().mockResolvedValue(fakeUser),
+    });
 
     const next = vi.fn();
     const req = makeReq({ cookies: { jwt: "valid.token" } });
@@ -118,7 +116,9 @@ describe("admin middleware", () => {
   it("throws 403 for a non-admin user", () => {
     const next = vi.fn();
     const res = makeRes();
-    expect(() => admin({ user: { role: "Employee", isAdmin: false } }, res, next)).toThrow();
+    expect(() =>
+      admin({ user: { role: "Employee", isAdmin: false } }, res, next),
+    ).toThrow();
     expect(res.status).toHaveBeenCalledWith(403);
   });
 

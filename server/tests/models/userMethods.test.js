@@ -43,8 +43,12 @@ describe("User.schema.methods.getResetPasswordToken", () => {
     const after = Date.now();
 
     const tenMinutes = 10 * 60 * 1000;
-    expect(ctx.resetPasswordExpire).toBeGreaterThanOrEqual(before + tenMinutes - 50);
-    expect(ctx.resetPasswordExpire).toBeLessThanOrEqual(after + tenMinutes + 50);
+    expect(ctx.resetPasswordExpire).toBeGreaterThanOrEqual(
+      before + tenMinutes - 50,
+    );
+    expect(ctx.resetPasswordExpire).toBeLessThanOrEqual(
+      after + tenMinutes + 50,
+    );
   });
 
   it("each call produces a different token", () => {
@@ -81,7 +85,11 @@ describe("User.schema.methods.getVerificationToken", () => {
     const after = Date.now();
 
     const twentyFourHours = 24 * 60 * 60 * 1000;
-    expect(ctx.verificationExpire).toBeGreaterThanOrEqual(before + twentyFourHours - 50);
-    expect(ctx.verificationExpire).toBeLessThanOrEqual(after + twentyFourHours + 50);
+    expect(ctx.verificationExpire).toBeGreaterThanOrEqual(
+      before + twentyFourHours - 50,
+    );
+    expect(ctx.verificationExpire).toBeLessThanOrEqual(
+      after + twentyFourHours + 50,
+    );
   });
 });

@@ -33,8 +33,9 @@ const admin = (req, res, next) => {
   if (
     req.user &&
     (req.user.isAdmin ||
-      (Array.isArray(req.user.role) ? req.user.role.includes("Admin") : req.user.role === "Admin")
-    )
+      (Array.isArray(req.user.role)
+        ? req.user.role.includes("Admin")
+        : req.user.role === "Admin"))
   ) {
     next();
   } else {

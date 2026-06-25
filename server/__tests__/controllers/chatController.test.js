@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── vi.hoisted so all mock fns are available when factories run ─────────────
-const { mockAggregate, mockGenerateEmbedding, mockGenerateContent, mockGetGenerativeModel } =
-  vi.hoisted(() => ({
-    mockAggregate: vi.fn(),
-    mockGenerateEmbedding: vi.fn(),
-    mockGenerateContent: vi.fn(),
-    mockGetGenerativeModel: vi.fn(),
-  }));
+const {
+  mockAggregate,
+  mockGenerateEmbedding,
+  mockGenerateContent,
+  mockGetGenerativeModel,
+} = vi.hoisted(() => ({
+  mockAggregate: vi.fn(),
+  mockGenerateEmbedding: vi.fn(),
+  mockGenerateContent: vi.fn(),
+  mockGetGenerativeModel: vi.fn(),
+}));
 
 vi.mock("../../models/Article.js", () => ({
   default: { aggregate: mockAggregate },
@@ -28,7 +32,9 @@ vi.mock("@google/generative-ai", () => ({
 vi.mock("mongoose", async (importOriginal) => {
   const actual = await importOriginal();
   // ObjectId is used as `new mongoose.Types.ObjectId(id)` — must be a constructor
-  function FakeObjectId(id) { this.id = id; }
+  function FakeObjectId(id) {
+    this.id = id;
+  }
   return {
     ...actual,
     default: {
@@ -82,7 +88,9 @@ describe("generateChatResponse", () => {
     mockGenerateEmbedding.mockReset();
     mockAggregate.mockReset();
     mockGenerateContent.mockReset();
-    mockGetGenerativeModel.mockReturnValue({ generateContent: mockGenerateContent });
+    mockGetGenerativeModel.mockReturnValue({
+      generateContent: mockGenerateContent,
+    });
   });
 
   it("forwards 400 via next when question is missing", async () => {
@@ -118,7 +126,10 @@ describe("generateChatResponse", () => {
     await generateChatResponse(makeReq(), res, vi.fn());
 
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ sources: [], answer: expect.stringMatching(/couldn't find/i) }),
+      expect.objectContaining({
+        sources: [],
+        answer: expect.stringMatching(/couldn't find/i),
+      }),
     );
   });
 
@@ -172,13 +183,17 @@ describe("generateChatResponse", () => {
   it("applies department filter for Employee role (RBAC)", async () => {
     mockGenerateEmbedding.mockResolvedValue([0.1]);
     mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
-    const req = makeReq({ user: makeUser({ role: "Employee", department: ["Sales"] }) });
+    const req = makeReq({
+      user: makeUser({ role: "Employee", department: ["Sales"] }),
+    });
 
     await generateChatResponse(req, makeRes(), vi.fn());
 
     const [[pipeline]] = mockAggregate.mock.calls;
     const vectorStage = pipeline[0].$vectorSearch;
-    expect(vectorStage.filter).toMatchObject({ department: { $in: ["Sales"] } });
+    expect(vectorStage.filter).toMatchObject({
+      department: { $in: ["Sales"] },
+    });
   });
 
   it("does NOT apply department filter for Admin role (RBAC)", async () => {
