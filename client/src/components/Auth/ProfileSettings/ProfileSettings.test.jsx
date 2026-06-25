@@ -69,7 +69,7 @@ describe('ProfileSettings', () => {
 
   it('blocks submission when the passwords do not match', async () => {
     const user = userEvent.setup();
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const auth = renderProfileSettings();
     const emailInput = document.querySelector('input[name="email"]');
     const passwordInput = document.querySelector('input[name="password"]');
@@ -92,7 +92,7 @@ describe('ProfileSettings', () => {
 
   it('submits valid profile updates and refreshes auth state', async () => {
     const user = userEvent.setup();
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({}),
     });
