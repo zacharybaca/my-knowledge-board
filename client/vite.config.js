@@ -36,5 +36,10 @@ export default defineConfig({
         manualChunks: undefined // Avoid splitting into excessive chunks
       }
     }
-  }
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.js'],
+  },
 })
