@@ -30,6 +30,10 @@ const protect = asyncHandler(async (req, res, next) => {
 
 // For strictly Admin-only routes (e.g., Company management)
 const admin = (req, res, next) => {
+  if (
+    req.user &&
+    (req.user.isAdmin || (Array.isArray(req.user.role) ? req.user.role.includes("Admin") : req.user.role === "Admin"))
+  ) {
   if (req.user && (req.user.isAdmin || req.user.role.includes("Admin"))) {
     next();
   } else {
@@ -40,6 +44,11 @@ const admin = (req, res, next) => {
 
 // NEW: For Manager-only or Admin access (e.g., Article Approvals)
 const manager = (req, res, next) => {
+  const role = req.user && req.user.role;
+  const hasAccess = Array.isArray(role)
+    ? role.includes("Manager") || role.includes("Admin")
+    : role === "Manager" || role === "Admin";
+  if (req.user && hasAccess) {
   if (
     req.user &&
     (req.user.role.includes("Manager") || req.user.role.includes("Admin"))
