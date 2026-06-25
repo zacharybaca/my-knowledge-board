@@ -32,9 +32,10 @@ const protect = asyncHandler(async (req, res, next) => {
 const admin = (req, res, next) => {
   if (
     req.user &&
-    (req.user.isAdmin || (Array.isArray(req.user.role) ? req.user.role.includes("Admin") : req.user.role === "Admin"))
+    (req.user.isAdmin ||
+      (Array.isArray(req.user.role) ? req.user.role.includes("Admin") : req.user.role === "Admin")
+    )
   ) {
-  if (req.user && (req.user.isAdmin || req.user.role.includes("Admin"))) {
     next();
   } else {
     res.status(403);
@@ -48,11 +49,8 @@ const manager = (req, res, next) => {
   const hasAccess = Array.isArray(role)
     ? role.includes("Manager") || role.includes("Admin")
     : role === "Manager" || role === "Admin";
+
   if (req.user && hasAccess) {
-  if (
-    req.user &&
-    (req.user.role.includes("Manager") || req.user.role.includes("Admin"))
-  ) {
     next();
   } else {
     res.status(403);
