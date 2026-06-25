@@ -4,8 +4,12 @@ import react from '@vitejs/plugin-react'
 // Render-friendly Vite config
 export default defineConfig({
   base: '/', // Ensure correct asset paths in production
-  plugins: [react(),
-  ],
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setupTests.js',
+    globals: true,
+  },
   server: {
     port: 5173,
     // --- ADD THIS PROXY SECTION ---
