@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
+import {
+  getStoredCustomCursorPreference,
+  syncCustomCursorPreference,
+} from './customCursorPreference.js';
 import '../../Auth/auth-forms.css';
 
 const ProfileSettings = () => {
@@ -21,7 +25,7 @@ const ProfileSettings = () => {
 
   // Custom Cursor State
   const [useCustomCursor, setUseCustomCursor] = useState(() => {
-    return localStorage.getItem('customCursor') === 'true';
+    return getStoredCustomCursorPreference();
   });
 
   useEffect(() => {
@@ -40,13 +44,7 @@ const ProfileSettings = () => {
 
   // Handle Custom Cursor Side Effect
   useEffect(() => {
-    if (useCustomCursor) {
-      document.body.classList.add('theme-custom-cursor');
-      localStorage.setItem('customCursor', 'true');
-    } else {
-      document.body.classList.remove('theme-custom-cursor');
-      localStorage.setItem('customCursor', 'false');
-    }
+    syncCustomCursorPreference(useCustomCursor);
   }, [useCustomCursor]);
 
   const handleChange = (e) => {
@@ -114,7 +112,7 @@ const ProfileSettings = () => {
           type: 'error',
         });
       }
-    } catch (error) {
+    } catch {
       setToastConfig({
         message: 'Server error during profile update.',
         type: 'error',
