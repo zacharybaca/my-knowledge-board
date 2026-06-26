@@ -113,6 +113,12 @@ describe("admin middleware", () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
+  it("calls next() for a user whose role array includes 'Admin'", () => {
+    const next = vi.fn();
+    admin({ user: { role: ["Employee", "Admin"] } }, makeRes(), next);
+    expect(next).toHaveBeenCalledOnce();
+  });
+
   it("throws 403 for a non-admin user", () => {
     const next = vi.fn();
     const res = makeRes();
@@ -140,6 +146,12 @@ describe("manager middleware", () => {
   it("calls next() for a user with role 'Admin'", () => {
     const next = vi.fn();
     manager({ user: { role: "Admin" } }, makeRes(), next);
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("calls next() for a user whose role array includes 'Manager'", () => {
+    const next = vi.fn();
+    manager({ user: { role: ["Employee", "Manager"] } }, makeRes(), next);
     expect(next).toHaveBeenCalledOnce();
   });
 
