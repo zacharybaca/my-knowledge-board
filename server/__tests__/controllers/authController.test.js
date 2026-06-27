@@ -25,7 +25,11 @@ vi.mock("../../utils/sendEmail.js", () => ({
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import { loginUser, registerUser, logoutUser } from "../../controllers/authController.js";
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+} from "../../controllers/authController.js";
 import generateToken from "../../utils/generateToken.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

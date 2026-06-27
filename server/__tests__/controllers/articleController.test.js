@@ -199,7 +199,12 @@ describe("voteArticle", () => {
     down.push = (id) => {
       down[down.length] = id;
     };
-    return { _id: "article-1", upvotes: up, downvotes: down, save: vi.fn().mockResolvedValue(true) };
+    return {
+      _id: "article-1",
+      upvotes: up,
+      downvotes: down,
+      save: vi.fn().mockResolvedValue(true),
+    };
   }
 
   beforeEach(() => vi.clearAllMocks());
@@ -207,7 +212,11 @@ describe("voteArticle", () => {
   it("adds an upvote when user has not yet voted", async () => {
     const article = makeArticle([], []);
     mockFindById.mockResolvedValue(article);
-    const req = { params: { id: "article-1" }, body: { voteType: "up" }, user: { _id: userId } };
+    const req = {
+      params: { id: "article-1" },
+      body: { voteType: "up" },
+      user: { _id: userId },
+    };
     await run(voteArticle, req, makeRes());
     expect(article.upvotes).toContain(userId);
     expect(article.downvotes).not.toContain(userId);
@@ -216,7 +225,11 @@ describe("voteArticle", () => {
   it("removes an upvote (toggle off) when user already upvoted", async () => {
     const article = makeArticle([userId], []);
     mockFindById.mockResolvedValue(article);
-    const req = { params: { id: "article-1" }, body: { voteType: "up" }, user: { _id: userId } };
+    const req = {
+      params: { id: "article-1" },
+      body: { voteType: "up" },
+      user: { _id: userId },
+    };
     await run(voteArticle, req, makeRes());
     expect(article.upvotes).not.toContain(userId);
   });
@@ -224,7 +237,11 @@ describe("voteArticle", () => {
   it("switches from upvote to downvote", async () => {
     const article = makeArticle([userId], []);
     mockFindById.mockResolvedValue(article);
-    const req = { params: { id: "article-1" }, body: { voteType: "down" }, user: { _id: userId } };
+    const req = {
+      params: { id: "article-1" },
+      body: { voteType: "down" },
+      user: { _id: userId },
+    };
     await run(voteArticle, req, makeRes());
     expect(article.downvotes).toContain(userId);
     expect(article.upvotes).not.toContain(userId);
@@ -233,14 +250,22 @@ describe("voteArticle", () => {
   it("removes a downvote (toggle off) when user already downvoted", async () => {
     const article = makeArticle([], [userId]);
     mockFindById.mockResolvedValue(article);
-    const req = { params: { id: "article-1" }, body: { voteType: "down" }, user: { _id: userId } };
+    const req = {
+      params: { id: "article-1" },
+      body: { voteType: "down" },
+      user: { _id: userId },
+    };
     await run(voteArticle, req, makeRes());
     expect(article.downvotes).not.toContain(userId);
   });
 
   it("returns 404 when article is not found", async () => {
     mockFindById.mockResolvedValue(null);
-    const req = { params: { id: "ghost" }, body: { voteType: "up" }, user: { _id: userId } };
+    const req = {
+      params: { id: "ghost" },
+      body: { voteType: "up" },
+      user: { _id: userId },
+    };
     const { res, nextArgs } = await run(voteArticle, req, makeRes());
     expect(res.statusCode).toBe(404);
     expect(nextArgs[0]).toBeInstanceOf(Error);
@@ -306,7 +331,10 @@ describe("approveRejectArticle", () => {
     const req = {
       params: { id: "article-1" },
       body: { status: "Approved" },
-      user: { _id: "manager-1", companyId: [{ toString: () => "other-company" }] },
+      user: {
+        _id: "manager-1",
+        companyId: [{ toString: () => "other-company" }],
+      },
     };
     const { res, nextArgs } = await run(approveRejectArticle, req, makeRes());
     expect(res.statusCode).toBe(403);
