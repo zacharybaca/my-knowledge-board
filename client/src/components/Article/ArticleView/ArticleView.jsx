@@ -66,7 +66,9 @@ const ArticleView = () => {
         setArticle(response.data);
         const defaults = {};
         const foundVariables = new Set();
-        for (const match of response.data.content.matchAll(templateVariableRegex)) {
+        for (const match of response.data.content.matchAll(
+          templateVariableRegex
+        )) {
           if (!match[1].startsWith('Widget:')) foundVariables.add(match[1]);
         }
         foundVariables.forEach((key) => {
@@ -265,8 +267,10 @@ const ArticleView = () => {
     user?.role?.includes('Admin') ||
     user?.role?.includes('Manager') ||
     user?._id === article.authorId?._id;
-  const isExpired = article.expiresAt && new Date(article.expiresAt) < new Date();
-  const isManager = user?.role?.includes('Admin') || user?.role?.includes('Manager');
+  const isExpired =
+    article.expiresAt && new Date(article.expiresAt) < new Date();
+  const isManager =
+    user?.role?.includes('Admin') || user?.role?.includes('Manager');
 
   return (
     <div className="article-view-container">
@@ -285,7 +289,10 @@ const ArticleView = () => {
                     key={viewer._id}
                     title={`${viewer.firstName} ${viewer.lastName}`}
                     className="active-viewer-avatar"
-                    style={{ marginLeft: idx === 0 ? '0' : '-10px', zIndex: 10 - idx }}
+                    style={{
+                      marginLeft: idx === 0 ? '0' : '-10px',
+                      zIndex: 10 - idx,
+                    }}
                   >
                     {viewer.avatar ? (
                       <img src={viewer.avatar} alt={viewer.firstName} />
@@ -340,8 +347,8 @@ const ArticleView = () => {
           <div>
             <h4>This article has expired</h4>
             <p>
-              The information below has not been reviewed recently and may be out of
-              date. Proceed with caution.
+              The information below has not been reviewed recently and may be
+              out of date. Proceed with caution.
             </p>
           </div>
         </div>
@@ -350,7 +357,9 @@ const ArticleView = () => {
       <article className="article-wrapper">
         <header className="article-header">
           <div className="article-meta-top">
-            <span className={`status-badge status-${article.status.toLowerCase()}`}>
+            <span
+              className={`status-badge status-${article.status.toLowerCase()}`}
+            >
               {article.status}
             </span>
           </div>
@@ -408,7 +417,10 @@ const ArticleView = () => {
               ))}
             </div>
 
-            <button onClick={handleCopyToClipboard} className="copy-template-btn">
+            <button
+              onClick={handleCopyToClipboard}
+              className="copy-template-btn"
+            >
               <Copy size={16} /> Copy Filled Template
             </button>
           </div>
@@ -448,16 +460,22 @@ const ArticleView = () => {
       </article>
 
       {showRevisions && (
-        <div className="revision-modal-overlay" onClick={() => setShowRevisions(false)}>
+        <div
+          className="revision-modal-overlay"
+          onClick={() => setShowRevisions(false)}
+        >
           <div className="revision-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Revision History</h3>
             <div className="revision-list">
               {revisions.map((revision) => (
                 <div key={revision._id} className="revision-item">
                   <div>
-                    <strong>{new Date(revision.createdAt).toLocaleString()}</strong>
+                    <strong>
+                      {new Date(revision.createdAt).toLocaleString()}
+                    </strong>
                     <p>
-                      by {revision.updatedBy?.firstName} {revision.updatedBy?.lastName}
+                      by {revision.updatedBy?.firstName}{' '}
+                      {revision.updatedBy?.lastName}
                     </p>
                   </div>
                   <button

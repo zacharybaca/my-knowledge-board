@@ -181,7 +181,10 @@ const getArticleById = asyncHandler(async (req, res) => {
   }
 
   if (typeof article.populate === "function") {
-    article = await article.populate("comments.userId", "firstName lastName avatar");
+    article = await article.populate(
+      "comments.userId",
+      "firstName lastName avatar",
+    );
   }
 
   if (typeof article.viewCount === "number") {
@@ -474,7 +477,7 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
     article.feedback.push({
       userId: req.user._id,
       isHelpful,
-    comment: sanitizeRichText(comment || ""),
+      comment: sanitizeRichText(comment || ""),
       submittedAt: Date.now(),
     });
   }
@@ -590,7 +593,8 @@ const bulkUpdateArticleStatus = asyncHandler(async (req, res) => {
   for (const article of articles) {
     article.status = status;
     article.approverId = req.user._id;
-    article.rejectionReason = status === "Rejected" ? rejectionReason || null : null;
+    article.rejectionReason =
+      status === "Rejected" ? rejectionReason || null : null;
     await article.save();
 
     if (typeof Notification.create === "function") {
@@ -704,7 +708,10 @@ const rollbackArticleRevision = asyncHandler(async (req, res) => {
     throw new Error("Article not found");
   }
 
-  if (!hasCompanyAccess(req.user, article.companyId) || !isElevatedUser(req.user)) {
+  if (
+    !hasCompanyAccess(req.user, article.companyId) ||
+    !isElevatedUser(req.user)
+  ) {
     res.status(403);
     throw new Error("Not authorized to rollback this article");
   }
@@ -746,7 +753,10 @@ const getArticleAnalytics = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to access analytics");
   }
 
-  const companyFilter = { companyId: { $in: req.user.companyId }, status: "Approved" };
+  const companyFilter = {
+    companyId: { $in: req.user.companyId },
+    status: "Approved",
+  };
   const [totals, topViewed, votedCandidates] = await Promise.all([
     Article.countDocuments(companyFilter),
     Article.find(companyFilter)

@@ -71,7 +71,9 @@ const ManagerDashboard = () => {
     if (selectedArticleIds.length === 0) return;
     const rejectionReason =
       status === 'Rejected'
-        ? window.prompt('Optional rejection reason for all selected articles:') || ''
+        ? window.prompt(
+            'Optional rejection reason for all selected articles:'
+          ) || ''
         : '';
 
     const response = await fetcher('/api/articles/bulk-status', {

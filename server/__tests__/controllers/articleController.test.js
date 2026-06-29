@@ -427,7 +427,11 @@ describe("bulkUpdateArticleStatus", () => {
       user: { _id: "emp-1", role: ["Employee"], companyId: [] },
       app: { get: vi.fn() },
     };
-    const { res, nextArgs } = await run(bulkUpdateArticleStatus, req, makeRes());
+    const { res, nextArgs } = await run(
+      bulkUpdateArticleStatus,
+      req,
+      makeRes(),
+    );
     expect(res.statusCode).toBe(403);
     expect(nextArgs[0]).toBeInstanceOf(Error);
   });
@@ -844,7 +848,11 @@ describe("rollbackArticleRevision", () => {
       },
     };
     mockFindById.mockResolvedValue(fakeArticle([fakeRevision()]));
-    const { res, nextArgs } = await run(rollbackArticleRevision, req, makeRes());
+    const { res, nextArgs } = await run(
+      rollbackArticleRevision,
+      req,
+      makeRes(),
+    );
     expect(res.statusCode).toBe(403);
     expect(nextArgs[0]).toBeInstanceOf(Error);
   });
@@ -861,7 +869,11 @@ describe("rollbackArticleRevision", () => {
         companyId: [{ toString: () => companyId }],
       },
     };
-    const { res, nextArgs } = await run(rollbackArticleRevision, req, makeRes());
+    const { res, nextArgs } = await run(
+      rollbackArticleRevision,
+      req,
+      makeRes(),
+    );
     expect(res.statusCode).toBe(404);
     expect(nextArgs[0]).toBeInstanceOf(Error);
   });
@@ -877,7 +889,11 @@ describe("rollbackArticleRevision", () => {
         companyId: [{ toString: () => companyId }],
       },
     };
-    const { res, nextArgs } = await run(rollbackArticleRevision, req, makeRes());
+    const { res, nextArgs } = await run(
+      rollbackArticleRevision,
+      req,
+      makeRes(),
+    );
     expect(res.statusCode).toBe(404);
     expect(nextArgs[0]).toBeInstanceOf(Error);
   });

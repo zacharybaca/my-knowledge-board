@@ -8,11 +8,7 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 const nonEmptyTrimmed = (field, label) =>
-  body(field)
-    .isString()
-    .trim()
-    .notEmpty()
-    .withMessage(`${label} is required`);
+  body(field).isString().trim().notEmpty().withMessage(`${label} is required`);
 
 const validateLogin = [
   body("email").isEmail().withMessage("Valid email is required"),

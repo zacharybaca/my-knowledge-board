@@ -62,7 +62,12 @@ router.route("/:id/comments").post(protect, validateComment, addArticleComment);
 router.route("/:id/revisions").get(protect, getArticleRevisions);
 router.route("/:id/rollback").patch(protect, rollbackArticleRevision);
 
-router.patch("/:id/status", protect, validateArticleStatus, approveRejectArticle);
+router.patch(
+  "/:id/status",
+  protect,
+  validateArticleStatus,
+  approveRejectArticle,
+);
 router.patch("/:id/vote", protect, voteArticle);
 
 export default router;
