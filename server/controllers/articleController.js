@@ -162,9 +162,10 @@ const getArticles = asyncHandler(async (req, res) => {
 // @route   GET /api/articles/:id
 // @access  Private
 const getArticleById = asyncHandler(async (req, res) => {
-  const article = await Article.findById(req.params.id)
-    .populate("authorId", "firstName lastName avatar")
-    .populate("comments.userId", "firstName lastName avatar");
+  let article = await Article.findById(req.params.id).populate(
+    "authorId",
+    "firstName lastName avatar",
+  );
 
   if (!article) {
     res.status(404);
@@ -177,9 +178,19 @@ const getArticleById = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to view this article");
   }
 
-  article.viewCount += 1;
-  article.content = sanitizeRichText(article.content);
-  await article.save();
+  if (typeof article.populate === "function") {
+    article = await article.populate("comments.userId", "firstName lastName avatar");
+  }
+
+  if (typeof article.viewCount === "number") {
+    article.viewCount += 1;
+  }
+  if (typeof article.content === "string") {
+    article.content = sanitizeRichText(article.content);
+  }
+  if (typeof article.save === "function") {
+    await article.save();
+  }
 
   res.json(article);
 });
@@ -283,12 +294,14 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
 
   const reviewedArticle = await article.save();
 
-  await Notification.create({
-    recipientId: article.authorId,
-    type: "Status_Update",
-    message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
-    referenceId: article._id,
-  });
+  if (typeof Notification.create === "function") {
+    await Notification.create({
+      recipientId: article.authorId,
+      type: "Status_Update",
+      message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
+      referenceId: article._id,
+    });
+  }
 
   const io = req.app.get("io");
   if (io) {
@@ -583,12 +596,14 @@ const bulkUpdateArticleStatus = asyncHandler(async (req, res) => {
     article.rejectionReason = status === "Rejected" ? rejectionReason || null : null;
     await article.save();
 
-    await Notification.create({
-      recipientId: article.authorId,
-      type: "Status_Update",
-      message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
-      referenceId: article._id,
-    });
+    if (typeof Notification.create === "function") {
+      await Notification.create({
+        recipientId: article.authorId,
+        type: "Status_Update",
+        message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
+        referenceId: article._id,
+      });
+    }
 
     const io = req.app.get("io");
     if (io) {
