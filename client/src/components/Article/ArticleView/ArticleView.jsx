@@ -24,6 +24,13 @@ import './article-view.css';
 
 const templateVariableRegex = /\[([A-Za-z0-9_]+)\]/g;
 const widgetRegex = /\[Widget:([a-zA-Z0-9_]+)\]/g;
+const escapeHtml = (value = '') =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 
 const ArticleView = () => {
   const { id } = useParams();
@@ -114,8 +121,9 @@ const ArticleView = () => {
 
     templateVariables.forEach((variable) => {
       const regex = new RegExp(`\\[${variable}\\]`, 'g');
+      const safeValue = escapeHtml(templateData[variable] || '');
       const valueToInject = templateData[variable]
-        ? `<span class="template-filled">${templateData[variable]}</span>`
+        ? `<span class="template-filled">${safeValue}</span>`
         : `<span class="template-empty">[${variable}]</span>`;
 
       parsedHtml = parsedHtml.replace(regex, valueToInject);
