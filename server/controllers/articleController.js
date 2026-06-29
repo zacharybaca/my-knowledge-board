@@ -186,8 +186,7 @@ const getArticleById = asyncHandler(async (req, res) => {
 
   if (typeof article.viewCount === "number") {
     article.viewCount += 1;
-  }
-  await article.save();
+    await article.save();
   }
 
   res.json(article);
