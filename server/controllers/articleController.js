@@ -246,7 +246,9 @@ const updateArticle = asyncHandler(async (req, res) => {
     : article.content;
   article.summary = req.body.summary ?? article.summary;
   article.tags = req.body.tags || article.tags;
-  article.department = req.body.departments || article.department;
+  article.department = req.body.departments
+    ? normalizeDepartments(req.body.departments)
+    : article.department;
 
   // Re-generate embedding if title or content changed
   if (req.body.title || req.body.content) {
