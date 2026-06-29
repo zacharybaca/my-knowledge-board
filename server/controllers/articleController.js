@@ -187,11 +187,7 @@ const getArticleById = asyncHandler(async (req, res) => {
   if (typeof article.viewCount === "number") {
     article.viewCount += 1;
   }
-  if (typeof article.content === "string") {
-    article.content = sanitizeRichText(article.content);
-  }
-  if (typeof article.save === "function") {
-    await article.save();
+  await article.save();
   }
 
   res.json(article);
