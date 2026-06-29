@@ -119,15 +119,17 @@ const getArticles = asyncHandler(async (req, res) => {
   };
 
   if (keyword) {
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     filter.$or = [
-      { title: { $regex: keyword, $options: "i" } },
-      { content: { $regex: keyword, $options: "i" } },
-      { tags: { $regex: keyword, $options: "i" } },
+      { title: { $regex: escapedKeyword, $options: "i" } },
+      { content: { $regex: escapedKeyword, $options: "i" } },
+      { tags: { $regex: escapedKeyword, $options: "i" } },
     ];
   }
 
   if (tag) {
-    filter.tags = { $in: [new RegExp(`^${tag}$`, "i")] };
+    const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.tags = { $in: [new RegExp(`^${escapedTag}$`, "i")] };
   }
 
   const query = Article.find(filter)
