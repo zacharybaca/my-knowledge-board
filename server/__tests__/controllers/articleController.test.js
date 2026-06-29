@@ -54,6 +54,7 @@ vi.mock("../../utils/sanitizeHtml.js", () => ({
 // ── Imports ───────────────────────────────────────────────────────────────────
 
 import {
+  getArticles,
   getArticleById,
   checkDuplicateArticle,
   voteArticle,
@@ -954,5 +955,129 @@ describe("getArticleAnalytics", () => {
     const { res } = await run(getArticleAnalytics, req, makeRes());
     const { topVoted } = res.json.mock.calls[0][0];
     expect(topVoted[0].title).toBe("High Score");
+  });
+});
+
+// ── getArticles – filtering and pagination ────────────────────────────────────
+
+describe("getArticles", () => {
+  // Build a mock Mongoose query chain that is also thenable (Promise-like) so
+  // that both `await query` (non-paginated path) and `query.skip().limit()`
+  // (paginated path) work correctly in tests.
+  function makeQueryMock(articles) {
+    const mock = {
+      populate: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      skip: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      then: (onFulfilled, onRejected) =>
+        Promise.resolve(articles).then(onFulfilled, onRejected),
+      catch: (onRejected) => Promise.resolve(articles).catch(onRejected),
+      finally: (onFinally) => Promise.resolve(articles).finally(onFinally),
+    };
+    return mock;
+  }
+
+  const fakeArticles = [
+    { _id: "a1", title: "Article One", tags: ["policy"] },
+    { _id: "a2", title: "Article Two", tags: ["hr"] },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns all approved articles for the company without pagination", async () => {
+    mockFind.mockReturnValue(makeQueryMock(fakeArticles));
+    const req = {
+      query: {},
+      user: { companyId: ["company-001"] },
+    };
+    const { res } = await run(getArticles, req, makeRes());
+    expect(res.json).toHaveBeenCalledWith(fakeArticles);
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: { $in: ["company-001"] },
+        status: "Approved",
+      }),
+    );
+  });
+
+  it("returns paginated result with pagination metadata when paginate=true", async () => {
+    const pageArticles = [fakeArticles[0]];
+    mockFind.mockReturnValue(makeQueryMock(pageArticles));
+    mockCountDocuments.mockResolvedValue(15);
+    const req = {
+      query: { paginate: "true", page: "2", limit: "5" },
+      user: { companyId: ["company-001"] },
+    };
+    const { res } = await run(getArticles, req, makeRes());
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toHaveProperty("articles");
+    expect(payload).toHaveProperty("pagination");
+    expect(payload.pagination.page).toBe(2);
+    expect(payload.pagination.limit).toBe(5);
+    expect(payload.pagination.total).toBe(15);
+    expect(payload.pagination.totalPages).toBe(3);
+    expect(payload.pagination.hasNextPage).toBe(true);
+    expect(payload.pagination.hasPrevPage).toBe(true);
+  });
+
+  it("adds $or filter when keyword is provided", async () => {
+    mockFind.mockReturnValue(makeQueryMock([]));
+    const req = {
+      query: { keyword: "onboarding" },
+      user: { companyId: ["company-001"] },
+    };
+    await run(getArticles, req, makeRes());
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg).toHaveProperty("$or");
+    expect(filterArg.$or).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: expect.anything() }),
+        expect.objectContaining({ content: expect.anything() }),
+        expect.objectContaining({ tags: expect.anything() }),
+      ]),
+    );
+  });
+
+  it("escapes regex special characters in keyword to prevent ReDoS", async () => {
+    mockFind.mockReturnValue(makeQueryMock([]));
+    const req = {
+      query: { keyword: "policy.*" },
+      user: { companyId: ["company-001"] },
+    };
+    await run(getArticles, req, makeRes());
+    const filterArg = mockFind.mock.calls[0][0];
+    const titleFilter = filterArg.$or.find((c) => c.title);
+    expect(titleFilter.title.$regex).toContain("\\.");
+    expect(titleFilter.title.$regex).toContain("\\*");
+  });
+
+  it("adds tags filter when tag is provided", async () => {
+    mockFind.mockReturnValue(makeQueryMock([]));
+    const req = {
+      query: { tag: "hr" },
+      user: { companyId: ["company-001"] },
+    };
+    await run(getArticles, req, makeRes());
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg).toHaveProperty("tags");
+    expect(filterArg.tags.$in).toHaveLength(1);
+    expect(filterArg.tags.$in[0].flags).toContain("i");
+  });
+
+  it("reports hasNextPage=false and hasPrevPage=false on the only page", async () => {
+    mockFind.mockReturnValue(makeQueryMock(fakeArticles));
+    mockCountDocuments.mockResolvedValue(2);
+    const req = {
+      query: { paginate: "true", page: "1", limit: "10" },
+      user: { companyId: ["company-001"] },
+    };
+    const { res } = await run(getArticles, req, makeRes());
+    const { pagination } = res.json.mock.calls[0][0];
+    expect(pagination.hasNextPage).toBe(false);
+    expect(pagination.hasPrevPage).toBe(false);
+    expect(pagination.totalPages).toBe(1);
   });
 });
