@@ -236,8 +236,6 @@ const updateArticle = asyncHandler(async (req, res) => {
     article.status = "Approved";
   } else if (article.status === "Rejected") {
     article.status = "Pending";
-  } else if (req.body.status) {
-    article.status = req.body.status;
   }
 
   article.title = req.body.title || article.title;
