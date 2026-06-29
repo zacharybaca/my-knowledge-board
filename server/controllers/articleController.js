@@ -3,12 +3,26 @@ import Article from "../models/Article.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import { generateEmbedding } from "./aiController.js";
+import sendEmail from "../utils/sendEmail.js";
+import { sanitizeRichText } from "../utils/sanitizeHtml.js";
+
+const isElevatedUser = (user) =>
+  user?.role?.includes("Admin") || user?.role?.includes("Manager");
+
+const hasCompanyAccess = (user, companyId) =>
+  user.companyId.some((id) => id.toString() === companyId.toString());
+
+const normalizeDepartments = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return [value];
+};
 
 // @desc    Create new article
 // @route   POST /api/articles
 // @access  Private
 const createArticle = asyncHandler(async (req, res) => {
-  const { title, content, tags, department } = req.body;
+  const { title, content, tags, departments, summary } = req.body;
 
   // Assign article to the user's first active workspace
   const activeCompanyId = req.body.companyId || req.user.companyId[0];
@@ -28,9 +42,10 @@ const createArticle = asyncHandler(async (req, res) => {
 
   const article = await Article.create({
     title,
-    content,
+    content: sanitizeRichText(content),
+    summary: summary || "",
     tags,
-    department,
+    department: normalizeDepartments(departments),
     authorId: req.user._id,
     companyId: activeCompanyId,
     contentEmbedding: embedding, // Save the generated vector
@@ -92,22 +107,64 @@ const checkDuplicateArticle = asyncHandler(async (req, res) => {
 // @route   GET /api/articles
 // @access  Private
 const getArticles = asyncHandler(async (req, res) => {
-  // Find articles where companyId is IN the user's company array
-  const articles = await Article.find({
+  const keyword = req.query.keyword?.trim();
+  const tag = req.query.tag?.trim();
+  const page = Number.parseInt(req.query.page || "1", 10);
+  const limit = Number.parseInt(req.query.limit || "10", 10);
+  const shouldPaginate = req.query.paginate === "true";
+
+  const filter = {
     companyId: { $in: req.user.companyId },
     status: "Approved",
-  })
+  };
+
+  if (keyword) {
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.$or = [
+      { title: { $regex: escapedKeyword, $options: "i" } },
+      { content: { $regex: escapedKeyword, $options: "i" } },
+      { tags: { $regex: escapedKeyword, $options: "i" } },
+    ];
+  }
+
+  if (tag) {
+    const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.tags = { $in: [new RegExp(`^${escapedTag}$`, "i")] };
+  }
+
+  const query = Article.find(filter)
     .populate("authorId", "firstName lastName avatar")
     .sort("-createdAt");
 
-  res.json(articles);
+  if (!shouldPaginate) {
+    const articles = await query;
+    return res.json(articles);
+  }
+
+  const skip = (page - 1) * limit;
+  const [articles, total] = await Promise.all([
+    query.skip(skip).limit(limit),
+    Article.countDocuments(filter),
+  ]);
+
+  res.json({
+    articles,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+    },
+  });
 });
 
 // @desc    Get single article by ID
 // @route   GET /api/articles/:id
 // @access  Private
 const getArticleById = asyncHandler(async (req, res) => {
-  const article = await Article.findById(req.params.id).populate(
+  let article = await Article.findById(req.params.id).populate(
     "authorId",
     "firstName lastName avatar",
   );
@@ -118,13 +175,18 @@ const getArticleById = asyncHandler(async (req, res) => {
   }
 
   // Check if the user's company array contains the article's companyId
-  const hasCompanyAccess = req.user.companyId.some(
-    (id) => id.toString() === article.companyId.toString(),
-  );
-
-  if (!hasCompanyAccess) {
+  if (!hasCompanyAccess(req.user, article.companyId)) {
     res.status(403);
     throw new Error("Not authorized to view this article");
+  }
+
+  if (typeof article.populate === "function") {
+    article = await article.populate("comments.userId", "firstName lastName avatar");
+  }
+
+  if (typeof article.viewCount === "number") {
+    article.viewCount += 1;
+    await article.save();
   }
 
   res.json(article);
@@ -138,23 +200,52 @@ const getArticleById = asyncHandler(async (req, res) => {
 const updateArticle = asyncHandler(async (req, res) => {
   const article = await Article.findById(req.params.id);
 
-  if (!article || article.authorId.toString() !== req.user._id.toString()) {
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
     res.status(403);
     throw new Error("Not authorized to edit this article");
   }
 
-  if (req.user.role.includes("Admin") || req.user.role.includes("Manager")) {
+  if (
+    article.authorId.toString() !== req.user._id.toString() &&
+    !isElevatedUser(req.user)
+  ) {
+    res.status(403);
+    throw new Error("Not authorized to edit this article");
+  }
+
+  article.revisions.push({
+    title: article.title,
+    content: article.content,
+    summary: article.summary || "",
+    tags: article.tags || [],
+    department: article.department || [],
+    updatedBy: req.user._id,
+  });
+
+  if (article.revisions.length > 25) {
+    article.revisions = article.revisions.slice(-25);
+  }
+
+  if (isElevatedUser(req.user)) {
     article.status = "Approved";
   } else if (article.status === "Rejected") {
     article.status = "Pending";
-  } else if (req.body.status) {
-    article.status = req.body.status;
   }
 
   article.title = req.body.title || article.title;
-  article.content = req.body.content || article.content;
+  article.content = req.body.content
+    ? sanitizeRichText(req.body.content)
+    : article.content;
+  article.summary = req.body.summary ?? article.summary;
   article.tags = req.body.tags || article.tags;
-  article.department = req.body.departments || article.department;
+  article.department = req.body.departments
+    ? normalizeDepartments(req.body.departments)
+    : article.department;
 
   // Re-generate embedding if title or content changed
   if (req.body.title || req.body.content) {
@@ -184,11 +275,7 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   }
 
   // Array verification for security
-  const hasCompanyAccess = req.user.companyId.some(
-    (id) => id.toString() === article.companyId.toString(),
-  );
-
-  if (!hasCompanyAccess) {
+  if (!hasCompanyAccess(req.user, article.companyId)) {
     res.status(403);
     throw new Error("Not authorized to modify this article");
   }
@@ -203,6 +290,42 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   }
 
   const reviewedArticle = await article.save();
+
+  if (typeof Notification.create === "function") {
+    await Notification.create({
+      recipientId: article.authorId,
+      type: "Status_Update",
+      message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
+      referenceId: article._id,
+    });
+  }
+
+  const io = req.app.get("io");
+  if (io) {
+    io.to(article.authorId.toString()).emit("article_status_update", {
+      status,
+      articleId: article._id,
+      message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
+    });
+    io.to(article.authorId.toString()).emit("refresh_notifications");
+  }
+
+  try {
+    const author = await User.findById(article.authorId).select("email");
+    if (author?.email) {
+      await sendEmail({
+        email: author.email,
+        subject: `Article ${status}: ${article.title}`,
+        message:
+          status === "Rejected" && rejectionReason
+            ? `Your article "${article.title}" was rejected.\nReason: ${rejectionReason}`
+            : `Your article "${article.title}" was approved and published.`,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to send article status email:", error);
+  }
+
   res.json(reviewedArticle);
 });
 
@@ -224,9 +347,13 @@ const getUserArticles = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const getPendingArticles = asyncHandler(async (req, res) => {
+  const userDepartments = Array.isArray(req.user.department)
+    ? req.user.department
+    : [req.user.department];
+
   const articles = await Article.find({
     companyId: { $in: req.user.companyId },
-    department: { $in: req.user.department },
+    department: { $in: userDepartments },
     status: "Pending",
   }).populate("authorId", "firstName lastName");
 
@@ -327,11 +454,7 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
     throw new Error("Article not found");
   }
 
-  const hasCompanyAccess = req.user.companyId.some(
-    (id) => id.toString() === article.companyId.toString(),
-  );
-
-  if (!hasCompanyAccess) {
+  if (!hasCompanyAccess(req.user, article.companyId)) {
     res.status(403);
     throw new Error("Access denied");
   }
@@ -344,14 +467,14 @@ const submitArticleFeedback = asyncHandler(async (req, res) => {
     article.feedback[existingFeedbackIndex] = {
       userId: req.user._id,
       isHelpful,
-      comment,
+      comment: sanitizeRichText(comment || ""),
       submittedAt: Date.now(),
     };
   } else {
     article.feedback.push({
       userId: req.user._id,
       isHelpful,
-      comment,
+    comment: sanitizeRichText(comment || ""),
       submittedAt: Date.now(),
     });
   }
@@ -403,11 +526,7 @@ const certifyArticle = asyncHandler(async (req, res) => {
     throw new Error("Article not found");
   }
 
-  const hasCompanyAccess = req.user.companyId.some(
-    (id) => id.toString() === article.companyId.toString(),
-  );
-
-  if (!hasCompanyAccess) {
+  if (!hasCompanyAccess(req.user, article.companyId)) {
     res.status(403);
     throw new Error("Not authorized to modify this article");
   }
@@ -420,6 +539,247 @@ const certifyArticle = asyncHandler(async (req, res) => {
   res.json({
     message: "Article certified successfully",
     expiresAt: article.expiresAt,
+  });
+});
+
+/**
+ * @desc    Delete an article
+ * @route   DELETE /api/articles/:id
+ * @access  Private
+ */
+const deleteArticle = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id);
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
+    res.status(403);
+    throw new Error("Not authorized to delete this article");
+  }
+
+  const isAuthor = article.authorId.toString() === req.user._id.toString();
+  if (!isAuthor && !isElevatedUser(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized to delete this article");
+  }
+
+  await article.deleteOne();
+  res.json({ message: "Article deleted successfully" });
+});
+
+/**
+ * @desc    Bulk approve/reject pending articles
+ * @route   PATCH /api/articles/bulk-status
+ * @access  Private (Manager/Admin)
+ */
+const bulkUpdateArticleStatus = asyncHandler(async (req, res) => {
+  if (!isElevatedUser(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized");
+  }
+
+  const { articleIds, status, rejectionReason } = req.body;
+  const articles = await Article.find({
+    _id: { $in: articleIds },
+    companyId: { $in: req.user.companyId },
+    status: "Pending",
+  });
+
+  for (const article of articles) {
+    article.status = status;
+    article.approverId = req.user._id;
+    article.rejectionReason = status === "Rejected" ? rejectionReason || null : null;
+    await article.save();
+
+    if (typeof Notification.create === "function") {
+      await Notification.create({
+        recipientId: article.authorId,
+        type: "Status_Update",
+        message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
+        referenceId: article._id,
+      });
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(article.authorId.toString()).emit("article_status_update", {
+        status,
+        articleId: article._id,
+        message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
+      });
+      io.to(article.authorId.toString()).emit("refresh_notifications");
+    }
+
+    try {
+      const author = await User.findById(article.authorId).select("email");
+      if (author?.email) {
+        await sendEmail({
+          email: author.email,
+          subject: `Article ${status}: ${article.title}`,
+          message:
+            status === "Rejected" && rejectionReason
+              ? `Your article "${article.title}" was rejected.\nReason: ${rejectionReason}`
+              : `Your article "${article.title}" was approved and published.`,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to send bulk article status email:", error);
+    }
+  }
+
+  res.json({
+    message: `${articles.length} article(s) updated successfully`,
+    count: articles.length,
+  });
+});
+
+/**
+ * @desc    Add article comment
+ * @route   POST /api/articles/:id/comments
+ * @access  Private
+ */
+const addArticleComment = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id);
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
+    res.status(403);
+    throw new Error("Not authorized to comment on this article");
+  }
+
+  article.comments.push({
+    userId: req.user._id,
+    message: sanitizeRichText(req.body.message),
+  });
+  await article.save();
+  await article.populate("comments.userId", "firstName lastName avatar");
+
+  res.status(201).json(article.comments[article.comments.length - 1]);
+});
+
+/**
+ * @desc    Get article revision history
+ * @route   GET /api/articles/:id/revisions
+ * @access  Private
+ */
+const getArticleRevisions = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id)
+    .populate("revisions.updatedBy", "firstName lastName")
+    .select("title revisions companyId");
+
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
+    res.status(403);
+    throw new Error("Not authorized to view revision history");
+  }
+
+  res.json({
+    title: article.title,
+    revisions: article.revisions.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    ),
+  });
+});
+
+/**
+ * @desc    Rollback article to a previous revision
+ * @route   PATCH /api/articles/:id/rollback
+ * @access  Private (Manager/Admin)
+ */
+const rollbackArticleRevision = asyncHandler(async (req, res) => {
+  const { revisionId } = req.body;
+  const article = await Article.findById(req.params.id);
+
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId) || !isElevatedUser(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized to rollback this article");
+  }
+
+  const revision = article.revisions.id(revisionId);
+  if (!revision) {
+    res.status(404);
+    throw new Error("Revision not found");
+  }
+
+  article.revisions.push({
+    title: article.title,
+    content: article.content,
+    summary: article.summary || "",
+    tags: article.tags || [],
+    department: article.department || [],
+    updatedBy: req.user._id,
+  });
+
+  article.title = revision.title;
+  article.content = revision.content;
+  article.summary = revision.summary || "";
+  article.tags = revision.tags || [];
+  article.department = revision.department || [];
+  article.status = "Approved";
+  await article.save();
+
+  res.json({ message: "Article rolled back successfully", article });
+});
+
+/**
+ * @desc    Get article analytics
+ * @route   GET /api/articles/analytics
+ * @access  Private (Manager/Admin)
+ */
+const getArticleAnalytics = asyncHandler(async (req, res) => {
+  if (!isElevatedUser(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized to access analytics");
+  }
+
+  const companyFilter = { companyId: { $in: req.user.companyId }, status: "Approved" };
+  const [totals, topViewed, votedCandidates] = await Promise.all([
+    Article.countDocuments(companyFilter),
+    Article.find(companyFilter)
+      .sort({ viewCount: -1 })
+      .limit(5)
+      .select("title viewCount upvotes downvotes"),
+    Article.find(companyFilter)
+      .limit(100)
+      .select("title upvotes downvotes viewCount"),
+  ]);
+
+  const topVoted = votedCandidates
+    .map((article) => ({
+      _id: article._id,
+      title: article.title,
+      views: article.viewCount,
+      upvotes: article.upvotes.length,
+      downvotes: article.downvotes.length,
+      score: article.upvotes.length - article.downvotes.length,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  res.json({
+    totals,
+    topViewed: topViewed.map((article) => ({
+      _id: article._id,
+      title: article.title,
+      views: article.viewCount,
+      upvotes: article.upvotes.length,
+      downvotes: article.downvotes.length,
+    })),
+    topVoted,
   });
 });
 
@@ -438,4 +798,10 @@ export {
   submitArticleFeedback,
   getReviewQueue,
   certifyArticle,
+  deleteArticle,
+  bulkUpdateArticleStatus,
+  getArticleAnalytics,
+  getArticleRevisions,
+  rollbackArticleRevision,
+  addArticleComment,
 };

@@ -6,9 +6,15 @@ const sendEmail = async (options) => {
   const msg = {
     to: options.email,
     from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
-    templateId: options.templateId,
-    dynamicTemplateData: options.dynamicTemplateData,
   };
+
+  if (options.templateId) {
+    msg.templateId = options.templateId;
+    msg.dynamicTemplateData = options.dynamicTemplateData || {};
+  } else {
+    msg.subject = options.subject || "Notification";
+    msg.text = options.message || "";
+  }
 
   try {
     await sgMail.send(msg);

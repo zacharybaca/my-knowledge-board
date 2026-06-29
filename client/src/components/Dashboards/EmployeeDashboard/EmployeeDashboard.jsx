@@ -83,17 +83,6 @@ const EmployeeDashboard = () => {
       </div>
     );
 
-  const departmentBadgeStyle = {
-    backgroundColor: '#f1f5f9',
-    border: '1px solid #cbd5e1',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    fontSize: '0.7rem',
-    marginRight: '8px',
-    color: '#475569',
-    fontWeight: '600',
-  };
-
   return (
     <div className="dashboard-container">
       {toastConfig && (
@@ -165,7 +154,7 @@ const EmployeeDashboard = () => {
                       >
                         <span className="article-title">
                           {depts.map((dept, i) => (
-                            <span key={i} style={departmentBadgeStyle}>
+                            <span key={i} className="department-badge">
                               {dept}
                             </span>
                           ))}
@@ -211,7 +200,7 @@ const EmployeeDashboard = () => {
                           <span className="article-title">{article.title}</span>
                           <span className="article-meta">
                             {depts.map((dept, i) => (
-                              <span key={i} style={departmentBadgeStyle}>
+                              <span key={i} className="department-badge">
                                 {dept}
                               </span>
                             ))}
@@ -272,7 +261,7 @@ const EmployeeDashboard = () => {
                             style={{ marginBottom: 0 }}
                           >
                             {depts.map((dept, i) => (
-                              <span key={i} style={departmentBadgeStyle}>
+                              <span key={i} className="department-badge">
                                 {dept}
                               </span>
                             ))}

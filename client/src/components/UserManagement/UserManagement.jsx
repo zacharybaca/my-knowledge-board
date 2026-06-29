@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useFetcher } from '../../hooks/useFetcher';
 import { useAuth } from '../../hooks/useAuth';
 import Toast from '../Layout/Toast/Toast';
@@ -19,11 +19,7 @@ const UserManagement = () => {
   });
   const [suspensionReason, setSuspensionReason] = useState('');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const response = await fetcher('/api/users/directory');
     if (response.success) {
       setUsers(response.data);
@@ -34,7 +30,11 @@ const UserManagement = () => {
       });
     }
     setIsLoading(false);
-  };
+  }, [fetcher]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleDelete = async (targetId) => {
     if (

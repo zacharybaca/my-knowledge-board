@@ -72,7 +72,7 @@ const CompanyRegistration = () => {
         });
         setIsSubmitting(false);
       }
-    } catch (error) {
+    } catch {
       setToastConfig({
         type: 'error',
         message: 'Server error during registration.',

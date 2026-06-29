@@ -32,3 +32,16 @@ export const markNotificationRead = asyncHandler(async (req, res) => {
     throw new Error("Notification not found");
   }
 });
+
+/**
+ * @desc    Mark all notifications as read
+ * @route   PATCH /api/notifications/read-all
+ * @access  Private
+ */
+export const markAllNotificationsRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany(
+    { recipientId: req.user._id, isRead: false },
+    { $set: { isRead: true } },
+  );
+  res.json({ success: true });
+});

@@ -70,6 +70,15 @@ const NotificationBell = () => {
     }
   };
 
+  const handleMarkAllRead = async () => {
+    const response = await fetcher('/api/notifications/read-all', {
+      method: 'PATCH',
+    });
+    if (response.success) {
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
@@ -88,6 +97,15 @@ const NotificationBell = () => {
         <div className="notification-dropdown">
           <div className="notification-header">
             <h4>Notifications</h4>
+            {notifications.some((n) => !n.isRead) && (
+              <button
+                type="button"
+                className="mark-all-read-btn"
+                onClick={handleMarkAllRead}
+              >
+                Mark all as read
+              </button>
+            )}
           </div>
           <div className="notification-list">
             {notifications.length === 0 ? (

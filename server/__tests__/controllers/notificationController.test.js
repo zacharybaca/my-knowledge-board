@@ -2,13 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-const { mockFind, mockFindOneAndUpdate } = vi.hoisted(() => ({
+const { mockFind, mockFindOneAndUpdate, mockUpdateMany } = vi.hoisted(() => ({
   mockFind: vi.fn(),
   mockFindOneAndUpdate: vi.fn(),
+  mockUpdateMany: vi.fn(),
 }));
 
 vi.mock("../../models/Notification.js", () => ({
-  default: { find: mockFind, findOneAndUpdate: mockFindOneAndUpdate },
+  default: {
+    find: mockFind,
+    findOneAndUpdate: mockFindOneAndUpdate,
+    updateMany: mockUpdateMany,
+  },
 }));
 
 // ── Imports ───────────────────────────────────────────────────────────────────
@@ -16,6 +21,7 @@ vi.mock("../../models/Notification.js", () => ({
 import {
   getUserNotifications,
   markNotificationRead,
+  markAllNotificationsRead,
 } from "../../controllers/notificationController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -110,5 +116,37 @@ describe("markNotificationRead", () => {
     expect(res.statusCode).toBe(404);
     expect(nextArgs[0]).toBeInstanceOf(Error);
     expect(nextArgs[0].message).toMatch(/notification not found/i);
+  });
+});
+
+// ── markAllNotificationsRead ──────────────────────────────────────────────────
+
+describe("markAllNotificationsRead", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("marks all unread notifications as read and returns success", async () => {
+    mockUpdateMany.mockResolvedValue({ modifiedCount: 3 });
+
+    const req = { user: { _id: "user-1" } };
+    const { res } = await run(markAllNotificationsRead, req, makeRes());
+
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      { recipientId: "user-1", isRead: false },
+      { $set: { isRead: true } },
+    );
+    expect(res._body).toEqual({ success: true });
+  });
+
+  it("returns success even when there are no unread notifications", async () => {
+    mockUpdateMany.mockResolvedValue({ modifiedCount: 0 });
+
+    const req = { user: { _id: "user-no-unread" } };
+    const { res } = await run(markAllNotificationsRead, req, makeRes());
+
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      { recipientId: "user-no-unread", isRead: false },
+      { $set: { isRead: true } },
+    );
+    expect(res._body).toEqual({ success: true });
   });
 });

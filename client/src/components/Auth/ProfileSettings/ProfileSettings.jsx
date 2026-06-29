@@ -114,7 +114,7 @@ const ProfileSettings = () => {
           type: 'error',
         });
       }
-    } catch (error) {
+    } catch {
       setToastConfig({
         message: 'Server error during profile update.',
         type: 'error',

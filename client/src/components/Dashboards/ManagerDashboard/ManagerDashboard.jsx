@@ -17,15 +17,19 @@ const ManagerDashboard = () => {
   const [myArticles, setMyArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastConfig, setToastConfig] = useState(null);
+  const [selectedArticleIds, setSelectedArticleIds] = useState([]);
+  const [analytics, setAnalytics] = useState({ totals: 0, topViewed: [] });
 
   const fetchDashboardData = useCallback(async () => {
-    const [pendingRes, personalRes] = await Promise.all([
+    const [pendingRes, personalRes, analyticsRes] = await Promise.all([
       fetcher('/api/articles/pending'),
       fetcher('/api/articles/my-articles'),
+      fetcher('/api/articles/analytics'),
     ]);
 
     if (pendingRes.success) setPendingArticles(pendingRes.data);
     if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+    if (analyticsRes.success) setAnalytics(analyticsRes.data);
 
     setIsLoading(false);
   }, [fetcher]);
@@ -55,15 +59,34 @@ const ManagerDashboard = () => {
       </div>
     );
 
-  const departmentBadgeStyle = {
-    backgroundColor: '#f1f5f9',
-    border: '1px solid #cbd5e1',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    fontSize: '0.7rem',
-    marginRight: '8px',
-    color: '#475569',
-    fontWeight: '600',
+  const togglePendingSelection = (articleId) => {
+    setSelectedArticleIds((prev) =>
+      prev.includes(articleId)
+        ? prev.filter((id) => id !== articleId)
+        : [...prev, articleId]
+    );
+  };
+
+  const handleBulkStatus = async (status) => {
+    if (selectedArticleIds.length === 0) return;
+    const rejectionReason =
+      status === 'Rejected'
+        ? window.prompt('Optional rejection reason for all selected articles:') || ''
+        : '';
+
+    const response = await fetcher('/api/articles/bulk-status', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        articleIds: selectedArticleIds,
+        status,
+        rejectionReason,
+      }),
+    });
+
+    if (response.success) {
+      setSelectedArticleIds([]);
+      fetchDashboardData();
+    }
   };
 
   return (
@@ -126,6 +149,15 @@ const ManagerDashboard = () => {
             <p>Your Submissions</p>
           </div>
         </div>
+        <div className="metric-card">
+          <div className="metric-icon active-icon">
+            <FileText size={24} />
+          </div>
+          <div className="metric-data">
+            <h3>{analytics.totals || 0}</h3>
+            <p>Published Articles</p>
+          </div>
+        </div>
       </div>
 
       <div className="dashboard-grid">
@@ -133,6 +165,24 @@ const ManagerDashboard = () => {
           <div className="card-header">
             <ClipboardCheck size={20} className="card-icon" />
             <h2>Approval Queue</h2>
+            <div className="bulk-action-row">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => handleBulkStatus('Approved')}
+                disabled={selectedArticleIds.length === 0}
+              >
+                Bulk Approve
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => handleBulkStatus('Rejected')}
+                disabled={selectedArticleIds.length === 0}
+              >
+                Bulk Reject
+              </button>
+            </div>
           </div>
           <div className="card-content">
             {pendingArticles.length === 0 ? (
@@ -147,6 +197,14 @@ const ManagerDashboard = () => {
                     : [article.department];
                   return (
                     <li key={article._id}>
+                      <div className="pending-checkbox-wrap">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select "${article.title}" for bulk actions`}
+                          checked={selectedArticleIds.includes(article._id)}
+                          onChange={() => togglePendingSelection(article._id)}
+                        />
+                      </div>
                       <Link
                         to={`/queue/${article._id}`}
                         className="article-link flex-between"
@@ -155,7 +213,7 @@ const ManagerDashboard = () => {
                           <span className="article-title">{article.title}</span>
                           <span className="article-meta">
                             {depts.map((dept, i) => (
-                              <span key={i} style={departmentBadgeStyle}>
+                              <span key={i} className="department-badge">
                                 {dept}
                               </span>
                             ))}
@@ -237,7 +295,7 @@ const ManagerDashboard = () => {
                       >
                         <span className="article-title">
                           {depts.map((dept, i) => (
-                            <span key={i} style={departmentBadgeStyle}>
+                            <span key={i} className="department-badge">
                               {dept}
                             </span>
                           ))}
@@ -253,6 +311,30 @@ const ManagerDashboard = () => {
                   );
                 })}
               </ul>
+            )}
+          </div>
+        </section>
+        <section className="dashboard-card">
+          <div className="card-header">
+            <Clock size={20} className="card-icon" />
+            <h2>Top Viewed Articles</h2>
+          </div>
+          <div className="card-content">
+            {analytics.topViewed?.length ? (
+              <ul className="article-list">
+                {analytics.topViewed.map((item) => (
+                  <li key={item._id}>
+                    <Link to={`/articles/${item._id}`} className="article-link">
+                      <div className="article-meta-container">
+                        <span className="article-title">{item.title}</span>
+                        <span className="article-meta">{item.views} views</span>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-state">No analytics data available yet.</p>
             )}
           </div>
         </section>

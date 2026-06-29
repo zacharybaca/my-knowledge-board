@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetcher } from '../../hooks/useFetcher';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
@@ -9,17 +9,17 @@ const ReviewQueue = () => {
   const [queue, setQueue] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchQueue();
-  }, []);
-
-  const fetchQueue = async () => {
+  const fetchQueue = useCallback(async () => {
     const response = await fetcher('/api/articles/review-queue');
     if (response.success) {
       setQueue(response.data);
     }
     setIsLoading(false);
-  };
+  }, [fetcher]);
+
+  useEffect(() => {
+    fetchQueue();
+  }, [fetchQueue]);
 
   const handleCertify = async (articleId) => {
     const response = await fetcher(`/api/articles/${articleId}/certify`, {

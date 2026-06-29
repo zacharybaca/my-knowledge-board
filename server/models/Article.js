@@ -1,5 +1,38 @@
 import mongoose from "mongoose";
 
+const articleRevisionSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    summary: { type: String, default: "" },
+    tags: [{ type: String }],
+    department: [{ type: String }],
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: true },
+);
+
+const articleCommentSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 2000,
+    },
+  },
+  { timestamps: true },
+);
+
 const articleSchema = new mongoose.Schema(
   {
     companyId: {
@@ -62,6 +95,8 @@ const articleSchema = new mongoose.Schema(
       },
     ],
     title: { type: String, required: true },
+    content: { type: String, required: true, trim: true },
+    summary: { type: String, default: "" },
     contentEmbedding: {
       type: [Number], // Array of floats
       select: false, // Hide by default to save bandwidth on normal queries
@@ -91,6 +126,8 @@ const articleSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    revisions: [articleRevisionSchema],
+    comments: [articleCommentSchema],
   },
   { timestamps: true },
 );
