@@ -58,7 +58,7 @@ const WorkspaceManagement = () => {
           message: response.error || 'Failed to delete workspace.',
         });
       }
-    } catch (error) {
+    } catch {
       setToastConfig({
         type: 'error',
         message: 'A server error occurred during deletion.',

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import './search-bar.css';
 
-const SearchBar = ({ setSearchTerm, setFilterTag, availableTags = [] }) => {
+const SearchBar = ({ setSearchTerm }) => {
   const [displayValue, setDisplayValue] = useState('');
 
   useEffect(() => {
