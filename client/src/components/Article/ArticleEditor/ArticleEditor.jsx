@@ -15,6 +15,7 @@ const ArticleEditor = () => {
   const editorRef = useRef(null);
 
   const isEditing = Boolean(id && id !== 'new');
+  const draftStorageKey = `article_editor_draft_${id || 'new'}`;
 
   // Available departments mapping
   const availableDepartments = [
@@ -44,6 +45,7 @@ const ArticleEditor = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [toastConfig, setToastConfig] = useState(null);
+  const [didRestoreDraft, setDidRestoreDraft] = useState(false);
 
   useEffect(() => {
     if (isEditing) {
@@ -63,8 +65,48 @@ const ArticleEditor = () => {
         setIsLoading(false);
       };
       fetchArticle();
+    } else {
+      const savedDraftRaw = localStorage.getItem(draftStorageKey);
+      if (!savedDraftRaw || didRestoreDraft) return;
+
+      try {
+        const savedDraft = JSON.parse(savedDraftRaw);
+        if (
+          savedDraft?.title ||
+          savedDraft?.content ||
+          savedDraft?.summary ||
+          savedDraft?.tags
+        ) {
+          const shouldRestore = window.confirm(
+            'A local draft was found. Do you want to restore it?'
+          );
+          if (shouldRestore) {
+            setFormData((prev) => ({
+              ...prev,
+              ...savedDraft,
+            }));
+            setToastConfig({
+              type: 'success',
+              message: 'Restored your local draft.',
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse saved draft', error);
+      } finally {
+        setDidRestoreDraft(true);
+      }
     }
-  }, [id, isEditing]);
+  }, [id, isEditing, fetcher, draftStorageKey, didRestoreDraft]);
+
+  useEffect(() => {
+    if (isLoading) return undefined;
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem(draftStorageKey, JSON.stringify(formData));
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData, draftStorageKey, isLoading]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -233,6 +275,7 @@ const ArticleEditor = () => {
     });
 
     if (response.success) {
+      localStorage.removeItem(draftStorageKey);
       navigate(isUserAdmin ? '/manager-dashboard' : '/employee-dashboard');
     } else {
       setToastConfig({

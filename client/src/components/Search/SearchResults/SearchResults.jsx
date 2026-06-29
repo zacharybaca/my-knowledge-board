@@ -16,6 +16,14 @@ const SearchResults = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+    total: 0,
+  });
 
   const [companyDetails, setCompanyDetails] = useState({
     name: 'your organization',
@@ -79,6 +87,10 @@ const SearchResults = () => {
   }, [fetcher]);
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterTag]);
+
+  useEffect(() => {
     const fetchResults = async () => {
       setIsLoading(true);
       setError(null);
@@ -86,13 +98,25 @@ const SearchResults = () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('keyword', searchTerm);
       if (filterTag) params.append('tag', filterTag);
+      params.append('paginate', 'true');
+      params.append('page', String(currentPage));
+      params.append('limit', '12');
 
       const queryString = params.toString() ? `?${params.toString()}` : '';
 
       const response = await fetcher(`/api/articles${queryString}`);
 
       if (response.success) {
-        setArticles(response.data);
+        setArticles(response.data.articles || []);
+        setPagination(
+          response.data.pagination || {
+            page: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+            total: response.data.articles?.length || 0,
+          }
+        );
       } else {
         setError(response.error || 'Failed to fetch search results.');
       }
@@ -101,7 +125,7 @@ const SearchResults = () => {
     };
 
     fetchResults();
-  }, [searchTerm, filterTag, fetcher]);
+  }, [searchTerm, filterTag, currentPage, fetcher]);
 
   return (
     <div className="search-page-container">
@@ -154,7 +178,7 @@ const SearchResults = () => {
       ) : articles.length > 0 ? (
         <>
           <div className="search-results-meta">
-            Found {articles.length} result{articles.length === 1 ? '' : 's'}
+            Found {pagination.total} result{pagination.total === 1 ? '' : 's'}
             {(searchTerm || filterTag) && ' for your query'}
           </div>
 
@@ -162,6 +186,27 @@ const SearchResults = () => {
             {articles.map((article) => (
               <ArticleCard key={article._id} article={article} />
             ))}
+          </div>
+          <div className="search-pagination">
+            <button
+              type="button"
+              className="dashboard-search-btn"
+              disabled={!pagination.hasPrevPage}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              Previous
+            </button>
+            <span>
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+            <button
+              type="button"
+              className="dashboard-search-btn"
+              disabled={!pagination.hasNextPage}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+            >
+              Next
+            </button>
           </div>
         </>
       ) : (

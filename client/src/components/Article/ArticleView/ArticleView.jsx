@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
@@ -13,10 +13,17 @@ import {
   AlertCircle,
   AlertTriangle,
   Copy,
+  Download,
+  Trash2,
+  MessageSquare,
+  History,
 } from 'lucide-react';
 import ArticleFeedback from '../ArticleFeedback/ArticleFeedback.jsx';
 import ProrationWidget from '../../Widgets/ProrationWidget/ProrationWidget.jsx';
 import './article-view.css';
+
+const templateVariableRegex = /\[([A-Za-z0-9_]+)\]/g;
+const widgetRegex = /\[Widget:([a-zA-Z0-9_]+)\]/g;
 
 const ArticleView = () => {
   const { id } = useParams();
@@ -29,13 +36,19 @@ const ArticleView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeViewers, setActiveViewers] = useState([]);
+  const [templateData, setTemplateData] = useState({});
+  const [newComment, setNewComment] = useState('');
+  const [revisions, setRevisions] = useState([]);
+  const [showRevisions, setShowRevisions] = useState(false);
 
-  // Template Automation State
-  const [templateData, setTemplateData] = useState({
-    Customer_Name: '',
-    Account_Number: '',
-    Discount_Amount: '5.00',
-  });
+  const templateVariables = useMemo(() => {
+    if (!article?.content) return [];
+    const variables = new Set();
+    for (const match of article.content.matchAll(templateVariableRegex)) {
+      if (!match[1].startsWith('Widget:')) variables.add(match[1]);
+    }
+    return Array.from(variables);
+  }, [article?.content]);
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -44,6 +57,15 @@ const ArticleView = () => {
 
       if (response.success) {
         setArticle(response.data);
+        const defaults = {};
+        const foundVariables = new Set();
+        for (const match of response.data.content.matchAll(templateVariableRegex)) {
+          if (!match[1].startsWith('Widget:')) foundVariables.add(match[1]);
+        }
+        foundVariables.forEach((key) => {
+          defaults[key] = '';
+        });
+        setTemplateData(defaults);
       } else {
         setError(response.error || 'Failed to load article.');
       }
@@ -53,11 +75,9 @@ const ArticleView = () => {
     fetchArticle();
   }, [id, fetcher]);
 
-  // --- Real-Time Presence Logic ---
   useEffect(() => {
     if (!socket || !article || !user) return;
 
-    // Send lean user payload to the server
     const viewerData = {
       _id: user._id,
       firstName: user.firstName,
@@ -68,7 +88,6 @@ const ArticleView = () => {
     socket.emit('join_article', { articleId: article._id, user: viewerData });
 
     socket.on('presence_update', (viewers) => {
-      // Filter out the current user so they don't see themselves in the cluster
       setActiveViewers(viewers.filter((v) => v._id !== user._id));
     });
 
@@ -81,7 +100,6 @@ const ArticleView = () => {
     };
   }, [socket, article, user]);
 
-  // --- Feature 3: Template Automation Parsers ---
   const handleTemplateInputChange = (e) => {
     const { name, value } = e.target;
     setTemplateData((prev) => ({
@@ -93,13 +111,12 @@ const ArticleView = () => {
   const parseTemplateContent = (htmlContent) => {
     if (!htmlContent) return '';
     let parsedHtml = htmlContent;
-    const variables = ['Customer_Name', 'Account_Number', 'Discount_Amount'];
 
-    variables.forEach((variable) => {
+    templateVariables.forEach((variable) => {
       const regex = new RegExp(`\\[${variable}\\]`, 'g');
       const valueToInject = templateData[variable]
-        ? `<span class="template-filled" style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-weight:bold;">${templateData[variable]}</span>`
-        : `<span class="template-empty" style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:4px;">[${variable}]</span>`;
+        ? `<span class="template-filled">${templateData[variable]}</span>`
+        : `<span class="template-empty">[${variable}]</span>`;
 
       parsedHtml = parsedHtml.replace(regex, valueToInject);
     });
@@ -116,19 +133,87 @@ const ArticleView = () => {
     navigator.clipboard
       .writeText(textToCopy)
       .then(() => {
-        alert('Template copied to clipboard!');
+        window.alert('Template copied to clipboard!');
       })
       .catch((err) => {
         console.error('Failed to copy text: ', err);
       });
   };
 
-  // --- Feature 4: Dynamic Widget Injection Engine ---
+  const handleDeleteArticle = async () => {
+    const shouldDelete = window.confirm(
+      'Are you sure you want to permanently delete this article?'
+    );
+    if (!shouldDelete) return;
+
+    const response = await fetcher(`/api/articles/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.success) {
+      navigate(
+        user?.role?.includes('Admin') || user?.role?.includes('Manager')
+          ? '/manager-dashboard'
+          : '/employee-dashboard'
+      );
+    } else {
+      setError(response.error || 'Failed to delete article.');
+    }
+  };
+
+  const handleExportPdf = () => {
+    window.print();
+  };
+
+  const loadRevisions = async () => {
+    const response = await fetcher(`/api/articles/${id}/revisions`);
+    if (response.success) {
+      setRevisions(response.data.revisions || []);
+      setShowRevisions(true);
+    }
+  };
+
+  const handleRollback = async (revisionId) => {
+    const shouldRollback = window.confirm(
+      'Rollback this article to the selected revision?'
+    );
+    if (!shouldRollback) return;
+
+    const response = await fetcher(`/api/articles/${id}/rollback`, {
+      method: 'PATCH',
+      body: JSON.stringify({ revisionId }),
+    });
+
+    if (response.success) {
+      setArticle(response.data.article);
+      setShowRevisions(false);
+    }
+  };
+
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    const trimmed = newComment.trim();
+    if (!trimmed) return;
+
+    const response = await fetcher(`/api/articles/${id}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ message: trimmed }),
+    });
+
+    if (response.success) {
+      setArticle((prev) => ({
+        ...prev,
+        comments: [...(prev.comments || []), response.data],
+      }));
+      setNewComment('');
+    }
+  };
+
   const renderInteractiveContent = () => {
-    if (!article.content) return null;
+    if (!article?.content) return null;
 
     const htmlWithTemplates = parseTemplateContent(article.content);
-    const parts = htmlWithTemplates.split(/\[Widget:([a-zA-Z0-9_]+)\]/g);
+    const parts = htmlWithTemplates.split(widgetRegex);
 
     return parts.map((part, index) => {
       if (index % 2 === 1) {
@@ -137,21 +222,14 @@ const ArticleView = () => {
             return <ProrationWidget key={index} />;
           default:
             return (
-              <div
-                key={index}
-                style={{
-                  color: 'red',
-                  padding: '10px',
-                  border: '1px solid red',
-                }}
-              >
+              <div key={index} className="widget-error">
                 Error: Widget "{part}" not found.
               </div>
             );
         }
-      } else {
-        return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
       }
+
+      return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     });
   };
 
@@ -179,8 +257,8 @@ const ArticleView = () => {
     user?.role?.includes('Admin') ||
     user?.role?.includes('Manager') ||
     user?._id === article.authorId?._id;
-  const isExpired =
-    article.expiresAt && new Date(article.expiresAt) < new Date();
+  const isExpired = article.expiresAt && new Date(article.expiresAt) < new Date();
+  const isManager = user?.role?.includes('Admin') || user?.role?.includes('Manager');
 
   return (
     <div className="article-view-container">
@@ -189,46 +267,20 @@ const ArticleView = () => {
           <ArrowLeft size={16} /> Back to Dashboard
         </button>
 
-        {/* --- Active Viewers Avatar Cluster --- */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="article-actions-panel">
           {activeViewers.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                Currently viewing:
-              </span>
-              <div style={{ display: 'flex', marginLeft: '4px' }}>
+            <div className="active-viewers-panel">
+              <span className="active-viewers-label">Currently viewing:</span>
+              <div className="active-viewers-list">
                 {activeViewers.map((viewer, idx) => (
                   <div
                     key={viewer._id}
                     title={`${viewer.firstName} ${viewer.lastName}`}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold',
-                      marginLeft: idx === 0 ? '0' : '-10px',
-                      border: '2px solid white',
-                      zIndex: 10 - idx,
-                      overflow: 'hidden',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    }}
+                    className="active-viewer-avatar"
+                    style={{ marginLeft: idx === 0 ? '0' : '-10px', zIndex: 10 - idx }}
                   >
                     {viewer.avatar ? (
-                      <img
-                        src={viewer.avatar}
-                        alt={viewer.firstName}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
+                      <img src={viewer.avatar} alt={viewer.firstName} />
                     ) : (
                       viewer.firstName.charAt(0)
                     )}
@@ -238,12 +290,25 @@ const ArticleView = () => {
             </div>
           )}
 
+          <button onClick={handleExportPdf} className="btn-secondary-action">
+            <Download size={16} /> Export PDF
+          </button>
           {canEdit && (
             <button
               onClick={() => navigate(`/articles/${article._id}/edit`)}
               className="btn-edit"
             >
               <Edit size={16} /> Edit Article
+            </button>
+          )}
+          {canEdit && (
+            <button onClick={handleDeleteArticle} className="btn-danger-action">
+              <Trash2 size={16} /> Delete
+            </button>
+          )}
+          {isManager && (
+            <button onClick={loadRevisions} className="btn-secondary-action">
+              <History size={16} /> Revisions
             </button>
           )}
         </div>
@@ -262,26 +327,13 @@ const ArticleView = () => {
       )}
 
       {isExpired && (
-        <div
-          className="expiration-alert-banner"
-          style={{
-            background: '#fef2f2',
-            border: '1px solid #f87171',
-            color: '#991b1b',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
+        <div className="expiration-alert-banner">
           <AlertTriangle size={24} />
           <div>
-            <h4 style={{ margin: 0 }}>This article has expired</h4>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
-              The information below has not been reviewed recently and may be
-              out of date. Proceed with caution.
+            <h4>This article has expired</h4>
+            <p>
+              The information below has not been reviewed recently and may be out of
+              date. Proceed with caution.
             </p>
           </div>
         </div>
@@ -290,9 +342,7 @@ const ArticleView = () => {
       <article className="article-wrapper">
         <header className="article-header">
           <div className="article-meta-top">
-            <span
-              className={`status-badge status-${article.status.toLowerCase()}`}
-            >
+            <span className={`status-badge status-${article.status.toLowerCase()}`}>
               {article.status}
             </span>
           </div>
@@ -328,126 +378,29 @@ const ArticleView = () => {
           )}
         </header>
 
-        {article.content && article.content.includes('[') && (
-          <div
-            className="template-controls"
-            style={{
-              background: '#f8fafc',
-              padding: '16px',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              marginBottom: '24px',
-            }}
-          >
-            <h4 style={{ marginTop: 0 }}>Template Variables</h4>
-            <p
-              style={{
-                fontSize: '0.9rem',
-                color: '#475569',
-                marginBottom: '16px',
-              }}
-            >
-              Fill out the fields below to auto-populate the email templates in
-              this article.
+        {templateVariables.length > 0 && (
+          <div className="template-controls">
+            <h4>Template Variables</h4>
+            <p>
+              Fill out the fields below to auto-populate the templates in this
+              article.
             </p>
 
-            <div
-              className="template-inputs-grid"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px',
-                marginBottom: '16px',
-              }}
-            >
-              {article.content.includes('[Customer_Name]') && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                  }}
-                >
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    Customer Name
-                  </label>
+            <div className="template-inputs-grid">
+              {templateVariables.map((variable) => (
+                <div key={variable} className="template-input-group">
+                  <label>{variable.replaceAll('_', ' ')}</label>
                   <input
                     type="text"
-                    name="Customer_Name"
-                    value={templateData.Customer_Name}
+                    name={variable}
+                    value={templateData[variable] || ''}
                     onChange={handleTemplateInputChange}
-                    style={{
-                      padding: '8px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '4px',
-                    }}
                   />
                 </div>
-              )}
-              {article.content.includes('[Account_Number]') && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                  }}
-                >
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    Account Number
-                  </label>
-                  <input
-                    type="text"
-                    name="Account_Number"
-                    value={templateData.Account_Number}
-                    onChange={handleTemplateInputChange}
-                    style={{
-                      padding: '8px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '4px',
-                    }}
-                  />
-                </div>
-              )}
-              {article.content.includes('[Discount_Amount]') && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                  }}
-                >
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    Discount Amount ($)
-                  </label>
-                  <input
-                    type="text"
-                    name="Discount_Amount"
-                    value={templateData.Discount_Amount}
-                    onChange={handleTemplateInputChange}
-                    style={{
-                      padding: '8px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '4px',
-                    }}
-                  />
-                </div>
-              )}
+              ))}
             </div>
 
-            <button
-              onClick={handleCopyToClipboard}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: '#0f172a',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={handleCopyToClipboard} className="copy-template-btn">
               <Copy size={16} /> Copy Filled Template
             </button>
           </div>
@@ -455,8 +408,63 @@ const ArticleView = () => {
 
         <div className="article-body">{renderInteractiveContent()}</div>
 
+        <section className="article-comments-section">
+          <h3>
+            <MessageSquare size={18} /> Discussion
+          </h3>
+          <form onSubmit={handleAddComment} className="comment-form">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Ask a question or add context..."
+              rows={3}
+            />
+            <button type="submit" className="btn-secondary-action">
+              Post Comment
+            </button>
+          </form>
+          <div className="comment-list">
+            {(article.comments || []).map((comment) => (
+              <div key={comment._id} className="comment-item">
+                <strong>
+                  {comment.userId?.firstName} {comment.userId?.lastName}
+                </strong>
+                <p>{comment.message}</p>
+                <span>{new Date(comment.createdAt).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <ArticleFeedback articleId={article._id} />
       </article>
+
+      {showRevisions && (
+        <div className="revision-modal-overlay" onClick={() => setShowRevisions(false)}>
+          <div className="revision-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Revision History</h3>
+            <div className="revision-list">
+              {revisions.map((revision) => (
+                <div key={revision._id} className="revision-item">
+                  <div>
+                    <strong>{new Date(revision.createdAt).toLocaleString()}</strong>
+                    <p>
+                      by {revision.updatedBy?.firstName} {revision.updatedBy?.lastName}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-secondary-action"
+                    onClick={() => handleRollback(revision._id)}
+                  >
+                    Rollback
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

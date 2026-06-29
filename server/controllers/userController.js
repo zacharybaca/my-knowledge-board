@@ -71,8 +71,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getCompanyDirectory = asyncHandler(async (req, res) => {
-  // UPDATED: Assuming we want users in the current active workspace
-  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+  const activeCompanyId = req.query.companyId || req.user.companyId[0];
 
   // Use $in to find users whose companyId array contains the active workspace
   const users = await User.find({ companyId: { $in: [activeCompanyId] } })
@@ -88,12 +87,12 @@ const getCompanyDirectory = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getCompanyManagers = asyncHandler(async (req, res) => {
-  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+  const activeCompanyId = req.query.companyId || req.user.companyId[0];
 
   // UPDATED: Array search for companyId
   const managers = await User.find({
     companyId: { $in: [activeCompanyId] },
-    role: "Manager",
+    role: { $in: ["Manager"] },
   }).select("firstName lastName _id");
 
   res.json(managers);

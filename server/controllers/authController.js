@@ -3,6 +3,7 @@ import Company from "../models/Company.js";
 import generateToken from "../utils/generateToken.js";
 import asyncHandler from "express-async-handler";
 import crypto from "crypto";
+import sendEmail from "../utils/sendEmail.js";
 
 // @desc    Register a new employee/user
 // @route   POST /api/auth/register
