@@ -200,6 +200,7 @@ const ManagerDashboard = () => {
                       <div className="pending-checkbox-wrap">
                         <input
                           type="checkbox"
+                          aria-label={`Select "${article.title}" for bulk actions`}
                           checked={selectedArticleIds.includes(article._id)}
                           onChange={() => togglePendingSelection(article._id)}
                         />
