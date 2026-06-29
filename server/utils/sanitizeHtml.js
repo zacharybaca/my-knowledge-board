@@ -13,10 +13,11 @@ export const sanitizeRichText = (value = "") =>
       ...sanitizeHtml.defaults.allowedAttributes,
       a: ["href", "name", "target", "rel"],
       img: ["src", "alt", "title", "width", "height", "loading"],
-      span: ["class", "style"],
-      "*": ["style"],
+      span: ["class"],
     },
-    allowedSchemes: ["http", "https", "mailto", "tel", "data"],
+    allowedSchemesByTag: {
+      a: ["http", "https", "mailto", "tel"],
+      img: ["http", "https", "data"],
+    },
     disallowedTagsMode: "discard",
-    parseStyleAttributes: true,
   });
