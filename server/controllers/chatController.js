@@ -6,6 +6,21 @@ import mongoose from "mongoose";
 import { generateEmbedding } from "./aiController.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const FALLBACK_ANSWER =
+  "I couldn't find any specific information regarding that in our active policies. Please try rephrasing your question or consult your manager.";
+
+const logContentGap = async ({ companyId, question, userId, type }) => {
+  try {
+    await ContentGapLog.create({
+      companyId,
+      question,
+      type,
+      userId,
+    });
+  } catch (logError) {
+    console.error("Failed to log content gap:", logError);
+  }
+};
 
 export const generateChatResponse = asyncHandler(async (req, res) => {
   const { question } = req.body;
@@ -22,8 +37,17 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   try {
     queryEmbedding = await generateEmbedding(question);
   } catch (error) {
-    res.status(500);
-    throw new Error("Failed to process query embedding");
+    await logContentGap({
+      companyId: activeCompanyId,
+      question,
+      type: "failed_search",
+      userId: req.user._id,
+    });
+
+    return res.json({
+      answer: FALLBACK_ANSWER,
+      sources: [],
+    });
   }
 
   // --- 2. Perform Vector Search (Retrieval) ---
@@ -67,19 +91,15 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
   // If no articles are found or relevance is too low, log the content gap and fallback
   if (relevantArticles.length === 0 || relevantArticles[0].score < 0.6) {
-    try {
-      await ContentGapLog.create({
-        companyId: activeCompanyId,
-        question,
-        type: "unanswered_chat",
-        userId: req.user._id,
-      });
-    } catch (logError) {
-      console.error("Failed to log content gap:", logError);
-    }
+    await logContentGap({
+      companyId: activeCompanyId,
+      question,
+      type: "unanswered_chat",
+      userId: req.user._id,
+    });
+
     return res.json({
-      answer:
-        "I couldn't find any specific information regarding that in our active policies. Please try rephrasing your question or consult your manager.",
+      answer: FALLBACK_ANSWER,
       sources: [],
     });
   }
