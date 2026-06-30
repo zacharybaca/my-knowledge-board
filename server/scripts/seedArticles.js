@@ -10,8 +10,8 @@
  *   --count=<n>           Number of articles to create (default: 30)
  *   --status=<s>          Force a single status: Draft | Pending | Approved | Rejected
  *                         (default: randomly distributed)
- *   --company-id=<id>     Use an existing Company ObjectId instead of creating a seed company
- *   --author-id=<id>      Use an existing User ObjectId as the author instead of creating one
+ *   --company-id=<id>     Target a specific Company ObjectId (default: first Active company in DB)
+ *   --author-id=<id>      Target a specific User ObjectId as author (default: first Admin/Manager in target company)
  *   --clear               Delete all existing articles for the target company before seeding
  *
  * Examples:
@@ -765,6 +765,15 @@ async function getOrCreateSeedCompany() {
     return company;
   }
 
+  // Prefer an existing active company so seeded articles are visible to
+  // real users already in the database.
+  const activeCompany = await Company.findOne({ status: 'Active', isActive: true });
+  if (activeCompany) {
+    console.log(`✅ Using existing active company: "${activeCompany.name}" (${activeCompany._id})`);
+    return activeCompany;
+  }
+
+  // Fall back to the isolated seed company only when no real company exists yet.
   const existing = await Company.findOne({ emailDomain: 'seedcorp.example' });
   if (existing) {
     console.log(`✅ Seed company already exists: "${existing.name}"`);
@@ -789,6 +798,18 @@ async function getOrCreateSeedAuthor(companyId) {
     return user;
   }
 
+  // Prefer an existing Admin/Manager in the chosen company so articles are
+  // owned by a real user and pass all company-access checks.
+  const existingUser = await User.findOne({
+    companyId: companyId,
+    role: { $in: ['Admin', 'Manager'] },
+  });
+  if (existingUser) {
+    console.log(`✅ Using existing company user: "${existingUser.firstName} ${existingUser.lastName}" (${existingUser._id})`);
+    return existingUser;
+  }
+
+  // Fall back to the dedicated seed author for isolated/empty databases.
   const existing = await User.findOne({ email: 'seed.author@seedcorp.example' });
   if (existing) {
     console.log(`✅ Seed author already exists: "${existing.firstName} ${existing.lastName}"`);
