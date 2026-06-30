@@ -6,11 +6,13 @@ const {
   mockGenerateEmbedding,
   mockGenerateContent,
   mockGetGenerativeModel,
+  mockCreateContentGap,
 } = vi.hoisted(() => ({
   mockAggregate: vi.fn(),
   mockGenerateEmbedding: vi.fn(),
   mockGenerateContent: vi.fn(),
   mockGetGenerativeModel: vi.fn(),
+  mockCreateContentGap: vi.fn(),
 }));
 
 vi.mock("../../models/Article.js", () => ({
@@ -19,6 +21,10 @@ vi.mock("../../models/Article.js", () => ({
 
 vi.mock("../../controllers/aiController.js", () => ({
   generateEmbedding: mockGenerateEmbedding,
+}));
+
+vi.mock("../../models/ContentGapLog.js", () => ({
+  default: { create: mockCreateContentGap },
 }));
 
 vi.mock("@google/generative-ai", () => ({
@@ -87,6 +93,7 @@ describe("generateChatResponse", () => {
   beforeEach(() => {
     mockGenerateEmbedding.mockReset();
     mockAggregate.mockReset();
+    mockCreateContentGap.mockReset();
     mockGenerateContent.mockReset();
     mockGetGenerativeModel.mockReturnValue({
       generateContent: mockGenerateContent,
@@ -105,17 +112,26 @@ describe("generateChatResponse", () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it("forwards 500 via next when embedding generation fails", async () => {
+  it("returns fallback and logs content gap when embedding generation fails", async () => {
     mockGenerateEmbedding.mockRejectedValue(new Error("AI offline"));
-    const next = vi.fn();
     const res = makeRes();
+    const next = vi.fn();
 
     await generateChatResponse(makeReq(), res, next);
 
-    const errorArg = next.mock.calls[0]?.[0];
-    expect(errorArg).toBeInstanceOf(Error);
-    expect(errorArg.message).toMatch(/failed to process query embedding/i);
-    expect(res.statusCode).toBe(500);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sources: [],
+        answer: expect.stringMatching(/couldn't find/i),
+      }),
+    );
+    expect(mockCreateContentGap).toHaveBeenCalledWith(
+      expect.objectContaining({
+        question: "What is the refund policy?",
+        type: "failed_search",
+      }),
+    );
   });
 
   it("returns fallback answer when no articles are found", async () => {
