@@ -20,53 +20,53 @@
  *   node -r dotenv/config scripts/seedArticles.js --company-id=6650abc... --author-id=6650def...
  */
 
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import Article from '../models/Article.js';
-import User from '../models/User.js';
-import Company from '../models/Company.js';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import Article from "../models/Article.js";
+import User from "../models/User.js";
+import Company from "../models/Company.js";
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing
 // ---------------------------------------------------------------------------
 const args = Object.fromEntries(
   process.argv.slice(2).map((a) => {
-    const [k, v] = a.replace(/^--/, '').split('=');
+    const [k, v] = a.replace(/^--/, "").split("=");
     return [k, v ?? true];
   }),
 );
 
-const COUNT = parseInt(args['count'] ?? '30', 10);
-const FORCED_STATUS = args['status'] ?? null;
-const CLEAR = args['clear'] === true || args['clear'] === 'true';
-const GIVEN_COMPANY_ID = args['company-id'] ?? null;
-const GIVEN_AUTHOR_ID = args['author-id'] ?? null;
+const COUNT = parseInt(args["count"] ?? "30", 10);
+const FORCED_STATUS = args["status"] ?? null;
+const CLEAR = args["clear"] === true || args["clear"] === "true";
+const GIVEN_COMPANY_ID = args["company-id"] ?? null;
+const GIVEN_AUTHOR_ID = args["author-id"] ?? null;
 
 // ---------------------------------------------------------------------------
 // Placeholder content data
 // ---------------------------------------------------------------------------
 const DEPARTMENTS = [
-  'Customer Service',
-  'Tech Support',
-  'Human Resources',
-  'Sales',
-  'Marketing',
-  'Engineering',
-  'Product',
-  'Finance',
-  'Legal',
-  'Operations',
-  'Other',
+  "Customer Service",
+  "Tech Support",
+  "Human Resources",
+  "Sales",
+  "Marketing",
+  "Engineering",
+  "Product",
+  "Finance",
+  "Legal",
+  "Operations",
+  "Other",
 ];
 
-const STATUSES = ['Draft', 'Pending', 'Approved', 'Rejected'];
+const STATUSES = ["Draft", "Pending", "Approved", "Rejected"];
 
 const ARTICLES_BY_DEPARTMENT = {
-  'Customer Service': [
+  "Customer Service": [
     {
-      title: 'How to Handle an Escalated Customer Complaint',
+      title: "How to Handle an Escalated Customer Complaint",
       summary:
-        'A step-by-step guide for de-escalating difficult customer interactions and reaching a satisfactory resolution.',
+        "A step-by-step guide for de-escalating difficult customer interactions and reaching a satisfactory resolution.",
       content: `<h2>Overview</h2>
 <p>Escalated complaints require a calm, empathetic approach. This guide walks you through the standard procedure for handling customers who have already spoken with a first-tier representative and remain unsatisfied.</p>
 <h2>Step 1 – Acknowledge the Frustration</h2>
@@ -77,12 +77,12 @@ const ARTICLES_BY_DEPARTMENT = {
 <p>Provide a specific fix, timeline, or compensation where policy allows. Vague commitments increase distrust.</p>
 <h2>Step 4 – Follow Up</h2>
 <p>Send a follow-up email within 24 hours confirming the resolution and any next steps.</p>`,
-      tags: ['escalation', 'complaints', 'CRM', 'customer satisfaction'],
+      tags: ["escalation", "complaints", "CRM", "customer satisfaction"],
     },
     {
-      title: 'Refund and Return Policy – Quick Reference',
+      title: "Refund and Return Policy – Quick Reference",
       summary:
-        'Concise reference card covering refund eligibility windows, exceptions, and processing steps.',
+        "Concise reference card covering refund eligibility windows, exceptions, and processing steps.",
       content: `<h2>Eligibility</h2>
 <ul>
   <li>Physical products: 30-day return window from delivery date.</li>
@@ -97,11 +97,12 @@ const ARTICLES_BY_DEPARTMENT = {
 </ol>
 <h2>Exceptions</h2>
 <p>Clearance items, customized products, and gift cards are non-refundable. Escalate edge cases to your manager.</p>`,
-      tags: ['refunds', 'returns', 'policy', 'billing'],
+      tags: ["refunds", "returns", "policy", "billing"],
     },
     {
-      title: 'Using the Support Ticketing System',
-      summary: 'How to create, categorize, and close support tickets efficiently.',
+      title: "Using the Support Ticketing System",
+      summary:
+        "How to create, categorize, and close support tickets efficiently.",
       content: `<h2>Creating a Ticket</h2>
 <p>Open the ticketing dashboard and click <strong>New Ticket</strong>. Fill in the customer name, contact details, issue category, and a concise description. Attach screenshots or logs where applicable.</p>
 <h2>Priority Levels</h2>
@@ -116,14 +117,14 @@ const ARTICLES_BY_DEPARTMENT = {
 </table>
 <h2>Closing a Ticket</h2>
 <p>Before closing, confirm with the customer that the issue is resolved. Add a resolution note, tag the root cause category, and close the ticket. Auto-surveys are sent 24 hours after closure.</p>`,
-      tags: ['ticketing', 'SLA', 'support workflow'],
+      tags: ["ticketing", "SLA", "support workflow"],
     },
   ],
-  'Tech Support': [
+  "Tech Support": [
     {
-      title: 'Diagnosing Network Connectivity Issues',
+      title: "Diagnosing Network Connectivity Issues",
       summary:
-        'Systematic troubleshooting workflow for diagnosing and resolving end-user network problems.',
+        "Systematic troubleshooting workflow for diagnosing and resolving end-user network problems.",
       content: `<h2>Initial Triage</h2>
 <p>Before diving into technical steps, determine the scope: Is the issue limited to one device, one location, or company-wide? Scope narrows your root-cause hypothesis significantly.</p>
 <h2>Step 1 – Verify Physical Layer</h2>
@@ -136,12 +137,12 @@ const ARTICLES_BY_DEPARTMENT = {
 <p>Run <code>nslookup google.com</code>. If name resolution fails, switch to a public DNS server (8.8.8.8) temporarily to isolate the problem.</p>
 <h2>Escalation</h2>
 <p>If steps 1–4 do not resolve the issue, escalate to the network team with your diagnostic findings.</p>`,
-      tags: ['networking', 'troubleshooting', 'DNS', 'DHCP', 'connectivity'],
+      tags: ["networking", "troubleshooting", "DNS", "DHCP", "connectivity"],
     },
     {
-      title: 'Password Reset Procedure for Active Directory Users',
+      title: "Password Reset Procedure for Active Directory Users",
       summary:
-        'How to securely reset an AD user password and communicate credentials without exposing them.',
+        "How to securely reset an AD user password and communicate credentials without exposing them.",
       content: `<h2>Pre-Requisites</h2>
 <p>You must have the <strong>Help Desk Operator</strong> role in Active Directory Users and Computers (ADUC) to perform this action.</p>
 <h2>Steps</h2>
@@ -154,12 +155,12 @@ const ARTICLES_BY_DEPARTMENT = {
 </ol>
 <h2>Security Notes</h2>
 <p>Never write passwords in ticket comments. Log only that a reset was performed and the delivery method used.</p>`,
-      tags: ['Active Directory', 'password reset', 'security', 'IT'],
+      tags: ["Active Directory", "password reset", "security", "IT"],
     },
     {
-      title: 'Setting Up a New Employee Workstation',
+      title: "Setting Up a New Employee Workstation",
       summary:
-        'Checklist and instructions for provisioning a new hire workstation from unboxing to first login.',
+        "Checklist and instructions for provisioning a new hire workstation from unboxing to first login.",
       content: `<h2>Hardware Checklist</h2>
 <ul>
   <li>Laptop or desktop unpacked and inspected for damage</li>
@@ -177,14 +178,14 @@ const ARTICLES_BY_DEPARTMENT = {
 </ol>
 <h2>Handoff</h2>
 <p>Log the asset tag, serial number, and assigned user in the IT asset management system. Send the new hire a welcome email with login instructions.</p>`,
-      tags: ['onboarding', 'workstation', 'provisioning', 'imaging'],
+      tags: ["onboarding", "workstation", "provisioning", "imaging"],
     },
   ],
-  'Human Resources': [
+  "Human Resources": [
     {
-      title: 'Employee Onboarding Checklist',
+      title: "Employee Onboarding Checklist",
       summary:
-        'Complete checklist for HR coordinators to ensure a smooth first day and first week for new hires.',
+        "Complete checklist for HR coordinators to ensure a smooth first day and first week for new hires.",
       content: `<h2>Before Day 1</h2>
 <ul>
   <li>Send welcome email with start date, dress code, parking, and point of contact</li>
@@ -207,12 +208,12 @@ const ARTICLES_BY_DEPARTMENT = {
   <li>Confirm all system access is functioning</li>
   <li>Verify benefits enrollment deadline has been communicated</li>
 </ul>`,
-      tags: ['onboarding', 'new hire', 'checklist', 'HR'],
+      tags: ["onboarding", "new hire", "checklist", "HR"],
     },
     {
-      title: 'Performance Improvement Plan (PIP) Guide',
+      title: "Performance Improvement Plan (PIP) Guide",
       summary:
-        'Guidelines for managers and HR on when and how to initiate a Performance Improvement Plan.',
+        "Guidelines for managers and HR on when and how to initiate a Performance Improvement Plan.",
       content: `<h2>Purpose</h2>
 <p>A PIP is a structured, documented plan intended to give an employee a clear and fair opportunity to meet defined performance standards. It should never be used punitively.</p>
 <h2>When to Use a PIP</h2>
@@ -231,12 +232,12 @@ const ARTICLES_BY_DEPARTMENT = {
 </ol>
 <h2>Documentation</h2>
 <p>All PIP documents must be signed by the employee, the manager, and an HR representative. Store originals in the employee's personnel file.</p>`,
-      tags: ['PIP', 'performance management', 'HR', 'documentation'],
+      tags: ["PIP", "performance management", "HR", "documentation"],
     },
     {
-      title: 'Paid Time Off Policy',
+      title: "Paid Time Off Policy",
       summary:
-        'Summary of PTO accrual, request procedures, carryover rules, and payout upon separation.',
+        "Summary of PTO accrual, request procedures, carryover rules, and payout upon separation.",
       content: `<h2>Accrual Rates</h2>
 <table>
   <thead><tr><th>Years of Service</th><th>PTO Accrual (per pay period)</th></tr></thead>
@@ -252,14 +253,14 @@ const ARTICLES_BY_DEPARTMENT = {
 <p>Employees may carry over a maximum of 40 hours (one week) of unused PTO into the next calendar year. Unused hours above this cap are forfeited on December 31.</p>
 <h2>Separation Payout</h2>
 <p>Accrued, unused PTO up to the carryover cap will be paid out upon voluntary resignation or company-initiated separation in good standing.</p>`,
-      tags: ['PTO', 'time off', 'leave policy', 'benefits'],
+      tags: ["PTO", "time off", "leave policy", "benefits"],
     },
   ],
   Sales: [
     {
-      title: 'Sales Discovery Call Best Practices',
+      title: "Sales Discovery Call Best Practices",
       summary:
-        'How to run an effective discovery call that uncovers genuine pain points and advances the deal.',
+        "How to run an effective discovery call that uncovers genuine pain points and advances the deal.",
       content: `<h2>Preparation</h2>
 <p>Research the prospect's company, recent news, and LinkedIn profiles of attendees before the call. Prepare 3–5 open-ended questions tailored to their industry.</p>
 <h2>Call Structure</h2>
@@ -277,12 +278,12 @@ const ARTICLES_BY_DEPARTMENT = {
   <li>❌ Don't pitch too early — wait until you fully understand the need.</li>
   <li>❌ Don't let the call end without a concrete next step.</li>
 </ul>`,
-      tags: ['discovery', 'sales process', 'SPIN', 'CRM'],
+      tags: ["discovery", "sales process", "SPIN", "CRM"],
     },
     {
-      title: 'Competitive Battlecard: Key Differentiators',
+      title: "Competitive Battlecard: Key Differentiators",
       summary:
-        'Quick-reference guide on how to position our product against top competitors in live deals.',
+        "Quick-reference guide on how to position our product against top competitors in live deals.",
       content: `<h2>Why Prospects Choose Us Over Competitor A</h2>
 <ul>
   <li><strong>Ease of Use:</strong> Our onboarding takes 2 days vs. their 2-week implementation.</li>
@@ -298,12 +299,12 @@ const ARTICLES_BY_DEPARTMENT = {
 <h2>Common Objections and Responses</h2>
 <p><strong>Objection:</strong> "Competitor A is cheaper."<br/>
 <strong>Response:</strong> "Their base price is lower, but once you add the modules for [feature X] and [feature Y] that come standard with us, the total cost is comparable — and you get a better support experience."</p>`,
-      tags: ['competitive intelligence', 'battlecard', 'objection handling'],
+      tags: ["competitive intelligence", "battlecard", "objection handling"],
     },
     {
-      title: 'CRM Hygiene Standards',
+      title: "CRM Hygiene Standards",
       summary:
-        'Required fields, update cadence, and data quality standards for maintaining a clean CRM.',
+        "Required fields, update cadence, and data quality standards for maintaining a clean CRM.",
       content: `<h2>Required Fields on Every Contact</h2>
 <ul>
   <li>First Name, Last Name, Business Email</li>
@@ -319,14 +320,14 @@ const ARTICLES_BY_DEPARTMENT = {
   <li>Use standardized company names — search before creating to avoid duplicates.</li>
   <li>Opportunities without activity for 30 days will be flagged for review by RevOps.</li>
 </ul>`,
-      tags: ['CRM', 'data quality', 'sales operations'],
+      tags: ["CRM", "data quality", "sales operations"],
     },
   ],
   Marketing: [
     {
-      title: 'Content Calendar Management',
+      title: "Content Calendar Management",
       summary:
-        'How to plan, schedule, and maintain the quarterly content calendar across all channels.',
+        "How to plan, schedule, and maintain the quarterly content calendar across all channels.",
       content: `<h2>Calendar Structure</h2>
 <p>The content calendar lives in the shared project management tool and is organized by channel (blog, social, email, paid) and mapped to campaign themes for the quarter.</p>
 <h2>Planning Process</h2>
@@ -343,12 +344,12 @@ const ARTICLES_BY_DEPARTMENT = {
   <li>Social: At least 3 posts per week per active channel.</li>
   <li>Email: No more than 2 marketing emails per week to any segment.</li>
 </ul>`,
-      tags: ['content calendar', 'planning', 'editorial', 'social media'],
+      tags: ["content calendar", "planning", "editorial", "social media"],
     },
     {
-      title: 'Brand Voice and Tone Guidelines',
+      title: "Brand Voice and Tone Guidelines",
       summary:
-        'How to write and communicate in a way that reflects our brand identity across all channels.',
+        "How to write and communicate in a way that reflects our brand identity across all channels.",
       content: `<h2>Our Brand Personality</h2>
 <p>We are <strong>knowledgeable but approachable</strong>, <strong>direct but not cold</strong>, and <strong>confident but never arrogant</strong>. Every piece of content should feel like it was written by a helpful expert, not a corporate press release.</p>
 <h2>Tone by Channel</h2>
@@ -368,12 +369,12 @@ const ARTICLES_BY_DEPARTMENT = {
   <li>Exclamation marks in formal content</li>
   <li>Superlatives without evidence ("best-in-class," "world-class")</li>
 </ul>`,
-      tags: ['brand voice', 'tone', 'writing guidelines', 'style guide'],
+      tags: ["brand voice", "tone", "writing guidelines", "style guide"],
     },
     {
-      title: 'Launching a Paid Ad Campaign – Checklist',
+      title: "Launching a Paid Ad Campaign – Checklist",
       summary:
-        'Pre-launch checklist for search and social paid campaigns to catch common mistakes before going live.',
+        "Pre-launch checklist for search and social paid campaigns to catch common mistakes before going live.",
       content: `<h2>Before You Launch</h2>
 <ul>
   <li>Campaign objective is defined and matches the funnel stage (awareness, consideration, conversion).</li>
@@ -388,14 +389,14 @@ const ARTICLES_BY_DEPARTMENT = {
 <p>Monitor delivery, CTR, and CPC daily. Flag any ad sets with below-average delivery to the channel manager immediately.</p>
 <h2>Reporting</h2>
 <p>Weekly performance reports are due every Monday by 10 AM for active campaigns. Use the standard reporting template in the shared drive.</p>`,
-      tags: ['paid ads', 'PPC', 'campaign management', 'UTM', 'Google Ads'],
+      tags: ["paid ads", "PPC", "campaign management", "UTM", "Google Ads"],
     },
   ],
   Engineering: [
     {
-      title: 'Git Branching and PR Workflow',
+      title: "Git Branching and PR Workflow",
       summary:
-        'The standard branching strategy and pull request process used by the engineering team.',
+        "The standard branching strategy and pull request process used by the engineering team.",
       content: `<h2>Branch Naming</h2>
 <p>Branches should follow the pattern: <code>&lt;type&gt;/&lt;short-description&gt;</code></p>
 <ul>
@@ -416,12 +417,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </ul>
 <h2>Merge Strategy</h2>
 <p>Squash and merge is preferred for feature branches. Merge commits are used only for long-lived integration branches.</p>`,
-      tags: ['git', 'branching', 'pull request', 'code review', 'workflow'],
+      tags: ["git", "branching", "pull request", "code review", "workflow"],
     },
     {
-      title: 'API Design Standards',
+      title: "API Design Standards",
       summary:
-        'Conventions for designing consistent, predictable RESTful APIs across all services.',
+        "Conventions for designing consistent, predictable RESTful APIs across all services.",
       content: `<h2>URL Conventions</h2>
 <ul>
   <li>Use nouns, not verbs: <code>/api/users</code> not <code>/api/getUsers</code></li>
@@ -445,12 +446,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 <p>All responses return JSON. Success responses include the resource data directly. Error responses include a top-level <code>message</code> field.</p>
 <h2>Pagination</h2>
 <p>List endpoints must support <code>page</code> and <code>limit</code> query parameters. The response envelope should include <code>total</code>, <code>page</code>, and <code>pages</code> fields.</p>`,
-      tags: ['API', 'REST', 'design standards', 'conventions'],
+      tags: ["API", "REST", "design standards", "conventions"],
     },
     {
-      title: 'Incident Response Runbook',
+      title: "Incident Response Runbook",
       summary:
-        'How to detect, communicate, and resolve production incidents with minimal customer impact.',
+        "How to detect, communicate, and resolve production incidents with minimal customer impact.",
       content: `<h2>Severity Levels</h2>
 <table>
   <thead><tr><th>Level</th><th>Definition</th><th>Response Time</th></tr></thead>
@@ -469,14 +470,14 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
   <li><strong>Resolve:</strong> Confirm resolution, update status page, and close the incident channel.</li>
   <li><strong>Post-Mortem:</strong> Complete a blameless post-mortem within 5 business days.</li>
 </ol>`,
-      tags: ['incident response', 'runbook', 'outage', 'SRE', 'on-call'],
+      tags: ["incident response", "runbook", "outage", "SRE", "on-call"],
     },
   ],
   Product: [
     {
-      title: 'Writing a Product Requirements Document (PRD)',
+      title: "Writing a Product Requirements Document (PRD)",
       summary:
-        'Template and guidance for writing clear, actionable PRDs that engineering can build from.',
+        "Template and guidance for writing clear, actionable PRDs that engineering can build from.",
       content: `<h2>PRD Structure</h2>
 <h3>1. Problem Statement</h3>
 <p>Describe the user problem being solved. Include data or qualitative evidence. Avoid describing the solution here.</p>
@@ -490,12 +491,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 <p>Per user story, define the conditions that must be true for the story to be considered complete (Given/When/Then format).</p>
 <h3>6. Open Questions</h3>
 <p>List decisions still to be made and who is responsible for resolving them.</p>`,
-      tags: ['PRD', 'product requirements', 'documentation', 'user stories'],
+      tags: ["PRD", "product requirements", "documentation", "user stories"],
     },
     {
-      title: 'Roadmap Prioritization Framework',
+      title: "Roadmap Prioritization Framework",
       summary:
-        'How the product team uses RICE scoring to prioritize the roadmap objectively.',
+        "How the product team uses RICE scoring to prioritize the roadmap objectively.",
       content: `<h2>RICE Scoring</h2>
 <p>RICE = (Reach × Impact × Confidence) / Effort</p>
 <table>
@@ -514,12 +515,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
   <li>Top-scored items are slotted into the roadmap, subject to capacity.</li>
   <li>Scores are documented and archived with the roadmap for future reference.</li>
 </ol>`,
-      tags: ['RICE', 'prioritization', 'roadmap', 'product management'],
+      tags: ["RICE", "prioritization", "roadmap", "product management"],
     },
     {
-      title: 'Beta Program Management',
+      title: "Beta Program Management",
       summary:
-        'How to recruit, manage, and extract value from beta users before a general release.',
+        "How to recruit, manage, and extract value from beta users before a general release.",
       content: `<h2>Recruiting Beta Users</h2>
 <p>Target power users who have opted in to early access communications. Aim for a cohort of 20–50 users representing diverse company sizes and use cases.</p>
 <h2>Beta Program Structure</h2>
@@ -530,14 +531,14 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </ol>
 <h2>Feedback Collection</h2>
 <p>Use a structured feedback template covering: (1) task completion, (2) ease of use (1–5), (3) most valuable feature, and (4) biggest pain point. Aggregate quantitative data in the product analytics dashboard.</p>`,
-      tags: ['beta', 'user research', 'product launch', 'feedback'],
+      tags: ["beta", "user research", "product launch", "feedback"],
     },
   ],
   Finance: [
     {
-      title: 'Expense Reimbursement Policy',
+      title: "Expense Reimbursement Policy",
       summary:
-        'Eligible expenses, required documentation, submission deadlines, and reimbursement timelines.',
+        "Eligible expenses, required documentation, submission deadlines, and reimbursement timelines.",
       content: `<h2>Eligible Expenses</h2>
 <ul>
   <li>Business travel: flights, hotels, ground transportation (up to policy limits)</li>
@@ -555,12 +556,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </ol>
 <h2>Reimbursement</h2>
 <p>Approved expenses are reimbursed via direct deposit on the next standard payroll cycle after Finance approval.</p>`,
-      tags: ['expenses', 'reimbursement', 'travel policy', 'finance'],
+      tags: ["expenses", "reimbursement", "travel policy", "finance"],
     },
     {
-      title: 'Budget Request Process',
+      title: "Budget Request Process",
       summary:
-        'How to submit, justify, and track approval of budget requests outside the annual cycle.',
+        "How to submit, justify, and track approval of budget requests outside the annual cycle.",
       content: `<h2>When to Submit an Out-of-Cycle Request</h2>
 <p>Submit an out-of-cycle budget request when an unplanned business need arises that cannot wait for the next annual planning cycle and exceeds $5,000.</p>
 <h2>Required Information</h2>
@@ -579,14 +580,14 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
     <tr><td>$100,000+</td><td>CFO + CEO</td></tr>
   </tbody>
 </table>`,
-      tags: ['budget', 'approval', 'finance', 'procurement'],
+      tags: ["budget", "approval", "finance", "procurement"],
     },
   ],
   Legal: [
     {
-      title: 'Contract Review Request Process',
+      title: "Contract Review Request Process",
       summary:
-        'How to submit contracts to Legal for review and what to expect during the review cycle.',
+        "How to submit contracts to Legal for review and what to expect during the review cycle.",
       content: `<h2>When to Involve Legal</h2>
 <p>Any third-party contract, addendum, or SOW must be reviewed by Legal before signature. Never sign on behalf of the company without Legal sign-off.</p>
 <h2>Submission Process</h2>
@@ -607,12 +608,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </table>
 <h2>Redlines and Negotiation</h2>
 <p>Legal will return a redlined version for internal review before sending to the counterparty. Do not share redlines externally without Legal approval.</p>`,
-      tags: ['contracts', 'legal review', 'NDA', 'compliance'],
+      tags: ["contracts", "legal review", "NDA", "compliance"],
     },
     {
-      title: 'Data Privacy and GDPR Compliance Overview',
+      title: "Data Privacy and GDPR Compliance Overview",
       summary:
-        'Internal guide to understanding our data privacy obligations and how to handle personal data responsibly.',
+        "Internal guide to understanding our data privacy obligations and how to handle personal data responsibly.",
       content: `<h2>What is Personal Data?</h2>
 <p>Any information that can identify a natural person, directly or indirectly — including names, email addresses, IP addresses, and behavioral data.</p>
 <h2>Key GDPR Principles</h2>
@@ -626,14 +627,14 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </ul>
 <h2>Your Responsibilities</h2>
 <p>If you receive a data subject access request (DSAR) or become aware of a potential data breach, notify the Legal/Privacy team within 24 hours. Do not respond to DSARs directly.</p>`,
-      tags: ['GDPR', 'data privacy', 'compliance', 'personal data'],
+      tags: ["GDPR", "data privacy", "compliance", "personal data"],
     },
   ],
   Operations: [
     {
-      title: 'Vendor Onboarding Procedure',
+      title: "Vendor Onboarding Procedure",
       summary:
-        'Steps required to add a new vendor to the approved vendor list and set up payment terms.',
+        "Steps required to add a new vendor to the approved vendor list and set up payment terms.",
       content: `<h2>New Vendor Request</h2>
 <p>All new vendor relationships must go through the formal onboarding process before any goods or services are delivered. Working with an unapproved vendor is a policy violation.</p>
 <h2>Required Documentation</h2>
@@ -653,12 +654,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </ol>
 <h2>Payment Terms</h2>
 <p>Standard payment terms are Net 30 unless negotiated otherwise and approved by Finance. Document any deviations in the contract.</p>`,
-      tags: ['vendor management', 'procurement', 'onboarding', 'AP'],
+      tags: ["vendor management", "procurement", "onboarding", "AP"],
     },
     {
-      title: 'Business Continuity Plan Overview',
+      title: "Business Continuity Plan Overview",
       summary:
-        'Summary of our business continuity and disaster recovery plans for key operational risks.',
+        "Summary of our business continuity and disaster recovery plans for key operational risks.",
       content: `<h2>Purpose</h2>
 <p>The Business Continuity Plan (BCP) ensures critical operations can continue or be rapidly restored following a disruptive event such as a natural disaster, cyberattack, or facility outage.</p>
 <h2>Risk Categories Covered</h2>
@@ -673,14 +674,14 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 <strong>RPO (Recovery Point Objective):</strong> No more than 1 hour of data loss.</p>
 <h2>Testing</h2>
 <p>The BCP is tested twice per year via tabletop exercises. Results and action items are reviewed by the Operations leadership team and updated accordingly.</p>`,
-      tags: ['BCP', 'disaster recovery', 'continuity', 'risk management'],
+      tags: ["BCP", "disaster recovery", "continuity", "risk management"],
     },
   ],
   Other: [
     {
-      title: 'Company Communication Guidelines',
+      title: "Company Communication Guidelines",
       summary:
-        'Expectations for professional communication across internal and external channels.',
+        "Expectations for professional communication across internal and external channels.",
       content: `<h2>Email</h2>
 <ul>
   <li>Use a clear, specific subject line.</li>
@@ -700,12 +701,12 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
   <li>Start and end on time.</li>
   <li>Send meeting notes with action items within 24 hours of the meeting.</li>
 </ul>`,
-      tags: ['communication', 'email etiquette', 'meetings', 'Slack'],
+      tags: ["communication", "email etiquette", "meetings", "Slack"],
     },
     {
-      title: 'Workplace Safety and Emergency Procedures',
+      title: "Workplace Safety and Emergency Procedures",
       summary:
-        'Essential safety information every employee should know, including evacuation routes and emergency contacts.',
+        "Essential safety information every employee should know, including evacuation routes and emergency contacts.",
       content: `<h2>Emergency Contacts</h2>
 <ul>
   <li>Emergency Services: 911</li>
@@ -722,7 +723,7 @@ Example: <code>feat(auth): add JWT refresh token support</code></p>
 </ol>
 <h2>Reporting Safety Concerns</h2>
 <p>Report any unsafe conditions or near-misses to Facilities using the safety concern form in the employee portal. All reports are investigated within 2 business days.</p>`,
-      tags: ['safety', 'emergency procedures', 'evacuation', 'facilities'],
+      tags: ["safety", "emergency procedures", "evacuation", "facilities"],
     },
   ],
 };
@@ -743,10 +744,10 @@ function pickStatus() {
   if (FORCED_STATUS) return FORCED_STATUS;
   // Weighted distribution: Approved 50%, Pending 25%, Draft 15%, Rejected 10%
   const rand = Math.random();
-  if (rand < 0.5) return 'Approved';
-  if (rand < 0.75) return 'Pending';
-  if (rand < 0.9) return 'Draft';
-  return 'Rejected';
+  if (rand < 0.5) return "Approved";
+  if (rand < 0.75) return "Pending";
+  if (rand < 0.9) return "Draft";
+  return "Rejected";
 }
 
 function randomPastDate(daysBack = 180) {
@@ -767,23 +768,28 @@ async function getOrCreateSeedCompany() {
 
   // Prefer an existing active company so seeded articles are visible to
   // real users already in the database.
-  const activeCompany = await Company.findOne({ status: 'Active', isActive: true });
+  const activeCompany = await Company.findOne({
+    status: "Active",
+    isActive: true,
+  });
   if (activeCompany) {
-    console.log(`✅ Using existing active company: "${activeCompany.name}" (${activeCompany._id})`);
+    console.log(
+      `✅ Using existing active company: "${activeCompany.name}" (${activeCompany._id})`,
+    );
     return activeCompany;
   }
 
   // Fall back to the isolated seed company only when no real company exists yet.
-  const existing = await Company.findOne({ emailDomain: 'seedcorp.example' });
+  const existing = await Company.findOne({ emailDomain: "seedcorp.example" });
   if (existing) {
     console.log(`✅ Seed company already exists: "${existing.name}"`);
     return existing;
   }
 
   const company = await Company.create({
-    name: 'Seed Corp (Placeholder)',
-    emailDomain: 'seedcorp.example',
-    status: 'Active',
+    name: "Seed Corp (Placeholder)",
+    emailDomain: "seedcorp.example",
+    status: "Active",
     isActive: true,
   });
   console.log(`✅ Created seed company: "${company.name}" (${company._id})`);
@@ -794,7 +800,9 @@ async function getOrCreateSeedAuthor(companyId) {
   if (GIVEN_AUTHOR_ID) {
     const user = await User.findById(GIVEN_AUTHOR_ID);
     if (!user) throw new Error(`User not found: ${GIVEN_AUTHOR_ID}`);
-    console.log(`✅ Using existing author: "${user.firstName} ${user.lastName}"`);
+    console.log(
+      `✅ Using existing author: "${user.firstName} ${user.lastName}"`,
+    );
     return user;
   }
 
@@ -802,54 +810,68 @@ async function getOrCreateSeedAuthor(companyId) {
   // owned by a real user and pass all company-access checks.
   const existingUser = await User.findOne({
     companyId: companyId,
-    role: { $in: ['Admin', 'Manager'] },
+    role: { $in: ["Admin", "Manager"] },
   });
   if (existingUser) {
-    console.log(`✅ Using existing company user: "${existingUser.firstName} ${existingUser.lastName}" (${existingUser._id})`);
+    console.log(
+      `✅ Using existing company user: "${existingUser.firstName} ${existingUser.lastName}" (${existingUser._id})`,
+    );
     return existingUser;
   }
 
   // Fall back to the dedicated seed author for isolated/empty databases.
-  const existing = await User.findOne({ email: 'seed.author@seedcorp.example' });
+  const existing = await User.findOne({
+    email: "seed.author@seedcorp.example",
+  });
   if (existing) {
-    console.log(`✅ Seed author already exists: "${existing.firstName} ${existing.lastName}"`);
+    console.log(
+      `✅ Seed author already exists: "${existing.firstName} ${existing.lastName}"`,
+    );
     return existing;
   }
 
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash('SeedPassword123!', salt);
+  const hashedPassword = await bcrypt.hash("SeedPassword123!", salt);
 
   const user = await User.create({
-    firstName: 'Seed',
-    lastName: 'Author',
-    email: 'seed.author@seedcorp.example',
+    firstName: "Seed",
+    lastName: "Author",
+    email: "seed.author@seedcorp.example",
     password: hashedPassword,
-    department: 'Other',
-    role: ['Admin'],
+    department: "Other",
+    role: ["Admin"],
     companyId: [companyId],
     isVerified: true,
   });
-  console.log(`✅ Created seed author: "${user.firstName} ${user.lastName}" (${user._id})`);
+  console.log(
+    `✅ Created seed author: "${user.firstName} ${user.lastName}" (${user._id})`,
+  );
   return user;
 }
 
 async function seed() {
   const mongoUri = process.env.MONGO_URI;
   if (!mongoUri) {
-    console.error('❌ MONGO_URI is not set. Make sure you run with: node -r dotenv/config scripts/seedArticles.js');
+    console.error(
+      "❌ MONGO_URI is not set. Make sure you run with: node -r dotenv/config scripts/seedArticles.js",
+    );
     process.exit(1);
   }
 
-  console.log('🔌 Connecting to MongoDB…');
+  console.log("🔌 Connecting to MongoDB…");
   await mongoose.connect(mongoUri);
-  console.log('✅ Connected.\n');
+  console.log("✅ Connected.\n");
 
   const company = await getOrCreateSeedCompany();
   const author = await getOrCreateSeedAuthor(company._id);
 
   if (CLEAR) {
-    const { deletedCount } = await Article.deleteMany({ companyId: company._id });
-    console.log(`🗑️  Cleared ${deletedCount} existing articles for company "${company.name}".`);
+    const { deletedCount } = await Article.deleteMany({
+      companyId: company._id,
+    });
+    console.log(
+      `🗑️  Cleared ${deletedCount} existing articles for company "${company.name}".`,
+    );
   }
 
   console.log(`\n📝 Generating ${COUNT} placeholder articles…\n`);
@@ -864,7 +886,10 @@ async function seed() {
     const articleData = {
       companyId: company._id,
       authorId: author._id,
-      title: COUNT > ARTICLE_POOL.length ? `${template.title} (${Math.floor(i / ARTICLE_POOL.length) + 1})` : template.title,
+      title:
+        COUNT > ARTICLE_POOL.length
+          ? `${template.title} (${Math.floor(i / ARTICLE_POOL.length) + 1})`
+          : template.title,
       content: template.content,
       summary: template.summary,
       tags: template.tags,
@@ -874,10 +899,11 @@ async function seed() {
       updatedAt: createdAt,
       expiresAt: new Date(createdAt.getTime() + 180 * 24 * 60 * 60 * 1000),
       lastReviewedAt: createdAt,
-      ...(status === 'Approved' && { approverId: author._id }),
-      ...(status === 'Rejected' && {
+      ...(status === "Approved" && { approverId: author._id }),
+      ...(status === "Rejected" && {
         approverId: author._id,
-        rejectionReason: 'Content requires further review and clarification before approval.',
+        rejectionReason:
+          "Content requires further review and clarification before approval.",
       }),
     };
 
@@ -892,17 +918,19 @@ async function seed() {
     acc[a.status] = (acc[a.status] ?? 0) + 1;
     return acc;
   }, {});
-  console.log('📊 Status breakdown:');
-  Object.entries(statusCounts).forEach(([s, n]) => console.log(`   ${s}: ${n}`));
+  console.log("📊 Status breakdown:");
+  Object.entries(statusCounts).forEach(([s, n]) =>
+    console.log(`   ${s}: ${n}`),
+  );
 
   console.log(`\n🏢 Company ID : ${company._id}`);
   console.log(`👤 Author ID  : ${author._id}`);
-  console.log('\n✅ Seeding complete.');
+  console.log("\n✅ Seeding complete.");
 
   await mongoose.disconnect();
 }
 
 seed().catch((err) => {
-  console.error('❌ Seeding failed:', err.message);
+  console.error("❌ Seeding failed:", err.message);
   process.exit(1);
 });

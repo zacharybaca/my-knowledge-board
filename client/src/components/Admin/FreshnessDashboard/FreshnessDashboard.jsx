@@ -105,7 +105,9 @@ const FreshnessDashboard = () => {
         <ShieldCheck size={28} className="freshness-header-icon" />
         <div>
           <h1>Content Freshness</h1>
-          <p>Articles expiring within 30 days or already past their review date.</p>
+          <p>
+            Articles expiring within 30 days or already past their review date.
+          </p>
         </div>
       </header>
 
@@ -193,7 +195,9 @@ const FreshnessDashboard = () => {
                         onClick={() => handleCertify(article._id)}
                       >
                         <ShieldCheck size={15} />
-                        {certifyingId === article._id ? 'Certifying…' : 'Certify'}
+                        {certifyingId === article._id
+                          ? 'Certifying…'
+                          : 'Certify'}
                       </button>
                     </td>
                   </tr>

@@ -493,7 +493,9 @@ const ArticleView = () => {
                         )
                       }
                     >
-                      {diffRevision?._id === revision._id ? 'Hide Diff' : 'View Diff'}
+                      {diffRevision?._id === revision._id
+                        ? 'Hide Diff'
+                        : 'View Diff'}
                     </button>
                     <button
                       type="button"
@@ -511,7 +513,8 @@ const ArticleView = () => {
               <div className="revision-diff-panel">
                 <div className="diff-column diff-old">
                   <div className="diff-label">
-                    Revision — {new Date(diffRevision.createdAt).toLocaleDateString()}
+                    Revision —{' '}
+                    {new Date(diffRevision.createdAt).toLocaleDateString()}
                   </div>
                   <div
                     className="diff-content"

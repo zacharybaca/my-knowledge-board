@@ -87,9 +87,7 @@ const SearchBar = ({ setSearchTerm, articleTitles = [] }) => {
     setShowDropdown(false);
   };
 
-  const dropdownItems = displayValue.trim()
-    ? suggestions
-    : recentSearches;
+  const dropdownItems = displayValue.trim() ? suggestions : recentSearches;
 
   const showSuggestions = showDropdown && dropdownItems.length > 0;
 

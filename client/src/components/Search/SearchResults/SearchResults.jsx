@@ -215,7 +215,14 @@ const SearchResults = () => {
           Advanced Filters
           {hasActiveFilters && (
             <span className="filter-active-badge">
-              {[filterDepartment, filterTag, filterDateFrom, filterDateTo].filter(Boolean).length}
+              {
+                [
+                  filterDepartment,
+                  filterTag,
+                  filterDateFrom,
+                  filterDateTo,
+                ].filter(Boolean).length
+              }
             </span>
           )}
         </button>
