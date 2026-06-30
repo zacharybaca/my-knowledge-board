@@ -40,7 +40,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   const isElevated =
     req.user.role.includes("Admin") || req.user.role.includes("Manager");
   if (!isElevated) {
-    searchFilter.department = { $in: req.user.department };
+    searchFilter.department = { $in: [req.user.department] };
   }
 
   // Execute the vector search
