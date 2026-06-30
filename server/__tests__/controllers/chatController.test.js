@@ -54,7 +54,7 @@ const companyId = "company-001";
 const makeUser = (overrides = {}) => ({
   _id: "user-1",
   role: "Employee",
-  department: ["Tech Support"],
+  department: "Tech Support",
   companyId: [companyId],
   ...overrides,
 });
@@ -184,7 +184,7 @@ describe("generateChatResponse", () => {
     mockGenerateEmbedding.mockResolvedValue([0.1]);
     mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
     const req = makeReq({
-      user: makeUser({ role: "Employee", department: ["Sales"] }),
+      user: makeUser({ role: "Employee", department: "Sales" }),
     });
 
     await generateChatResponse(req, makeRes(), vi.fn());
