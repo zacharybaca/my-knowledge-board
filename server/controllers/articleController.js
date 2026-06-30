@@ -109,6 +109,9 @@ const checkDuplicateArticle = asyncHandler(async (req, res) => {
 const getArticles = asyncHandler(async (req, res) => {
   const keyword = req.query.keyword?.trim();
   const tag = req.query.tag?.trim();
+  const department = req.query.department?.trim();
+  const dateFrom = req.query.dateFrom;
+  const dateTo = req.query.dateTo;
   const page = Number.parseInt(req.query.page || "1", 10);
   const limit = Number.parseInt(req.query.limit || "10", 10);
   const shouldPaginate = req.query.paginate === "true";
@@ -130,6 +133,20 @@ const getArticles = asyncHandler(async (req, res) => {
   if (tag) {
     const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     filter.tags = { $in: [new RegExp(`^${escapedTag}$`, "i")] };
+  }
+
+  if (department) {
+    filter.department = { $in: [department] };
+  }
+
+  if (dateFrom || dateTo) {
+    filter.createdAt = {};
+    if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = end;
+    }
   }
 
   const query = Article.find(filter)

@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import asyncHandler from "express-async-handler";
 import Article from "../models/Article.js";
+import ContentGapLog from "../models/ContentGapLog.js";
 import mongoose from "mongoose";
 import { generateEmbedding } from "./aiController.js";
 
@@ -64,8 +65,18 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     },
   ]);
 
-  // If no articles are found or relevance is too low, fallback
+  // If no articles are found or relevance is too low, log the content gap and fallback
   if (relevantArticles.length === 0 || relevantArticles[0].score < 0.6) {
+    try {
+      await ContentGapLog.create({
+        companyId: activeCompanyId,
+        question,
+        type: "unanswered_chat",
+        userId: req.user._id,
+      });
+    } catch (logError) {
+      console.error("Failed to log content gap:", logError);
+    }
     return res.json({
       answer:
         "I couldn't find any specific information regarding that in our active policies. Please try rephrasing your question or consult your manager.",

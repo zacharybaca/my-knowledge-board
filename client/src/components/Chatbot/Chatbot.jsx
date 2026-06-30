@@ -37,8 +37,7 @@ const Chatbot = () => {
     setIsLoading(true);
 
     // Make sure your endpoint matches what you defined in chatRoutes.js
-    // If you changed it to '/' or '/ask', make sure it aligns here.
-    const response = await fetcher('/api/chat', {
+    const response = await fetcher('/api/chat/ask', {
       method: 'POST',
       body: JSON.stringify({ question: userMessage }),
     });

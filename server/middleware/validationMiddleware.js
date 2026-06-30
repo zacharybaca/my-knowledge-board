@@ -82,6 +82,12 @@ const validateComment = [
 const validateSearchQuery = [
   query("keyword").optional().isString().trim().isLength({ max: 120 }),
   query("tag").optional().isString().trim().isLength({ max: 60 }),
+  query("department").optional().isString().trim().isLength({ max: 60 }),
+  query("dateFrom")
+    .optional()
+    .isISO8601()
+    .withMessage("Invalid dateFrom format"),
+  query("dateTo").optional().isISO8601().withMessage("Invalid dateTo format"),
   query("page").optional().isInt({ min: 1 }).withMessage("Invalid page"),
   query("limit")
     .optional()

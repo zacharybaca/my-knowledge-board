@@ -19,8 +19,10 @@ import AdminRoute from './components/Utility/AdminRoute/AdminRoute';
 import ProtectedRoute from './components/Utility/ProtectedRoute/ProtectedRoute';
 import Chatbot from './components/Chatbot/Chatbot';
 import UserManagement from './components/UserManagement/UserManagement';
-import SessionLogs from './components/Admin/SessionLogs'; // <-- NEW IMPORT
-import WorkspaceManagement from './components/Admin/WorkspaceManagement/WorkspaceManagement'; // Adjust path based on where you saved it
+import SessionLogs from './components/Admin/SessionLogs';
+import WorkspaceManagement from './components/Admin/WorkspaceManagement/WorkspaceManagement';
+import FreshnessDashboard from './components/Admin/FreshnessDashboard/FreshnessDashboard';
+import ContentGapDashboard from './components/Admin/ContentGapDashboard/ContentGapDashboard';
 import './App.css';
 
 const Layout = () => {
@@ -64,9 +66,10 @@ function App() {
           <Route path="queue/:id" element={<ArticleReview />} />
           <Route path="create-user" element={<CreateElevatedUser />} />
           <Route path="user-management" element={<UserManagement />} />
-          <Route path="session-logs" element={<SessionLogs />} />{' '}
-          <Route path="workspaces" element={<WorkspaceManagement />} />{' '}
-          {/* <-- NEW ROUTE */}
+          <Route path="session-logs" element={<SessionLogs />} />
+          <Route path="workspaces" element={<WorkspaceManagement />} />
+          <Route path="freshness" element={<FreshnessDashboard />} />
+          <Route path="content-gaps" element={<ContentGapDashboard />} />
         </Route>
 
         {/* 404 Fallback */}

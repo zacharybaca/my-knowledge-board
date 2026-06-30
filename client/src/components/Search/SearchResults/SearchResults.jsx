@@ -4,15 +4,34 @@ import { useAuth } from '../../../hooks/useAuth.js';
 import SearchBar from '../SearchBar/SearchBar.jsx';
 import ArticleCard from '../../Article/ArticleCard/ArticleCard.jsx';
 import TagFilter from '../TagFilter/TagFilter.jsx';
-import { SearchX } from 'lucide-react';
+import { SearchX, SlidersHorizontal, X } from 'lucide-react';
 import './search-results.css';
+
+const DEPARTMENTS = [
+  'Customer Service',
+  'Tech Support',
+  'Human Resources',
+  'Sales',
+  'Marketing',
+  'Engineering',
+  'Product',
+  'Finance',
+  'Legal',
+  'Operations',
+  'Other',
+];
 
 const SearchResults = () => {
   const [articles, setArticles] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
+  const [articleTitles, setArticleTitles] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTag, setFilterTag] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +51,16 @@ const SearchResults = () => {
 
   const { fetcher } = useFetcher();
   const { user } = useAuth();
+
+  const hasActiveFilters =
+    filterDepartment || filterDateFrom || filterDateTo || filterTag;
+
+  const clearAdvancedFilters = () => {
+    setFilterDepartment('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterTag('');
+  };
 
   useEffect(() => {
     const fetchCompanyInfo = async () => {
@@ -74,13 +103,17 @@ const SearchResults = () => {
     const fetchInitialData = async () => {
       const response = await fetcher('/api/articles');
       if (response.success) {
+        const allArticles = Array.isArray(response.data)
+          ? response.data
+          : response.data.articles || [];
         const tags = new Set();
-        response.data.forEach((article) => {
-          if (article.tags) {
-            article.tags.forEach((tag) => tags.add(tag));
-          }
+        const titles = [];
+        allArticles.forEach((article) => {
+          if (article.tags) article.tags.forEach((tag) => tags.add(tag));
+          if (article.title) titles.push(article.title);
         });
         setAvailableTags(Array.from(tags).sort());
+        setArticleTitles(titles);
       }
     };
     fetchInitialData();
@@ -88,7 +121,7 @@ const SearchResults = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterTag]);
+  }, [searchTerm, filterTag, filterDepartment, filterDateFrom, filterDateTo]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -98,6 +131,9 @@ const SearchResults = () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('keyword', searchTerm);
       if (filterTag) params.append('tag', filterTag);
+      if (filterDepartment) params.append('department', filterDepartment);
+      if (filterDateFrom) params.append('dateFrom', filterDateFrom);
+      if (filterDateTo) params.append('dateTo', filterDateTo);
       params.append('paginate', 'true');
       params.append('page', String(currentPage));
       params.append('limit', '12');
@@ -125,7 +161,15 @@ const SearchResults = () => {
     };
 
     fetchResults();
-  }, [searchTerm, filterTag, currentPage, fetcher]);
+  }, [
+    searchTerm,
+    filterTag,
+    filterDepartment,
+    filterDateFrom,
+    filterDateTo,
+    currentPage,
+    fetcher,
+  ]);
 
   return (
     <div className="search-page-container">
@@ -157,7 +201,79 @@ const SearchResults = () => {
         setSearchTerm={setSearchTerm}
         setFilterTag={setFilterTag}
         availableTags={availableTags}
+        articleTitles={articleTitles}
       />
+
+      {/* Advanced filter toggle */}
+      <div className="advanced-filter-row">
+        <button
+          type="button"
+          className={`advanced-filter-toggle ${showAdvanced ? 'active' : ''}`}
+          onClick={() => setShowAdvanced((v) => !v)}
+        >
+          <SlidersHorizontal size={16} />
+          Advanced Filters
+          {hasActiveFilters && (
+            <span className="filter-active-badge">
+              {[filterDepartment, filterTag, filterDateFrom, filterDateTo].filter(Boolean).length}
+            </span>
+          )}
+        </button>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="clear-filters-btn"
+            onClick={clearAdvancedFilters}
+          >
+            <X size={14} /> Clear filters
+          </button>
+        )}
+      </div>
+
+      {showAdvanced && (
+        <div className="advanced-filter-panel">
+          <div className="advanced-filter-grid">
+            <div className="filter-group">
+              <label htmlFor="dept-filter">Department</label>
+              <select
+                id="dept-filter"
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All departments</option>
+                {DEPARTMENTS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label htmlFor="date-from">Published from</label>
+              <input
+                id="date-from"
+                type="date"
+                value={filterDateFrom}
+                onChange={(e) => setFilterDateFrom(e.target.value)}
+                className="filter-input"
+              />
+            </div>
+
+            <div className="filter-group">
+              <label htmlFor="date-to">Published to</label>
+              <input
+                id="date-to"
+                type="date"
+                value={filterDateTo}
+                onChange={(e) => setFilterDateTo(e.target.value)}
+                className="filter-input"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <TagFilter
         availableTags={availableTags}
