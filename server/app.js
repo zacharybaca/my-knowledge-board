@@ -9,6 +9,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -44,6 +45,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use(errorHandler);
 
 export default app;
