@@ -3,7 +3,14 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
 import { useSocket } from '../../../hooks/useSocket';
-import { ClipboardCheck, FileText, UserPlus, Clock } from 'lucide-react'; // <-- Imported Clock icon
+import {
+  ClipboardCheck,
+  FileText,
+  UserPlus,
+  Clock,
+  ShieldCheck,
+  MessageCircleQuestion,
+} from 'lucide-react';
 import Toast from '../../Layout/Toast/Toast';
 import NotificationBell from '../../Notifications/NotificationBell';
 import '../dashboards.css';
@@ -258,6 +265,24 @@ const ManagerDashboard = () => {
               >
                 <Clock size={16} />
                 View Access Logs
+              </Link>
+
+              <Link
+                to="/freshness"
+                className="btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <ShieldCheck size={16} />
+                Content Freshness
+              </Link>
+
+              <Link
+                to="/content-gaps"
+                className="btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <MessageCircleQuestion size={16} />
+                Content Gaps
               </Link>
 
               {/* NEW: Workspace Management Link (Admins Only) */}
