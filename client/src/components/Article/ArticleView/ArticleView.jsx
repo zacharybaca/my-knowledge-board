@@ -47,6 +47,7 @@ const ArticleView = () => {
   const [newComment, setNewComment] = useState('');
   const [revisions, setRevisions] = useState([]);
   const [showRevisions, setShowRevisions] = useState(false);
+  const [diffRevision, setDiffRevision] = useState(null);
 
   const templateVariables = useMemo(() => {
     if (!article?.content) return [];
@@ -197,6 +198,7 @@ const ArticleView = () => {
     if (response.success) {
       setArticle(response.data.article);
       setShowRevisions(false);
+      setDiffRevision(null);
     }
   };
 
@@ -462,7 +464,10 @@ const ArticleView = () => {
       {showRevisions && (
         <div
           className="revision-modal-overlay"
-          onClick={() => setShowRevisions(false)}
+          onClick={() => {
+            setShowRevisions(false);
+            setDiffRevision(null);
+          }}
         >
           <div className="revision-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Revision History</h3>
@@ -478,16 +483,50 @@ const ArticleView = () => {
                       {revision.updatedBy?.lastName}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    className="btn-secondary-action"
-                    onClick={() => handleRollback(revision._id)}
-                  >
-                    Rollback
-                  </button>
+                  <div className="revision-actions">
+                    <button
+                      type="button"
+                      className={`btn-secondary-action ${diffRevision?._id === revision._id ? 'diff-active' : ''}`}
+                      onClick={() =>
+                        setDiffRevision(
+                          diffRevision?._id === revision._id ? null : revision
+                        )
+                      }
+                    >
+                      {diffRevision?._id === revision._id ? 'Hide Diff' : 'View Diff'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary-action"
+                      onClick={() => handleRollback(revision._id)}
+                    >
+                      Rollback
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {diffRevision && (
+              <div className="revision-diff-panel">
+                <div className="diff-column diff-old">
+                  <div className="diff-label">
+                    Revision — {new Date(diffRevision.createdAt).toLocaleDateString()}
+                  </div>
+                  <div
+                    className="diff-content"
+                    dangerouslySetInnerHTML={{ __html: diffRevision.content }}
+                  />
+                </div>
+                <div className="diff-column diff-new">
+                  <div className="diff-label">Current version</div>
+                  <div
+                    className="diff-content"
+                    dangerouslySetInnerHTML={{ __html: article.content }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
