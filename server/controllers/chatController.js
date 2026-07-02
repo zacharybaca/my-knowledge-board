@@ -16,13 +16,16 @@ const normalizeCompanyId = (company) => {
   return company;
 };
 
-const logContentGap = async ({ companyId, question, userId, type }) => {
+const logContentGap = async ({ companyId, question, userId, type, embedding }) => {
   try {
     await ContentGapLog.create({
       companyId,
       question,
       type,
       userId,
+      ...(Array.isArray(embedding) && embedding.length > 0
+        ? { questionEmbedding: embedding }
+        : {}),
     });
   } catch (logError) {
     console.error("Failed to log content gap:", logError);
@@ -163,6 +166,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
       question,
       type: "unanswered_chat",
       userId: req.user._id,
+      embedding: queryEmbedding,
     });
 
     return res.json({

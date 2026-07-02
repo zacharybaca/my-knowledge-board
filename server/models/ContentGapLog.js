@@ -22,6 +22,10 @@ const contentGapLogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    questionEmbedding: {
+      type: [Number],
+      select: false,
+    },
   },
   { timestamps: true },
 );
