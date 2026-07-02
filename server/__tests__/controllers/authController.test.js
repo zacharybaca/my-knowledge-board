@@ -191,7 +191,12 @@ describe("registerUser", () => {
     mockFindOne.mockResolvedValue({ _id: "existing-user" });
 
     const req = {
-      body: { email: "dupe@acme.com", password: "secret" },
+      body: {
+        email: "dupe@acme.com",
+        password: "secret",
+        department: ["Engineering"],
+        companyId: ["company-1"],
+      },
     };
     const { res, nextArgs } = await run(registerUser, req, makeRes());
 
