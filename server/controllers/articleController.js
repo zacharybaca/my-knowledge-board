@@ -5,6 +5,7 @@ import Notification from "../models/Notification.js";
 import { generateEmbedding } from "./aiController.js";
 import sendEmail from "../utils/sendEmail.js";
 import { sanitizeRichText, stripHtml } from "../utils/sanitizeHtml.js";
+import { resolveContentGapsForArticle } from "./analyticsController.js";
 
 const isElevatedUser = (user) =>
   user?.role?.includes("Admin") || user?.role?.includes("Manager");
@@ -289,7 +290,9 @@ const updateArticle = asyncHandler(async (req, res) => {
 // @access  Private (Manager/Admin Only)
 const approveRejectArticle = asyncHandler(async (req, res) => {
   const { status, rejectionReason } = req.body;
-  const article = await Article.findById(req.params.id);
+  const article = await Article.findById(req.params.id).select(
+    "+contentEmbedding",
+  );
 
   if (!article) {
     res.status(404);
@@ -312,6 +315,10 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   }
 
   const reviewedArticle = await article.save();
+
+  if (status === "Approved") {
+    resolveContentGapsForArticle(article.contentEmbedding, article.companyId);
+  }
 
   if (typeof Notification.create === "function") {
     await Notification.create({
@@ -607,7 +614,7 @@ const bulkUpdateArticleStatus = asyncHandler(async (req, res) => {
     _id: { $in: articleIds },
     companyId: { $in: req.user.companyId },
     status: "Pending",
-  });
+  }).select("+contentEmbedding");
 
   for (const article of articles) {
     article.status = status;
@@ -616,6 +623,9 @@ const bulkUpdateArticleStatus = asyncHandler(async (req, res) => {
       status === "Rejected" ? rejectionReason || null : null;
     await article.save();
 
+    if (status === "Approved") {
+      resolveContentGapsForArticle(article.contentEmbedding, article.companyId);
+    }
     if (typeof Notification.create === "function") {
       await Notification.create({
         recipientId: article.authorId,

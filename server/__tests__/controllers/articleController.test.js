@@ -11,6 +11,7 @@ const {
   mockNotificationCreate,
   mockSendEmail,
   mockUserFindById,
+  mockResolveContentGaps,
 } = vi.hoisted(() => ({
   mockFindById: vi.fn(),
   mockFind: vi.fn(),
@@ -20,6 +21,7 @@ const {
   mockNotificationCreate: vi.fn(),
   mockSendEmail: vi.fn(),
   mockUserFindById: vi.fn(),
+  mockResolveContentGaps: vi.fn(),
 }));
 
 vi.mock("../../models/Article.js", () => ({
@@ -41,6 +43,10 @@ vi.mock("../../models/Notification.js", () => ({
 
 vi.mock("../../controllers/aiController.js", () => ({
   generateEmbedding: mockGenerateEmbedding,
+}));
+
+vi.mock("../../controllers/analyticsController.js", () => ({
+  resolveContentGapsForArticle: mockResolveContentGaps,
 }));
 
 vi.mock("../../utils/sendEmail.js", () => ({
@@ -314,15 +320,25 @@ describe("approveRejectArticle", () => {
       _id: "article-1",
       companyId: { toString: () => companyId },
       status: "Pending",
+      contentEmbedding: [0.1, 0.2, 0.3],
       save: vi.fn().mockResolvedValue(true),
     };
   }
 
-  beforeEach(() => vi.clearAllMocks());
+  function mockFindByIdWithSelect(resolvedValue) {
+    mockFindById.mockReturnValue({
+      select: vi.fn().mockResolvedValue(resolvedValue),
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockResolveContentGaps.mockResolvedValue(undefined);
+  });
 
   it("approves the article when the manager belongs to the same company", async () => {
     const article = fakeArticle();
-    mockFindById.mockResolvedValue(article);
+    mockFindByIdWithSelect(article);
     const req = {
       params: { id: "article-1" },
       body: { status: "Approved" },
@@ -334,7 +350,7 @@ describe("approveRejectArticle", () => {
 
   it("persists the rejectionReason when status is Rejected", async () => {
     const article = fakeArticle();
-    mockFindById.mockResolvedValue(article);
+    mockFindByIdWithSelect(article);
     const req = {
       params: { id: "article-1" },
       body: { status: "Rejected", rejectionReason: "Off-topic" },
@@ -347,7 +363,7 @@ describe("approveRejectArticle", () => {
 
   it("clears rejectionReason when article is approved", async () => {
     const article = { ...fakeArticle(), rejectionReason: "Old reason" };
-    mockFindById.mockResolvedValue(article);
+    mockFindByIdWithSelect(article);
     const req = {
       params: { id: "article-1" },
       body: { status: "Approved" },
@@ -357,9 +373,36 @@ describe("approveRejectArticle", () => {
     expect(article.rejectionReason).toBeNull();
   });
 
+  it("triggers content gap resolution when status is Approved", async () => {
+    const article = fakeArticle();
+    mockFindByIdWithSelect(article);
+    const req = {
+      params: { id: "article-1" },
+      body: { status: "Approved" },
+      user: { _id: "manager-1", companyId: [{ toString: () => companyId }] },
+    };
+    await run(approveRejectArticle, req, makeRes());
+    expect(mockResolveContentGaps).toHaveBeenCalledWith(
+      article.contentEmbedding,
+      article.companyId,
+    );
+  });
+
+  it("does not trigger content gap resolution when status is Rejected", async () => {
+    const article = fakeArticle();
+    mockFindByIdWithSelect(article);
+    const req = {
+      params: { id: "article-1" },
+      body: { status: "Rejected", rejectionReason: "Off-topic" },
+      user: { _id: "manager-1", companyId: [{ toString: () => companyId }] },
+    };
+    await run(approveRejectArticle, req, makeRes());
+    expect(mockResolveContentGaps).not.toHaveBeenCalled();
+  });
+
   it("returns 403 when the manager belongs to a different company", async () => {
     const article = fakeArticle();
-    mockFindById.mockResolvedValue(article);
+    mockFindByIdWithSelect(article);
     const req = {
       params: { id: "article-1" },
       body: { status: "Approved" },
@@ -374,7 +417,7 @@ describe("approveRejectArticle", () => {
   });
 
   it("returns 404 when the article does not exist", async () => {
-    mockFindById.mockResolvedValue(null);
+    mockFindByIdWithSelect(null);
     const req = {
       params: { id: "ghost" },
       body: { status: "Approved" },
@@ -438,7 +481,7 @@ describe("bulkUpdateArticleStatus", () => {
 
   it("updates all matching pending articles and returns the count", async () => {
     const articles = [fakeArticle(), fakeArticle({ _id: "article-2" })];
-    mockFind.mockResolvedValue(articles);
+    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue(articles) });
     const req = {
       params: {},
       body: { articleIds: ["article-1", "article-2"], status: "Approved" },
@@ -454,7 +497,7 @@ describe("bulkUpdateArticleStatus", () => {
 
   it("sets rejectionReason when status is Rejected", async () => {
     const article = fakeArticle();
-    mockFind.mockResolvedValue([article]);
+    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
     const req = {
       params: {},
       body: {
@@ -472,7 +515,7 @@ describe("bulkUpdateArticleStatus", () => {
 
   it("clears rejectionReason when status is Approved", async () => {
     const article = fakeArticle({ rejectionReason: "old reason" });
-    mockFind.mockResolvedValue([article]);
+    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
     const req = {
       params: {},
       body: { articleIds: ["article-1"], status: "Approved" },
@@ -483,8 +526,42 @@ describe("bulkUpdateArticleStatus", () => {
     expect(article.rejectionReason).toBeNull();
   });
 
+  it("triggers content gap resolution for each approved article", async () => {
+    const embedding = [0.5, 0.6];
+    const article = fakeArticle({ contentEmbedding: embedding });
+    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
+    const req = {
+      params: {},
+      body: { articleIds: ["article-1"], status: "Approved" },
+      user: elevatedUser(),
+      app: { get: vi.fn().mockReturnValue(null) },
+    };
+    await run(bulkUpdateArticleStatus, req, makeRes());
+    expect(mockResolveContentGaps).toHaveBeenCalledWith(
+      embedding,
+      article.companyId,
+    );
+  });
+
+  it("does not trigger content gap resolution when bulk status is Rejected", async () => {
+    const article = fakeArticle();
+    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
+    const req = {
+      params: {},
+      body: {
+        articleIds: ["article-1"],
+        status: "Rejected",
+        rejectionReason: "Off-topic",
+      },
+      user: elevatedUser(),
+      app: { get: vi.fn().mockReturnValue(null) },
+    };
+    await run(bulkUpdateArticleStatus, req, makeRes());
+    expect(mockResolveContentGaps).not.toHaveBeenCalled();
+  });
+
   it("returns count=0 when no articles match the query", async () => {
-    mockFind.mockResolvedValue([]);
+    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([]) });
     const req = {
       params: {},
       body: { articleIds: ["nonexistent"], status: "Approved" },
