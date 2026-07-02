@@ -10,6 +10,8 @@ import {
   updateUserStatus,
   deleteUserById,
   updateUserRole,
+  getOnboardingStatus,
+  updateOnboardingStatus,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 // Inject Cloudinary multer middleware. Adjust path if your configuration file differs.
@@ -34,6 +36,14 @@ router
  */
 router.get("/directory", protect, getCompanyDirectory);
 router.get("/managers", protect, getCompanyManagers);
+
+/**
+ * Onboarding Checklist Routes
+ */
+router
+  .route("/me/onboarding")
+  .get(protect, getOnboardingStatus)
+  .patch(protect, updateOnboardingStatus);
 
 /**
  * Article Interaction Routes

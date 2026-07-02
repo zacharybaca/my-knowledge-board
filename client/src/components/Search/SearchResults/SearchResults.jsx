@@ -7,7 +7,7 @@ import TagFilter from '../TagFilter/TagFilter.jsx';
 import { SearchX, SlidersHorizontal, X } from 'lucide-react';
 import './search-results.css';
 
-const DEPARTMENTS = [
+const DEFAULT_DEPARTMENTS = [
   'Customer Service',
   'Tech Support',
   'Human Resources',
@@ -48,6 +48,9 @@ const SearchResults = () => {
     name: 'your organization',
     imageUrl: null,
   });
+  const [departmentOptions, setDepartmentOptions] = useState(
+    DEFAULT_DEPARTMENTS
+  );
 
   const { fetcher } = useFetcher();
   const { user } = useAuth();
@@ -71,28 +74,39 @@ const SearchResults = () => {
         ? user.companyId[0]
         : user.companyId;
 
+      const idToFetch =
+        typeof activeCompany === 'string' ? activeCompany : activeCompany._id;
+
       // Scenario A: Object is populated
       if (typeof activeCompany === 'object' && activeCompany.name) {
         setCompanyDetails({
           name: activeCompany.name,
           imageUrl: activeCompany.imageUrl,
         });
-        return;
+      } else {
+        // Scenario B: We just have the ID string
+        try {
+          const response = await fetcher(`/api/companies/${idToFetch}`);
+          if (response.success && response.data) {
+            setCompanyDetails({
+              name: response.data.name,
+              imageUrl: response.data.imageUrl,
+            });
+          }
+        } catch (err) {
+          console.error('Could not fetch company details', err);
+        }
       }
 
-      // Scenario B: We just have the ID string
-      try {
-        const idToFetch =
-          typeof activeCompany === 'string' ? activeCompany : activeCompany._id;
-        const response = await fetcher(`/api/companies/${idToFetch}`);
-        if (response.success && response.data) {
-          setCompanyDetails({
-            name: response.data.name,
-            imageUrl: response.data.imageUrl,
-          });
+      if (idToFetch) {
+        const deptResponse = await fetcher(`/api/companies/${idToFetch}`);
+        if (
+          deptResponse.success &&
+          Array.isArray(deptResponse.data?.departments) &&
+          deptResponse.data.departments.length > 0
+        ) {
+          setDepartmentOptions(deptResponse.data.departments);
         }
-      } catch (err) {
-        console.error('Could not fetch company details', err);
       }
     };
 
@@ -249,7 +263,7 @@ const SearchResults = () => {
                 className="filter-select"
               >
                 <option value="">All departments</option>
-                {DEPARTMENTS.map((d) => (
+                {departmentOptions.map((d) => (
                   <option key={d} value={d}>
                     {d}
                   </option>

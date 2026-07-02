@@ -56,6 +56,11 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    onboarding: {
+      joinedWorkspace: { type: Boolean, default: false },
+      readArticle: { type: Boolean, default: false },
+      submittedArticle: { type: Boolean, default: false },
+    },
     suspensionReason: {
       type: String,
       default: "",

@@ -11,6 +11,20 @@ import {
 import Toast from '../../Layout/Toast/Toast';
 import './freshness-dashboard.css';
 
+const DEPARTMENTS = [
+  'Customer Service',
+  'Tech Support',
+  'Human Resources',
+  'Sales',
+  'Marketing',
+  'Engineering',
+  'Product',
+  'Finance',
+  'Legal',
+  'Operations',
+  'Other',
+];
+
 const getDaysUntilExpiry = (expiresAt) => {
   if (!expiresAt) return null;
   const diff = new Date(expiresAt) - new Date();
@@ -50,15 +64,19 @@ const FreshnessDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [toastConfig, setToastConfig] = useState(null);
   const [certifyingId, setCertifyingId] = useState(null);
+  const [filterDepartment, setFilterDepartment] = useState('');
 
   const fetchQueue = useCallback(async () => {
     setIsLoading(true);
-    const response = await fetcher('/api/articles/review-queue');
+    const query = filterDepartment
+      ? `?department=${encodeURIComponent(filterDepartment)}`
+      : '';
+    const response = await fetcher(`/api/articles/review-queue${query}`);
     if (response.success) {
       setArticles(response.data);
     }
     setIsLoading(false);
-  }, [fetcher]);
+  }, [fetcher, filterDepartment]);
 
   useEffect(() => {
     fetchQueue();
@@ -110,6 +128,22 @@ const FreshnessDashboard = () => {
           </p>
         </div>
       </header>
+
+      <div className="freshness-filter-row">
+        <label htmlFor="freshness-dept-filter">Department</label>
+        <select
+          id="freshness-dept-filter"
+          value={filterDepartment}
+          onChange={(e) => setFilterDepartment(e.target.value)}
+        >
+          <option value="">All departments</option>
+          {DEPARTMENTS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="freshness-metrics">
         <div className="freshness-metric-card metric-expired">

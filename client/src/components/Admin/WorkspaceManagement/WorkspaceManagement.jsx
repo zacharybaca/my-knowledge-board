@@ -1,18 +1,87 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
-import { Building2, Trash2, AlertTriangle } from 'lucide-react';
+import { Building2, Trash2, AlertTriangle, Settings, Plus, X } from 'lucide-react';
 import Toast from '../../Layout/Toast/Toast';
 import './workspace-management.css'; // Optional: You can reuse existing CSS or create this
+
+const DEFAULT_DEPARTMENTS = [
+  'Customer Service',
+  'Tech Support',
+  'Human Resources',
+  'Sales',
+  'Marketing',
+  'Engineering',
+  'Product',
+  'Finance',
+  'Legal',
+  'Operations',
+  'Other',
+];
 
 const WorkspaceManagement = () => {
   const { user, setUser } = useAuth();
   const { fetcher } = useFetcher();
   const [toastConfig, setToastConfig] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [managingDepartmentsFor, setManagingDepartmentsFor] = useState(null);
+  const [departmentsDraft, setDepartmentsDraft] = useState([]);
+  const [newDeptInput, setNewDeptInput] = useState('');
+  const [isSavingDepartments, setIsSavingDepartments] = useState(false);
 
   // Fallback to empty array if not loaded yet
   const workspaces = Array.isArray(user?.companyId) ? user.companyId : [];
+
+  const handleOpenDepartmentManager = async (workspace) => {
+    setManagingDepartmentsFor(workspace._id);
+    setNewDeptInput('');
+
+    if (Array.isArray(workspace.departments) && workspace.departments.length > 0) {
+      setDepartmentsDraft(workspace.departments);
+      return;
+    }
+
+    const response = await fetcher(`/api/companies/${workspace._id}`);
+    if (response.success && Array.isArray(response.data?.departments)) {
+      setDepartmentsDraft(
+        response.data.departments.length > 0
+          ? response.data.departments
+          : DEFAULT_DEPARTMENTS
+      );
+    } else {
+      setDepartmentsDraft(DEFAULT_DEPARTMENTS);
+    }
+  };
+
+  const handleAddDepartment = () => {
+    const trimmed = newDeptInput.trim();
+    if (!trimmed || departmentsDraft.includes(trimmed)) return;
+    setDepartmentsDraft((prev) => [...prev, trimmed]);
+    setNewDeptInput('');
+  };
+
+  const handleRemoveDepartment = (dept) => {
+    setDepartmentsDraft((prev) => prev.filter((d) => d !== dept));
+  };
+
+  const handleSaveDepartments = async (workspaceId) => {
+    setIsSavingDepartments(true);
+    const response = await fetcher(`/api/companies/${workspaceId}/departments`, {
+      method: 'PATCH',
+      body: JSON.stringify({ departments: departmentsDraft }),
+    });
+
+    if (response.success) {
+      setToastConfig({ type: 'success', message: 'Departments updated.' });
+      setManagingDepartmentsFor(null);
+    } else {
+      setToastConfig({
+        type: 'error',
+        message: response.error || 'Failed to update departments.',
+      });
+    }
+    setIsSavingDepartments(false);
+  };
 
   const handleDeleteWorkspace = async (workspaceId, workspaceName) => {
     // 1. Strict Confirmation Prompt
@@ -155,37 +224,119 @@ const WorkspaceManagement = () => {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() =>
-                        handleDeleteWorkspace(workspace._id, workspace.name)
-                      }
-                      disabled={isDeleting}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        backgroundColor: '#fee2e2',
-                        color: '#ef4444',
-                        border: '1px solid #f87171',
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        cursor: isDeleting ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold',
-                        transition: 'background-color 0.2s',
-                      }}
-                      onMouseOver={(e) =>
-                        (e.currentTarget.style.backgroundColor = '#fecaca')
-                      }
-                      onMouseOut={(e) =>
-                        (e.currentTarget.style.backgroundColor = '#fee2e2')
-                      }
-                    >
-                      <Trash2 size={18} />
-                      {isDeleting ? 'Deleting...' : 'Delete Workspace'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => handleOpenDepartmentManager(workspace)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          backgroundColor: '#eef2ff',
+                          color: '#4338ca',
+                          border: '1px solid #c7d2fe',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        <Settings size={18} />
+                        Manage Departments
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDeleteWorkspace(workspace._id, workspace.name)
+                        }
+                        disabled={isDeleting}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          backgroundColor: '#fee2e2',
+                          color: '#ef4444',
+                          border: '1px solid #f87171',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          cursor: isDeleting ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.backgroundColor = '#fecaca')
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.backgroundColor = '#fee2e2')
+                        }
+                      >
+                        <Trash2 size={18} />
+                        {isDeleting ? 'Deleting...' : 'Delete Workspace'}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
+            )}
+
+            {managingDepartmentsFor && (
+              <div className="department-manager-panel">
+                <h4>Manage Departments</h4>
+                <p>
+                  Customize the department list used for this workspace's
+                  articles and filters. Leave empty to use the default list.
+                </p>
+                <div className="department-chip-list">
+                  {departmentsDraft.map((dept) => (
+                    <span key={dept} className="department-chip">
+                      {dept}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDepartment(dept)}
+                        aria-label={`Remove ${dept}`}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="department-add-row">
+                  <input
+                    type="text"
+                    value={newDeptInput}
+                    onChange={(e) => setNewDeptInput(e.target.value)}
+                    placeholder="Add department..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddDepartment();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={handleAddDepartment}
+                  >
+                    <Plus size={14} /> Add
+                  </button>
+                </div>
+                <div className="department-manager-actions">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setManagingDepartmentsFor(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={isSavingDepartments}
+                    onClick={() => handleSaveDepartments(managingDepartmentsFor)}
+                  >
+                    {isSavingDepartments ? 'Saving...' : 'Save Departments'}
+                  </button>
+                </div>
+              </div>
             )}
 
             <div

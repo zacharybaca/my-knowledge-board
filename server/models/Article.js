@@ -128,6 +128,12 @@ const articleSchema = new mongoose.Schema(
     ],
     revisions: [articleRevisionSchema],
     comments: [articleCommentSchema],
+    subscribers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true },
 );

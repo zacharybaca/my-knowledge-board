@@ -1,0 +1,32 @@
+.article-metrics-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+  padding: 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+}
+
+.metric-card div {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-card strong {
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.metric-card span {
+  font-size: 0.75rem;
+  color: #64748b;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Clock } from 'lucide-react';
+import { useFetcher } from '../../../hooks/useFetcher.js';
 import './search-bar.css';
 
 const RECENT_SEARCHES_KEY = 'mkb_recent_searches';
@@ -30,6 +31,7 @@ const SearchBar = ({ setSearchTerm, articleTitles = [] }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const containerRef = useRef(null);
+  const { fetcher } = useFetcher();
 
   useEffect(() => {
     setRecentSearches(getRecentSearches());
@@ -48,11 +50,26 @@ const SearchBar = ({ setSearchTerm, articleTitles = [] }) => {
       return;
     }
     const lower = displayValue.toLowerCase();
-    const matched = articleTitles
+    const localMatches = articleTitles
       .filter((t) => t.toLowerCase().includes(lower))
       .slice(0, 6);
-    setSuggestions(matched);
-  }, [displayValue, articleTitles]);
+    setSuggestions(localMatches);
+
+    const handler = setTimeout(async () => {
+      const response = await fetcher(
+        `/api/articles/autocomplete?q=${encodeURIComponent(displayValue)}`
+      );
+      if (response.success && Array.isArray(response.data)) {
+        const merged = [
+          ...response.data,
+          ...localMatches.filter((t) => !response.data.includes(t)),
+        ];
+        setSuggestions(merged.slice(0, 8));
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [displayValue, articleTitles, fetcher]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {

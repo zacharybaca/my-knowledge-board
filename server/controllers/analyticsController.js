@@ -63,7 +63,15 @@ const getContentGaps = asyncHandler(async (req, res) => {
     typeof id === "string" ? new mongoose.Types.ObjectId(id) : id,
   );
 
+  const department = req.query.department?.trim();
+
   const filter = { companyId: { $in: companyIds } };
+  const matchStage = { companyId: { $in: companyIds } };
+
+  if (department) {
+    filter.department = department;
+    matchStage.department = department;
+  }
 
   const [logs, topGaps, total] = await Promise.all([
     ContentGapLog.find(filter)
@@ -71,7 +79,7 @@ const getContentGaps = asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(100),
     ContentGapLog.aggregate([
-      { $match: { companyId: { $in: companyIds } } },
+      { $match: matchStage },
       {
         $group: {
           _id: "$question",

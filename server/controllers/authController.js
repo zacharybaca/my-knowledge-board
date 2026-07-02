@@ -96,6 +96,16 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     generateToken(res, user._id);
+
+    if (
+      user.companyId?.length > 0 &&
+      user.onboarding &&
+      !user.onboarding.joinedWorkspace
+    ) {
+      user.onboarding.joinedWorkspace = true;
+      await user.save({ validateBeforeSave: false });
+    }
+
     res.status(200).json({
       _id: user._id,
       firstName: user.firstName,
