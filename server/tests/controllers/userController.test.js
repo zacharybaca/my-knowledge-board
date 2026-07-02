@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -257,9 +257,6 @@ describe("createElevatedUser", () => {
   });
 
   it("returns 400 when an invalid role is provided", async () => {
-    // findOne must return null so the "user already exists" check is skipped
-    User.findById.mockResolvedValue({ role: ["Admin"], companyId: ["c1"] });
-
     const req = {
       user: { role: ["Admin"], companyId: ["company1"] },
       body: { role: "SuperUser" },
@@ -270,6 +267,64 @@ describe("createElevatedUser", () => {
 
     expect(res._code).toBe(400);
     expect(nextArgs[0].message).toMatch(/invalid role/i);
+  });
+
+  it("creates a user with multiple departments and workspaces", async () => {
+    User.findOne.mockResolvedValue(null);
+    User.create.mockResolvedValue({
+      _id: "new-user",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@test.com",
+      role: ["Manager"],
+      department: ["Engineering", "Product"],
+      companyId: ["company1", "company2"],
+    });
+
+    const req = {
+      user: { role: ["Admin"], companyId: ["company1", "company2"] },
+      body: {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@test.com",
+        password: "pass12345",
+        department: ["Engineering", "Product"],
+        companyId: ["company1", "company2"],
+        role: ["Manager"],
+      },
+    };
+    const res = makeRes();
+
+    await run(createElevatedUser, req, res);
+
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        department: ["Engineering", "Product"],
+        companyId: ["company1", "company2"],
+      }),
+    );
+    expect(res._code).toBe(201);
+  });
+
+  it("returns 403 when assigning a workspace caller does not have", async () => {
+    const req = {
+      user: { role: ["Admin"], companyId: ["company1"] },
+      body: {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@test.com",
+        password: "pass12345",
+        department: ["Engineering"],
+        companyId: ["company2"],
+        role: ["Employee"],
+      },
+    };
+    const res = makeRes();
+
+    const { nextArgs } = await run(createElevatedUser, req, res);
+
+    expect(res._code).toBe(403);
+    expect(nextArgs[0].message).toMatch(/not authorized to assign users/i);
   });
 });
 

@@ -10,6 +10,30 @@ const handleValidationErrors = (req, res, next) => {
 const nonEmptyTrimmed = (field, label) =>
   body(field).isString().trim().notEmpty().withMessage(`${label} is required`);
 
+const normalizeArrayInput = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch {
+      // no-op
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+};
+
 const validateLogin = [
   body("email").isEmail().withMessage("Valid email is required"),
   nonEmptyTrimmed("password", "Password"),
@@ -24,8 +48,12 @@ const validateRegistration = [
     .isString()
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters"),
-  nonEmptyTrimmed("department", "Department"),
-  body("companyId").notEmpty().withMessage("Company is required"),
+  body("department")
+    .custom((value) => normalizeArrayInput(value).length > 0)
+    .withMessage("At least one department is required"),
+  body("companyId")
+    .custom((value) => normalizeArrayInput(value).length > 0)
+    .withMessage("At least one company workspace is required"),
   handleValidationErrors,
 ];
 

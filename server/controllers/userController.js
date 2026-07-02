@@ -12,6 +12,30 @@ const hasSharedCompanyWorkspace = (requestUser, targetUser) =>
     requestUser.companyId.some((reqId) => reqId.toString() === id.toString()),
   );
 
+const normalizeStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch {
+      // no-op
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+};
+
 /**
  * @desc    Get user profile
  * @route   GET /api/users/profile
@@ -169,10 +193,40 @@ const createElevatedUser = asyncHandler(async (req, res) => {
 
   const rolesArray = Array.isArray(role) ? role : [role || "Employee"];
   const validRoles = ["Employee", "Manager", "Admin"];
+  const requestedCompanyIds = normalizeStringArray(req.body.companyId);
+  const requesterCompanyIds = normalizeStringArray(req.user.companyId);
+  const normalizedCompanyIds =
+    requestedCompanyIds.length > 0
+      ? requestedCompanyIds
+      : [requesterCompanyIds[0]].filter(Boolean);
+  const normalizedDepartments = normalizeStringArray(department);
 
   if (!rolesArray.every((r) => validRoles.includes(r))) {
     res.status(400);
     throw new Error("Invalid role selection");
+  }
+
+  if (normalizedDepartments.length === 0) {
+    res.status(400);
+    throw new Error("At least one department is required");
+  }
+
+  if (normalizedCompanyIds.length === 0) {
+    res.status(400);
+    throw new Error("At least one company workspace is required");
+  }
+
+  const hasUnauthorizedWorkspace = normalizedCompanyIds.some(
+    (companyId) =>
+      !requesterCompanyIds.some(
+        (requesterCompanyId) =>
+          requesterCompanyId.toString() === companyId.toString(),
+      ),
+  );
+
+  if (hasUnauthorizedWorkspace) {
+    res.status(403);
+    throw new Error("Not authorized to assign users to that workspace");
   }
 
   const userExists = await User.findOne({ email });
@@ -181,17 +235,15 @@ const createElevatedUser = asyncHandler(async (req, res) => {
     throw new Error("An account with this email already exists");
   }
 
-  const activeCompanyId = req.body.companyId || req.user.companyId[0];
-
-  // UPDATED: Assign the new user to the active company inside an array
   const user = await User.create({
     firstName,
     lastName,
     email,
     password,
-    companyId: [activeCompanyId],
-    department,
+    companyId: normalizedCompanyIds,
+    department: normalizedDepartments,
     role: rolesArray,
+    isAdmin: rolesArray.includes("Admin"),
     isVerified: true,
   });
 
@@ -204,6 +256,7 @@ const createElevatedUser = asyncHandler(async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        companyId: user.companyId,
         department: user.department,
       },
     });

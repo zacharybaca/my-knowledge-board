@@ -7,9 +7,13 @@ const userSchema = mongoose.Schema(
   {
     companyId: [{ type: mongoose.Schema.Types.ObjectId, ref: "Company" }], // Updated to an array to support multiple companies
     department: {
-      type: String,
+      type: [String],
       required: true,
-      trim: true,
+      validate: {
+        validator: (departments) =>
+          Array.isArray(departments) && departments.length > 0,
+        message: "At least one department is required",
+      },
       enum: [
         "Customer Service",
         "Tech Support",

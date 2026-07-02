@@ -11,8 +11,8 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    companyId: '',
-    department: '',
+    companyId: [],
+    department: [],
   });
 
   const [avatar, setAvatar] = useState(null);
@@ -56,6 +56,11 @@ const Register = () => {
     }
   };
 
+  const getSelectedValues = (options) =>
+    Array.from(options)
+      .filter((option) => option.selected)
+      .map((option) => option.value);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setToastConfig(null);
@@ -67,13 +72,31 @@ const Register = () => {
       return;
     }
 
+    if (formData.department.length === 0) {
+      setToastConfig({
+        message: 'Please select at least one department.',
+        type: 'error',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.companyId.length === 0) {
+      setToastConfig({
+        message: 'Please select at least one company workspace.',
+        type: 'error',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const payload = new FormData();
     payload.append('firstName', formData.firstName);
     payload.append('lastName', formData.lastName);
     payload.append('email', formData.email);
     payload.append('password', formData.password);
-    payload.append('companyId', formData.companyId);
-    payload.append('department', formData.department);
+    formData.companyId.forEach((id) => payload.append('companyId', id));
+    formData.department.forEach((dept) => payload.append('department', dept));
 
     if (avatar) {
       payload.append('avatar', avatar);
@@ -180,12 +203,16 @@ const Register = () => {
               id="department"
               name="department"
               value={formData.department}
+              multiple
               onChange={(e) =>
-                setFormData({ ...formData, department: e.target.value })
+                setFormData({
+                  ...formData,
+                  department: getSelectedValues(e.target.options),
+                })
               }
               required
+              style={{ height: 'auto', minHeight: '110px' }}
             >
-              <option value="">Select Department...</option>
               <option value="Customer Service">
                 Customer Service & Billing
               </option>
@@ -203,17 +230,19 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label>Company</label>
+            <label>Company Workspace(s) (Ctrl/Cmd click)</label>
             <select
               value={formData.companyId}
+              multiple
               onChange={(e) =>
-                setFormData({ ...formData, companyId: e.target.value })
+                setFormData({
+                  ...formData,
+                  companyId: getSelectedValues(e.target.options),
+                })
               }
               required
+              style={{ height: 'auto', minHeight: '100px' }}
             >
-              <option value="" disabled>
-                Select your company
-              </option>
               {companies.map((company) => (
                 <option key={company._id} value={company._id}>
                   {company.name}
