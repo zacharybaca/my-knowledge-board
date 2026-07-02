@@ -9,6 +9,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const FALLBACK_ANSWER =
   "I couldn't find any specific information regarding that in our active policies. Please try rephrasing your question or consult your manager.";
 
+const normalizeCompanyId = (company) => {
+  if (!company) return null;
+  if (typeof company === "object" && company._id) return company._id;
+  return company;
+};
+
 const logContentGap = async ({ companyId, question, userId, type }) => {
   try {
     await ContentGapLog.create({
@@ -24,12 +30,32 @@ const logContentGap = async ({ companyId, question, userId, type }) => {
 
 export const generateChatResponse = asyncHandler(async (req, res) => {
   const { question } = req.body;
-  // Ensure we get the active company ID correctly from the array structure
-  const activeCompanyId = req.body.companyId || req.user.companyId[0];
+  const accessibleCompanyIds = (Array.isArray(req.user.companyId)
+    ? req.user.companyId
+    : [req.user.companyId]
+  )
+    .map(normalizeCompanyId)
+    .filter(Boolean);
+  const selectedCompanyId = normalizeCompanyId(req.body.companyId);
 
   if (!question) {
     res.status(400);
     throw new Error("Question is required.");
+  }
+
+  if (accessibleCompanyIds.length === 0) {
+    res.status(400);
+    throw new Error("No company access found for this user.");
+  }
+
+  if (
+    selectedCompanyId &&
+    !accessibleCompanyIds.some(
+      (companyId) => companyId.toString() === selectedCompanyId.toString(),
+    )
+  ) {
+    res.status(403);
+    throw new Error("Not authorized for the selected company.");
   }
 
   // --- 1. Generate Embedding for the User's Query ---
@@ -38,7 +64,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     queryEmbedding = await generateEmbedding(question);
   } catch (error) {
     await logContentGap({
-      companyId: activeCompanyId,
+      companyId: selectedCompanyId || accessibleCompanyIds[0],
       question,
       type: "failed_search",
       userId: req.user._id,
@@ -51,11 +77,17 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   }
 
   // --- 2. Perform Vector Search (Retrieval) ---
-  const companyObjectId = new mongoose.Types.ObjectId(activeCompanyId);
+  const companyFilter = selectedCompanyId
+    ? { $eq: new mongoose.Types.ObjectId(selectedCompanyId) }
+    : {
+        $in: accessibleCompanyIds.map(
+          (companyId) => new mongoose.Types.ObjectId(companyId),
+        ),
+      };
 
   // Base filter: Must belong to their company and be Approved
   const searchFilter = {
-    companyId: { $eq: companyObjectId },
+    companyId: companyFilter,
     status: "Approved",
   };
 
@@ -92,7 +124,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   // If no articles are found or relevance is too low, log the content gap and fallback
   if (relevantArticles.length === 0 || relevantArticles[0].score < 0.6) {
     await logContentGap({
-      companyId: activeCompanyId,
+      companyId: selectedCompanyId || accessibleCompanyIds[0],
       question,
       type: "unanswered_chat",
       userId: req.user._id,

@@ -212,6 +212,59 @@ describe("generateChatResponse", () => {
     });
   });
 
+  it("searches across all accessible companies when no company is specified", async () => {
+    mockGenerateEmbedding.mockResolvedValue([0.1]);
+    mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
+    const req = makeReq({
+      user: makeUser({ companyId: ["company-001", "company-002"] }),
+    });
+
+    await generateChatResponse(req, makeRes(), vi.fn());
+
+    const [[pipeline]] = mockAggregate.mock.calls;
+    expect(pipeline[0].$vectorSearch.filter.companyId).toEqual({
+      $in: [{ id: "company-001" }, { id: "company-002" }],
+    });
+  });
+
+  it("restricts search to selected company when companyId is provided", async () => {
+    mockGenerateEmbedding.mockResolvedValue([0.1]);
+    mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
+    const req = makeReq({
+      body: {
+        question: "What is the refund policy?",
+        companyId: "company-002",
+      },
+      user: makeUser({ companyId: ["company-001", "company-002"] }),
+    });
+
+    await generateChatResponse(req, makeRes(), vi.fn());
+
+    const [[pipeline]] = mockAggregate.mock.calls;
+    expect(pipeline[0].$vectorSearch.filter.companyId).toEqual({
+      $eq: { id: "company-002" },
+    });
+  });
+
+  it("forwards 403 via next when provided companyId is not accessible", async () => {
+    const next = vi.fn();
+    const res = makeRes();
+    const req = makeReq({
+      body: {
+        question: "What is the refund policy?",
+        companyId: "company-999",
+      },
+      user: makeUser({ companyId: ["company-001"] }),
+    });
+
+    await generateChatResponse(req, res, next);
+
+    const errorArg = next.mock.calls[0]?.[0];
+    expect(errorArg).toBeInstanceOf(Error);
+    expect(errorArg.message).toMatch(/not authorized for the selected company/i);
+    expect(res.statusCode).toBe(403);
+  });
+
   it("does NOT apply department filter for Admin role (RBAC)", async () => {
     mockGenerateEmbedding.mockResolvedValue([0.1]);
     mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
