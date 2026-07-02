@@ -5,11 +5,47 @@ import asyncHandler from "express-async-handler";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
 
+const normalizeStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch {
+      // no-op
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+};
+
 // @desc    Register a new employee/user
 // @route   POST /api/auth/register
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password, department, companyId } =
     req.body;
+  const normalizedDepartments = normalizeStringArray(department);
+  const normalizedCompanyIds = normalizeStringArray(companyId);
+
+  if (normalizedDepartments.length === 0) {
+    res.status(400);
+    throw new Error("At least one department is required");
+  }
+
+  if (normalizedCompanyIds.length === 0) {
+    res.status(400);
+    throw new Error("At least one company workspace is required");
+  }
 
   const userExists = await User.findOne({ email });
 
@@ -24,8 +60,8 @@ const registerUser = asyncHandler(async (req, res) => {
     lastName,
     email,
     password,
-    department,
-    companyId: [companyId],
+    department: normalizedDepartments,
+    companyId: normalizedCompanyIds,
   });
 
   if (user) {
@@ -154,10 +190,19 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
   await user.save();
 
   // Handle Mongoose populate object reference for findById
-  const company = await Company.findById(user.companyId._id);
-  company.status = "Active";
-  company.isActive = true;
-  await company.save();
+  const companyRef = Array.isArray(user.companyId)
+    ? user.companyId[0]
+    : user.companyId;
+  const companyId = companyRef?._id || companyRef;
+
+  if (companyId) {
+    const company = await Company.findById(companyId);
+    if (company) {
+      company.status = "Active";
+      company.isActive = true;
+      await company.save();
+    }
+  }
 
   generateToken(res, user._id);
 

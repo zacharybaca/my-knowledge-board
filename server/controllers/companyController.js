@@ -3,6 +3,30 @@ import User from "../models/User.js";
 import asyncHandler from "express-async-handler";
 import sendEmail from "../utils/sendEmail.js";
 
+const normalizeStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch {
+      // no-op
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+};
+
 // @desc    Register a new company and initial Admin user
 // @route   POST /api/companies/register
 const registerCompany = asyncHandler(async (req, res) => {
@@ -16,9 +40,11 @@ const registerCompany = asyncHandler(async (req, res) => {
     department,
   } = req.body;
 
-  if (!department) {
+  const normalizedDepartments = normalizeStringArray(department);
+
+  if (normalizedDepartments.length === 0) {
     res.status(400);
-    throw new Error("Please select a department for the admin user.");
+    throw new Error("Please select at least one department for the admin user.");
   }
 
   const reservedNames = [
@@ -79,7 +105,7 @@ const registerCompany = asyncHandler(async (req, res) => {
     lastName,
     email,
     password,
-    department,
+    department: normalizedDepartments,
     companyId: [company._id], // UPDATED: Wrapped in array
     role: ["Admin"], // UPDATED: Wrapped in array to match schema
     isAdmin: true,

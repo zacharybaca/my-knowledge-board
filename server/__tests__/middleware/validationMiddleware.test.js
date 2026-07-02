@@ -93,8 +93,8 @@ describe("validateRegistration", () => {
     lastName: "Doe",
     email: "jane@example.com",
     password: "password123",
-    department: "Engineering",
-    companyId: "abc123",
+    department: ["Engineering", "Product"],
+    companyId: ["abc123", "def456"],
   };
 
   it("passes with all required fields present", async () => {
@@ -122,7 +122,7 @@ describe("validateRegistration", () => {
   it("rejects when companyId is absent", async () => {
     const { passed } = await runChain(validateRegistration, {
       ...valid,
-      companyId: "",
+      companyId: [],
     });
     expect(passed).toBe(false);
   });

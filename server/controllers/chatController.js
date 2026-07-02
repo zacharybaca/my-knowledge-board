@@ -85,12 +85,15 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   // If the user is an Employee, they can ONLY see articles mapped to their specific department(s)
   const isElevated =
     req.user.role.includes("Admin") || req.user.role.includes("Manager");
+  const userDepartments = Array.isArray(req.user.department)
+    ? req.user.department
+    : [req.user.department].filter(Boolean);
 
   // Post-vector-search filter: status and department are not indexed as Atlas
   // Vector Search filter fields, so they must be applied in a $match stage.
   const postMatchFilter = { status: "Approved" };
-  if (!isElevated) {
-    postMatchFilter.department = { $in: [req.user.department] };
+  if (!isElevated && userDepartments.length > 0) {
+    postMatchFilter.department = { $in: userDepartments };
   }
 
   // Execute the vector search only when we have a valid embedding.
@@ -141,8 +144,8 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
       status: "Approved",
       $text: { $search: question },
     };
-    if (!isElevated) {
-      textSearchFilter.department = { $in: [req.user.department] };
+    if (!isElevated && userDepartments.length > 0) {
+      textSearchFilter.department = { $in: userDepartments };
     }
 
     relevantArticles = await Article.find(

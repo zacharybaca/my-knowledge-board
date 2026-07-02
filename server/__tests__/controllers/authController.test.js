@@ -74,7 +74,7 @@ describe("loginUser", () => {
       email: "jane@acme.com",
       role: ["Employee"],
       companyId: ["company-1"],
-      department: "Engineering",
+      department: ["Engineering"],
       avatar: null,
       isSuspended: false,
       suspensionReason: "",
@@ -171,14 +171,17 @@ describe("registerUser", () => {
         lastName: "Smith",
         email: "bob@acme.com",
         password: "secret",
-        department: "Engineering",
-        companyId: "company-1",
+        department: ["Engineering", "Product"],
+        companyId: ["company-1", "company-2"],
       },
     };
     const { res } = await run(registerUser, req, makeRes());
 
     expect(mockUserCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ companyId: ["company-1"] }),
+      expect.objectContaining({
+        companyId: ["company-1", "company-2"],
+        department: ["Engineering", "Product"],
+      }),
     );
     expect(res.statusCode).toBe(201);
     expect(res._body._id).toBe("new-user");
@@ -188,7 +191,12 @@ describe("registerUser", () => {
     mockFindOne.mockResolvedValue({ _id: "existing-user" });
 
     const req = {
-      body: { email: "dupe@acme.com", password: "secret" },
+      body: {
+        email: "dupe@acme.com",
+        password: "secret",
+        department: ["Engineering"],
+        companyId: ["company-1"],
+      },
     };
     const { res, nextArgs } = await run(registerUser, req, makeRes());
 

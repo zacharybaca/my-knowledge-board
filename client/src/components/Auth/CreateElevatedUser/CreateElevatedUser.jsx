@@ -1,23 +1,48 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
+import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
 import { ShieldCheck } from 'lucide-react';
 import '../auth-forms.css';
 
 const CreateElevatedUser = () => {
   const { fetcher } = useFetcher();
+  const { user: currentUser } = useAuth();
 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    department: '',
+    departments: [],
+    companyIds: [],
     roles: ['Employee'], // Changed to array
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastConfig, setToastConfig] = useState(null);
+
+  const workspaceOptions = useMemo(() => {
+    const workspaces = Array.isArray(currentUser?.companyId)
+      ? currentUser.companyId
+      : [];
+
+    return workspaces
+      .map((workspace) => {
+        if (typeof workspace === 'object') {
+          return {
+            id: workspace._id,
+            name: workspace.name || workspace._id,
+          };
+        }
+
+        return {
+          id: workspace,
+          name: workspace,
+        };
+      })
+      .filter((workspace) => workspace.id);
+  }, [currentUser]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,14 +54,17 @@ const CreateElevatedUser = () => {
 
   // Multi-select handler for roles
   const handleRoleChange = (e) => {
-    const options = e.target.options;
-    const selectedRoles = [];
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) {
-        selectedRoles.push(options[i].value);
-      }
-    }
+    const selectedRoles = Array.from(e.target.options)
+      .filter((option) => option.selected)
+      .map((option) => option.value);
     setFormData((prev) => ({ ...prev, roles: selectedRoles }));
+  };
+
+  const handleMultiSelectChange = (fieldName) => (e) => {
+    const selectedValues = Array.from(e.target.options)
+      .filter((option) => option.selected)
+      .map((option) => option.value);
+    setFormData((prev) => ({ ...prev, [fieldName]: selectedValues }));
   };
 
   const handleSubmit = async (e) => {
@@ -53,12 +81,31 @@ const CreateElevatedUser = () => {
       return;
     }
 
+    if (formData.departments.length === 0) {
+      setToastConfig({
+        message: 'User must be assigned to at least one department.',
+        type: 'error',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.companyIds.length === 0) {
+      setToastConfig({
+        message: 'User must be assigned to at least one company workspace.',
+        type: 'error',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const payload = {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
       password: formData.password,
-      department: formData.department,
+      department: formData.departments,
+      companyId: formData.companyIds,
       role: formData.roles, // Transmit array
     };
 
@@ -77,7 +124,8 @@ const CreateElevatedUser = () => {
         lastName: '',
         email: '',
         password: '',
-        department: '',
+        departments: [],
+        companyIds: [],
         roles: ['Employee'],
       });
     } else {
@@ -164,15 +212,16 @@ const CreateElevatedUser = () => {
 
           <div className="auth-form-row">
             <div className="form-group half-width">
-              <label htmlFor="department">Primary Department</label>
+              <label htmlFor="department">Department(s) (Ctrl/Cmd click)</label>
               <select
                 id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
+                name="departments"
+                value={formData.departments}
+                multiple
+                onChange={handleMultiSelectChange('departments')}
                 required
+                style={{ height: 'auto', minHeight: '110px' }}
               >
-                <option value="">Select Department...</option>
                 <option value="Customer Service">
                   Customer Service & Billing
                 </option>
@@ -186,6 +235,25 @@ const CreateElevatedUser = () => {
                 <option value="Legal">Legal</option>
                 <option value="Operations">Operations</option>
                 <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="form-group half-width">
+              <label htmlFor="companyIds">Workspace(s) (Ctrl/Cmd click)</label>
+              <select
+                id="companyIds"
+                name="companyIds"
+                value={formData.companyIds}
+                multiple
+                onChange={handleMultiSelectChange('companyIds')}
+                required
+                style={{ height: 'auto', minHeight: '110px' }}
+              >
+                {workspaceOptions.map((workspace) => (
+                  <option key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </option>
+                ))}
               </select>
             </div>
 
