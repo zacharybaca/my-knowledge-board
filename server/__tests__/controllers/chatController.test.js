@@ -3,12 +3,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── vi.hoisted so all mock fns are available when factories run ─────────────
 const {
   mockAggregate,
+  mockFind,
+  mockFindSort,
+  mockFindLimit,
+  mockFindSelect,
   mockGenerateEmbedding,
   mockGenerateContent,
   mockGetGenerativeModel,
   mockCreateContentGap,
 } = vi.hoisted(() => ({
   mockAggregate: vi.fn(),
+  mockFind: vi.fn(),
+  mockFindSort: vi.fn(),
+  mockFindLimit: vi.fn(),
+  mockFindSelect: vi.fn(),
   mockGenerateEmbedding: vi.fn(),
   mockGenerateContent: vi.fn(),
   mockGetGenerativeModel: vi.fn(),
@@ -16,7 +24,7 @@ const {
 }));
 
 vi.mock("../../models/Article.js", () => ({
-  default: { aggregate: mockAggregate },
+  default: { aggregate: mockAggregate, find: mockFind },
 }));
 
 vi.mock("../../controllers/aiController.js", () => ({
@@ -59,7 +67,7 @@ const companyId = "company-001";
 
 const makeUser = (overrides = {}) => ({
   _id: "user-1",
-  role: "Employee",
+  role: ["Employee"],
   department: "Tech Support",
   companyId: [companyId],
   ...overrides,
@@ -93,11 +101,19 @@ describe("generateChatResponse", () => {
   beforeEach(() => {
     mockGenerateEmbedding.mockReset();
     mockAggregate.mockReset();
+    mockFind.mockReset();
+    mockFindSort.mockReset();
+    mockFindLimit.mockReset();
+    mockFindSelect.mockReset();
     mockCreateContentGap.mockReset();
     mockGenerateContent.mockReset();
     mockGetGenerativeModel.mockReturnValue({
       generateContent: mockGenerateContent,
     });
+    mockFind.mockReturnValue({ sort: mockFindSort });
+    mockFindSort.mockReturnValue({ limit: mockFindLimit });
+    mockFindLimit.mockReturnValue({ select: mockFindSelect });
+    mockFindSelect.mockResolvedValue([]);
   });
 
   it("forwards 400 via next when question is missing", async () => {
@@ -129,7 +145,7 @@ describe("generateChatResponse", () => {
     expect(mockCreateContentGap).toHaveBeenCalledWith(
       expect.objectContaining({
         question: "What is the refund policy?",
-        type: "failed_search",
+        type: "unanswered_chat",
       }),
     );
   });
@@ -200,14 +216,14 @@ describe("generateChatResponse", () => {
     mockGenerateEmbedding.mockResolvedValue([0.1]);
     mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
     const req = makeReq({
-      user: makeUser({ role: "Employee", department: "Sales" }),
+      user: makeUser({ role: ["Employee"], department: "Sales" }),
     });
 
     await generateChatResponse(req, makeRes(), vi.fn());
 
     const [[pipeline]] = mockAggregate.mock.calls;
-    const vectorStage = pipeline[0].$vectorSearch;
-    expect(vectorStage.filter).toMatchObject({
+    const matchStage = pipeline[1].$match;
+    expect(matchStage).toMatchObject({
       department: { $in: ["Sales"] },
     });
   });
@@ -268,25 +284,23 @@ describe("generateChatResponse", () => {
   it("does NOT apply department filter for Admin role (RBAC)", async () => {
     mockGenerateEmbedding.mockResolvedValue([0.1]);
     mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
-    const req = makeReq({ user: makeUser({ role: "Admin" }) });
+    const req = makeReq({ user: makeUser({ role: ["Admin"] }) });
 
     await generateChatResponse(req, makeRes(), vi.fn());
 
     const [[pipeline]] = mockAggregate.mock.calls;
-    const filterKeys = Object.keys(pipeline[0].$vectorSearch.filter);
-    expect(filterKeys).not.toContain("department");
+    expect(pipeline[1].$match).toEqual({ status: "Approved" });
   });
 
   it("does NOT apply department filter for Manager role (RBAC)", async () => {
     mockGenerateEmbedding.mockResolvedValue([0.1]);
     mockAggregate.mockResolvedValue([{ ...fakeArticle, score: 0.4 }]);
-    const req = makeReq({ user: makeUser({ role: "Manager" }) });
+    const req = makeReq({ user: makeUser({ role: ["Manager"] }) });
 
     await generateChatResponse(req, makeRes(), vi.fn());
 
     const [[pipeline]] = mockAggregate.mock.calls;
-    const filterKeys = Object.keys(pipeline[0].$vectorSearch.filter);
-    expect(filterKeys).not.toContain("department");
+    expect(pipeline[1].$match).toEqual({ status: "Approved" });
   });
 
   it("forwards 503 via next when the AI returns a 503 error", async () => {
