@@ -793,9 +793,7 @@ const addArticleComment = asyncHandler(async (req, res) => {
     const mentionedUsers = await User.find({
       companyId: { $in: req.user.companyId },
       firstName: {
-        $in: mentionedNames.map(
-          (name) => new RegExp(`^${name}$`, "i"),
-        ),
+        $in: mentionedNames.map((name) => new RegExp(`^${name}$`, "i")),
       },
     }).select("_id");
 

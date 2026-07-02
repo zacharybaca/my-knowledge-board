@@ -279,7 +279,9 @@ const ArticleView = () => {
   };
 
   const handleSelectMention = (candidate) => {
-    setNewComment((prev) => prev.replace(/@(\w*)$/, `@${candidate.firstName} `));
+    setNewComment((prev) =>
+      prev.replace(/@(\w*)$/, `@${candidate.firstName} `)
+    );
     setShowMentionDropdown(false);
     setMentionSuggestions([]);
   };

@@ -25,8 +25,7 @@ const OnboardingChecklist = () => {
     fetchOnboarding();
   }, [fetcher]);
 
-  const allComplete =
-    onboarding && STEPS.every((step) => onboarding[step.key]);
+  const allComplete = onboarding && STEPS.every((step) => onboarding[step.key]);
 
   useEffect(() => {
     if (!allComplete) return undefined;

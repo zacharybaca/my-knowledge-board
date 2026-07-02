@@ -44,7 +44,9 @@ const registerCompany = asyncHandler(async (req, res) => {
 
   if (normalizedDepartments.length === 0) {
     res.status(400);
-    throw new Error("Please select at least one department for the admin user.");
+    throw new Error(
+      "Please select at least one department for the admin user.",
+    );
   }
 
   const reservedNames = [
@@ -176,9 +178,7 @@ const updateCompanyDepartments = asyncHandler(async (req, res) => {
   }
 
   if (
-    !req.user.companyId.some(
-      (id) => id.toString() === req.params.id.toString(),
-    )
+    !req.user.companyId.some((id) => id.toString() === req.params.id.toString())
   ) {
     res.status(403);
     throw new Error("Not authorized to manage this workspace.");

@@ -11,7 +11,8 @@ const ARTICLE_TEMPLATES = [
   {
     key: 'policy',
     name: 'Policy',
-    description: 'Formal policy structure with Purpose, Scope, Policy, and Procedures sections.',
+    description:
+      'Formal policy structure with Purpose, Scope, Policy, and Procedures sections.',
     content:
       '<h2>Purpose</h2><p>Describe the purpose of this policy.</p>' +
       '<h2>Scope</h2><p>Describe who and what this policy applies to.</p>' +
@@ -62,9 +63,8 @@ const ArticleEditor = () => {
   const isEditing = Boolean(id && id !== 'new');
   const draftStorageKey = `article_editor_draft_${id || 'new'}`;
 
-  const [availableDepartments, setAvailableDepartments] = useState(
-    DEFAULT_DEPARTMENTS
-  );
+  const [availableDepartments, setAvailableDepartments] =
+    useState(DEFAULT_DEPARTMENTS);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -642,10 +642,7 @@ const ArticleEditor = () => {
           className="template-modal-overlay"
           onClick={() => setShowTemplatePicker(false)}
         >
-          <div
-            className="template-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="template-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Start from a template</h3>
             <div className="template-card-grid">
               {ARTICLE_TEMPLATES.map((template) => (

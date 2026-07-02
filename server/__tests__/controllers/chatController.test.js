@@ -277,7 +277,9 @@ describe("generateChatResponse", () => {
 
     const errorArg = next.mock.calls[0]?.[0];
     expect(errorArg).toBeInstanceOf(Error);
-    expect(errorArg.message).toMatch(/not authorized for the selected company/i);
+    expect(errorArg.message).toMatch(
+      /not authorized for the selected company/i,
+    );
     expect(res.statusCode).toBe(403);
   });
 

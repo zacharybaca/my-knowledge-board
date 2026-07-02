@@ -48,9 +48,8 @@ const SearchResults = () => {
     name: 'your organization',
     imageUrl: null,
   });
-  const [departmentOptions, setDepartmentOptions] = useState(
-    DEFAULT_DEPARTMENTS
-  );
+  const [departmentOptions, setDepartmentOptions] =
+    useState(DEFAULT_DEPARTMENTS);
 
   const { fetcher } = useFetcher();
   const { user } = useAuth();

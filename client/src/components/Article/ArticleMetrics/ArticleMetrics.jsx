@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, ThumbsUp, ThumbsDown, CheckCircle2, XCircle, MessageSquare } from 'lucide-react';
+import {
+  Eye,
+  ThumbsUp,
+  ThumbsDown,
+  CheckCircle2,
+  XCircle,
+  MessageSquare,
+} from 'lucide-react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
 import './article-metrics.css';

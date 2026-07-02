@@ -108,7 +108,9 @@ async function main() {
     });
 
     await user.save();
-    console.log(`✅ Created ${user.firstName} ${user.lastName} <${user.email}>`);
+    console.log(
+      `✅ Created ${user.firstName} ${user.lastName} <${user.email}>`,
+    );
     created++;
   }
 

@@ -284,7 +284,10 @@ const UserManagement = () => {
               >
                 Cancel
               </button>
-              <button onClick={handleRoleUpdate} className="btn-submit role-save">
+              <button
+                onClick={handleRoleUpdate}
+                className="btn-submit role-save"
+              >
                 Save Role
               </button>
             </div>

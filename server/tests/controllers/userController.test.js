@@ -486,7 +486,10 @@ describe("updateUserRole", () => {
   });
 
   it("updates role and admin flag successfully", async () => {
-    const mutableUser = { ...targetUser, save: vi.fn().mockResolvedValue(true) };
+    const mutableUser = {
+      ...targetUser,
+      save: vi.fn().mockResolvedValue(true),
+    };
     User.findById.mockResolvedValue(mutableUser);
     const req = {
       user: managerUser,

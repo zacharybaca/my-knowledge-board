@@ -16,7 +16,13 @@ const normalizeCompanyId = (company) => {
   return company;
 };
 
-const logContentGap = async ({ companyId, question, userId, type, embedding }) => {
+const logContentGap = async ({
+  companyId,
+  question,
+  userId,
+  type,
+  embedding,
+}) => {
   try {
     await ContentGapLog.create({
       companyId,
@@ -34,9 +40,10 @@ const logContentGap = async ({ companyId, question, userId, type, embedding }) =
 
 export const generateChatResponse = asyncHandler(async (req, res) => {
   const { question } = req.body;
-  const accessibleCompanyIds = (Array.isArray(req.user.companyId)
-    ? req.user.companyId
-    : [req.user.companyId]
+  const accessibleCompanyIds = (
+    Array.isArray(req.user.companyId)
+      ? req.user.companyId
+      : [req.user.companyId]
   )
     .map(normalizeCompanyId)
     .filter(Boolean);
@@ -69,7 +76,10 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   try {
     queryEmbedding = await generateEmbedding(question);
   } catch (error) {
-    console.error("Embedding generation failed, skipping vector search:", error);
+    console.error(
+      "Embedding generation failed, skipping vector search:",
+      error,
+    );
   }
 
   // --- 2. Perform Vector Search (Retrieval) ---
@@ -129,7 +139,10 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
         relevantArticles = vectorResults;
       }
     } catch (vectorError) {
-      console.error("Vector search failed, falling back to text search:", vectorError);
+      console.error(
+        "Vector search failed, falling back to text search:",
+        vectorError,
+      );
     }
   }
 
@@ -148,10 +161,9 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
       textSearchFilter.department = { $in: userDepartments };
     }
 
-    relevantArticles = await Article.find(
-      textSearchFilter,
-      { score: { $meta: "textScore" } },
-    )
+    relevantArticles = await Article.find(textSearchFilter, {
+      score: { $meta: "textScore" },
+    })
       .sort({ score: { $meta: "textScore" } })
       .limit(4)
       .select("title content");

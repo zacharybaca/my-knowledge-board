@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFetcher } from '../../../hooks/useFetcher';
-import { Building2, Trash2, AlertTriangle, Settings, Plus, X } from 'lucide-react';
+import {
+  Building2,
+  Trash2,
+  AlertTriangle,
+  Settings,
+  Plus,
+  X,
+} from 'lucide-react';
 import Toast from '../../Layout/Toast/Toast';
 import './workspace-management.css'; // Optional: You can reuse existing CSS or create this
 
@@ -36,7 +43,10 @@ const WorkspaceManagement = () => {
     setManagingDepartmentsFor(workspace._id);
     setNewDeptInput('');
 
-    if (Array.isArray(workspace.departments) && workspace.departments.length > 0) {
+    if (
+      Array.isArray(workspace.departments) &&
+      workspace.departments.length > 0
+    ) {
       setDepartmentsDraft(workspace.departments);
       return;
     }
@@ -66,10 +76,13 @@ const WorkspaceManagement = () => {
 
   const handleSaveDepartments = async (workspaceId) => {
     setIsSavingDepartments(true);
-    const response = await fetcher(`/api/companies/${workspaceId}/departments`, {
-      method: 'PATCH',
-      body: JSON.stringify({ departments: departmentsDraft }),
-    });
+    const response = await fetcher(
+      `/api/companies/${workspaceId}/departments`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ departments: departmentsDraft }),
+      }
+    );
 
     if (response.success) {
       setToastConfig({ type: 'success', message: 'Departments updated.' });
@@ -331,7 +344,9 @@ const WorkspaceManagement = () => {
                     type="button"
                     className="btn-secondary"
                     disabled={isSavingDepartments}
-                    onClick={() => handleSaveDepartments(managingDepartmentsFor)}
+                    onClick={() =>
+                      handleSaveDepartments(managingDepartmentsFor)
+                    }
                   >
                     {isSavingDepartments ? 'Saving...' : 'Save Departments'}
                   </button>

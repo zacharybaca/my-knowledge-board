@@ -11,7 +11,9 @@ const canManageSessions = (user) => {
 };
 
 const getManagedUserIds = async (companyIds = []) => {
-  const users = await User.find({ companyId: { $in: companyIds } }).select("_id");
+  const users = await User.find({ companyId: { $in: companyIds } }).select(
+    "_id",
+  );
   return users.map((user) => user._id);
 };
 
@@ -91,7 +93,9 @@ export const clearSessions = asyncHandler(async (req, res) => {
   }
 
   const managedUserIds = await getManagedUserIds(req.user.companyId || []);
-  const result = await SessionLog.deleteMany({ userId: { $in: managedUserIds } });
+  const result = await SessionLog.deleteMany({
+    userId: { $in: managedUserIds },
+  });
 
   res.json({
     message: "Access logs cleared successfully",

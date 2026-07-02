@@ -7,7 +7,9 @@ const isElevatedUser = (user) =>
 
 const cosineSimilarity = (a, b) => {
   if (!a?.length || !b?.length || a.length !== b.length) return 0;
-  let dot = 0, magA = 0, magB = 0;
+  let dot = 0,
+    magA = 0,
+    magB = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     magA += a[i] * a[i];
@@ -28,9 +30,9 @@ const resolveContentGapsForArticle = async (articleEmbedding, companyId) => {
   if (!Array.isArray(articleEmbedding) || articleEmbedding.length === 0) return;
   try {
     const companyIds = Array.isArray(companyId) ? companyId : [companyId];
-    const logs = await ContentGapLog.find(
-      { companyId: { $in: companyIds } },
-    ).select("+questionEmbedding");
+    const logs = await ContentGapLog.find({
+      companyId: { $in: companyIds },
+    }).select("+questionEmbedding");
 
     const toDelete = logs
       .filter(
