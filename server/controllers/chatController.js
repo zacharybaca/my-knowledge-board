@@ -85,32 +85,34 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
         ),
       };
 
-  // Base filter: Must belong to their company and be Approved
-  const searchFilter = {
-    companyId: companyFilter,
-    status: "Approved",
-  };
-
   // --- Role-Based Access Control (RBAC) Logic ---
-  // If the user is an Employee, they can ONLY see articles mapped to their specific department(s) or "Public"/"Other"
+  // If the user is an Employee, they can ONLY see articles mapped to their specific department(s)
   const isElevated =
     req.user.role.includes("Admin") || req.user.role.includes("Manager");
+
+  // Post-vector-search filter: status and department are not indexed as Atlas
+  // Vector Search filter fields, so they must be applied in a $match stage.
+  const postMatchFilter = { status: "Approved" };
   if (!isElevated) {
-    searchFilter.department = { $in: [req.user.department] };
+    postMatchFilter.department = { $in: [req.user.department] };
   }
 
-  // Execute the vector search
+  // Execute the vector search — filter only by companyId (the indexed filter
+  // field). Use a larger limit/numCandidates to ensure enough candidates
+  // survive the subsequent $match on status and department.
   const relevantArticles = await Article.aggregate([
     {
       $vectorSearch: {
         index: "vector_index",
         path: "contentEmbedding",
         queryVector: queryEmbedding,
-        numCandidates: 20,
-        limit: 4, // Retrieve the top 4 most relevant articles
-        filter: searchFilter,
+        numCandidates: 100,
+        limit: 20,
+        filter: { companyId: companyFilter },
       },
     },
+    { $match: postMatchFilter },
+    { $limit: 4 },
     {
       $project: {
         _id: 1,
