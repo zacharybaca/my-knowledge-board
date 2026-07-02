@@ -18,6 +18,11 @@ const UserManagement = () => {
     user: null,
   });
   const [suspensionReason, setSuspensionReason] = useState('');
+  const [roleModal, setRoleModal] = useState({
+    isOpen: false,
+    user: null,
+    selectedRole: 'Employee',
+  });
 
   const fetchUsers = useCallback(async () => {
     const response = await fetcher('/api/users/directory');
@@ -106,6 +111,32 @@ const UserManagement = () => {
     }
   };
 
+  const getPrimaryRole = (userRole) =>
+    Array.isArray(userRole) ? userRole[0] : userRole;
+
+  const handleOpenRoleModal = (targetUser) => {
+    setRoleModal({
+      isOpen: true,
+      user: targetUser,
+      selectedRole: getPrimaryRole(targetUser.role) || 'Employee',
+    });
+  };
+
+  const handleRoleUpdate = async () => {
+    const response = await fetcher(`/api/users/${roleModal.user._id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role: roleModal.selectedRole }),
+    });
+
+    if (response.success) {
+      setToastConfig({ type: 'success', message: 'User role updated.' });
+      setRoleModal({ isOpen: false, user: null, selectedRole: 'Employee' });
+      fetchUsers();
+    } else {
+      setToastConfig({ type: 'error', message: response.error });
+    }
+  };
+
   if (isLoading) return <div>Loading directory...</div>;
 
   return (
@@ -137,7 +168,7 @@ const UserManagement = () => {
                 {u.firstName} {u.lastName}
               </td>
               <td>{u.email}</td>
-              <td>{u.role}</td>
+              <td>{Array.isArray(u.role) ? u.role.join(', ') : u.role}</td>
               <td>
                 <span
                   className={`status-badge ${u.isSuspended ? 'suspended' : 'active'}`}
@@ -153,6 +184,12 @@ const UserManagement = () => {
                       className={`btn-suspend ${u.isSuspended ? 'restore' : 'suspend'}`}
                     >
                       {u.isSuspended ? 'Restore' : 'Suspend'}
+                    </button>
+                    <button
+                      onClick={() => handleOpenRoleModal(u)}
+                      className="btn-role"
+                    >
+                      Edit Role
                     </button>
                     <button
                       onClick={() => handleDelete(u._id)}
@@ -200,6 +237,55 @@ const UserManagement = () => {
                 className="btn-submit suspend-confirm"
               >
                 Confirm Suspension
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {roleModal.isOpen && roleModal.user && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit User Role</h3>
+            <p>
+              Update role for{' '}
+              <strong>
+                {roleModal.user.firstName} {roleModal.user.lastName}
+              </strong>
+              .
+            </p>
+            <div className="form-group">
+              <label htmlFor="role-select">Role</label>
+              <select
+                id="role-select"
+                value={roleModal.selectedRole}
+                onChange={(e) =>
+                  setRoleModal((prev) => ({
+                    ...prev,
+                    selectedRole: e.target.value,
+                  }))
+                }
+              >
+                <option value="Employee">Employee</option>
+                <option value="Manager">Manager</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button
+                onClick={() =>
+                  setRoleModal({
+                    isOpen: false,
+                    user: null,
+                    selectedRole: 'Employee',
+                  })
+                }
+                className="btn-cancel"
+              >
+                Cancel
+              </button>
+              <button onClick={handleRoleUpdate} className="btn-submit role-save">
+                Save Role
               </button>
             </div>
           </div>

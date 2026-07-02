@@ -2,6 +2,16 @@ import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
 
+const hasManagerAccess = (user) => {
+  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  return roles.includes("Admin") || roles.includes("Manager");
+};
+
+const hasSharedCompanyWorkspace = (requestUser, targetUser) =>
+  targetUser?.companyId.some((id) =>
+    requestUser.companyId.some((reqId) => reqId.toString() === id.toString()),
+  );
+
 /**
  * @desc    Get user profile
  * @route   GET /api/users/profile
@@ -209,17 +219,14 @@ const createElevatedUser = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const updateUserStatus = asyncHandler(async (req, res) => {
-  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
+  if (!hasManagerAccess(req.user)) {
     res.status(403);
     throw new Error("Not authorized to modify user status");
   }
 
   const user = await User.findById(req.params.id);
 
-  // UPDATED: Check if the Manager and the Target User share at least one company workspace
-  const hasSharedCompany = user?.companyId.some((id) =>
-    req.user.companyId.some((reqId) => reqId.toString() === id.toString()),
-  );
+  const hasSharedCompany = hasSharedCompanyWorkspace(req.user, user);
 
   if (!user || !hasSharedCompany) {
     res.status(404);
@@ -246,17 +253,14 @@ const updateUserStatus = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 const deleteUserById = asyncHandler(async (req, res) => {
-  if (!req.user.role.includes("Admin") && !req.user.role.includes("Manager")) {
+  if (!hasManagerAccess(req.user)) {
     res.status(403);
     throw new Error("Not authorized to delete accounts");
   }
 
   const user = await User.findById(req.params.id);
 
-  // UPDATED: Same shared workspace validation as above
-  const hasSharedCompany = user?.companyId.some((id) =>
-    req.user.companyId.some((reqId) => reqId.toString() === id.toString()),
-  );
+  const hasSharedCompany = hasSharedCompanyWorkspace(req.user, user);
 
   if (!user || !hasSharedCompany) {
     res.status(404);
@@ -272,6 +276,56 @@ const deleteUserById = asyncHandler(async (req, res) => {
   res.json({ message: "User permanently deleted" });
 });
 
+/**
+ * @desc    Update an existing user's role
+ * @route   PATCH /api/users/:id/role
+ * @access  Private (Manager/Admin Only)
+ */
+const updateUserRole = asyncHandler(async (req, res) => {
+  if (!hasManagerAccess(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized to modify user role");
+  }
+
+  const user = await User.findById(req.params.id);
+  const hasSharedCompany = hasSharedCompanyWorkspace(req.user, user);
+
+  if (!user || !hasSharedCompany) {
+    res.status(404);
+    throw new Error("User not found or access denied");
+  }
+
+  if (user._id.toString() === req.user._id.toString()) {
+    res.status(400);
+    throw new Error("Cannot update your own role");
+  }
+
+  const normalizedRoles = Array.isArray(req.body.role)
+    ? req.body.role
+    : [req.body.role].filter(Boolean);
+  const validRoles = ["Employee", "Manager", "Admin"];
+
+  if (
+    normalizedRoles.length === 0 ||
+    !normalizedRoles.every((role) => validRoles.includes(role))
+  ) {
+    res.status(400);
+    throw new Error("Invalid role selection");
+  }
+
+  user.role = normalizedRoles;
+  user.isAdmin = normalizedRoles.includes("Admin");
+  await user.save();
+
+  res.json({
+    message: "User role updated successfully",
+    data: {
+      _id: user._id,
+      role: user.role,
+    },
+  });
+});
+
 export {
   getUserProfile,
   updateUserProfile,
@@ -282,4 +336,5 @@ export {
   createElevatedUser,
   updateUserStatus,
   deleteUserById,
+  updateUserRole,
 };

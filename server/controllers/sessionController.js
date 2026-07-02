@@ -1,5 +1,19 @@
 import asyncHandler from "express-async-handler";
 import SessionLog from "../models/SessionLog.js";
+import User from "../models/User.js";
+
+const getUserRoles = (user) =>
+  Array.isArray(user?.role) ? user.role : [user?.role].filter(Boolean);
+
+const canManageSessions = (user) => {
+  const roles = getUserRoles(user);
+  return roles.includes("Admin") || roles.includes("Manager");
+};
+
+const getManagedUserIds = async (companyIds = []) => {
+  const users = await User.find({ companyId: { $in: companyIds } }).select("_id");
+  return users.map((user) => user._id);
+};
 
 /**
  * @desc    Start a new user session
@@ -51,20 +65,36 @@ export const endSession = asyncHandler(async (req, res) => {
  * @access  Private (Manager/Admin Only)
  */
 export const getAllSessions = asyncHandler(async (req, res) => {
-  // 1. Force the role into an array regardless of how it was cached in the JWT
-  const userRoles = Array.isArray(req.user.role)
-    ? req.user.role
-    : [req.user.role];
-
-  if (!userRoles.includes("Admin") && !userRoles.includes("Manager")) {
+  if (!canManageSessions(req.user)) {
     res.status(403);
     throw new Error("Not authorized to view session logs");
   }
 
-  const logs = await SessionLog.find()
+  const managedUserIds = await getManagedUserIds(req.user.companyId || []);
+  const logs = await SessionLog.find({ userId: { $in: managedUserIds } })
     .populate("userId", "firstName lastName email department")
     .sort({ loginTime: -1 })
     .limit(100);
 
   res.json(logs);
+});
+
+/**
+ * @desc    Clear all session logs for caller's company workspaces
+ * @route   DELETE /api/sessions
+ * @access  Private (Manager/Admin Only)
+ */
+export const clearSessions = asyncHandler(async (req, res) => {
+  if (!canManageSessions(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized to clear session logs");
+  }
+
+  const managedUserIds = await getManagedUserIds(req.user.companyId || []);
+  const result = await SessionLog.deleteMany({ userId: { $in: managedUserIds } });
+
+  res.json({
+    message: "Access logs cleared successfully",
+    deletedCount: result.deletedCount || 0,
+  });
 });

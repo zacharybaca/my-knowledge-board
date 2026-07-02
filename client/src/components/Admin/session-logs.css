@@ -22,6 +22,8 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .logs-header h2 {
@@ -65,4 +67,26 @@
 .duration-cell {
   font-weight: 500;
   color: #334155;
+}
+
+.btn-clear-logs {
+  margin-left: auto;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #ef4444;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-clear-logs:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.logs-empty-row {
+  text-align: center;
+  color: #475569;
+  font-weight: 500;
 }
