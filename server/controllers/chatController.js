@@ -60,21 +60,13 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   }
 
   // --- 1. Generate Embedding for the User's Query ---
-  let queryEmbedding;
+  // A failure here is non-fatal: the text search fallback below does not need
+  // an embedding, so we log and continue rather than returning early.
+  let queryEmbedding = null;
   try {
     queryEmbedding = await generateEmbedding(question);
   } catch (error) {
-    await logContentGap({
-      companyId: selectedCompanyId || accessibleCompanyIds[0],
-      question,
-      type: "failed_search",
-      userId: req.user._id,
-    });
-
-    return res.json({
-      answer: FALLBACK_ANSWER,
-      sources: [],
-    });
+    console.error("Embedding generation failed, skipping vector search:", error);
   }
 
   // --- 2. Perform Vector Search (Retrieval) ---
@@ -98,39 +90,41 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
     postMatchFilter.department = { $in: [req.user.department] };
   }
 
-  // Execute the vector search — filter only by companyId (the indexed filter
-  // field). Use a larger limit/numCandidates to ensure enough candidates
-  // survive the subsequent $match on status and department.
+  // Execute the vector search only when we have a valid embedding.
+  // Use a larger limit/numCandidates so enough candidates survive the
+  // subsequent $match on status and department.
   let relevantArticles = [];
-  try {
-    const vectorResults = await Article.aggregate([
-      {
-        $vectorSearch: {
-          index: "vector_index",
-          path: "contentEmbedding",
-          queryVector: queryEmbedding,
-          numCandidates: 100,
-          limit: 20,
-          filter: { companyId: companyFilter },
+  if (queryEmbedding) {
+    try {
+      const vectorResults = await Article.aggregate([
+        {
+          $vectorSearch: {
+            index: "vector_index",
+            path: "contentEmbedding",
+            queryVector: queryEmbedding,
+            numCandidates: 100,
+            limit: 20,
+            filter: { companyId: companyFilter },
+          },
         },
-      },
-      { $match: postMatchFilter },
-      { $limit: 4 },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          content: 1,
-          score: { $meta: "vectorSearchScore" },
+        { $match: postMatchFilter },
+        { $limit: 4 },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            content: 1,
+            score: { $meta: "vectorSearchScore" },
+          },
         },
-      },
-    ]);
+      ]);
 
-    if (vectorResults.length > 0 && vectorResults[0].score >= 0.6) {
-      relevantArticles = vectorResults;
+      if (vectorResults.length > 0 && vectorResults[0].score >= 0.6) {
+        relevantArticles = vectorResults;
+      }
+    } catch (vectorError) {
+      console.error("Vector search failed, falling back to text search:", vectorError);
     }
-  } catch (vectorError) {
-    console.error("Vector search failed, falling back to text search:", vectorError);
   }
 
   // --- 2b. Text Search Fallback ---
@@ -159,6 +153,11 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
   // If both searches returned nothing, log the content gap and fallback
   if (relevantArticles.length === 0) {
+    console.error(
+      `Chat fallback triggered — no articles found for question: "${question}" ` +
+        `(companyIds: ${accessibleCompanyIds}, embeddingAvailable: ${!!queryEmbedding})`,
+    );
+
     await logContentGap({
       companyId: selectedCompanyId || accessibleCompanyIds[0],
       question,
