@@ -4,6 +4,7 @@ import Article from "../models/Article.js";
 import ContentGapLog from "../models/ContentGapLog.js";
 import mongoose from "mongoose";
 import { generateEmbedding } from "./aiController.js";
+import { stripHtml } from "../utils/sanitizeHtml.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const FALLBACK_ANSWER =
@@ -100,31 +101,64 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
   // Execute the vector search — filter only by companyId (the indexed filter
   // field). Use a larger limit/numCandidates to ensure enough candidates
   // survive the subsequent $match on status and department.
-  const relevantArticles = await Article.aggregate([
-    {
-      $vectorSearch: {
-        index: "vector_index",
-        path: "contentEmbedding",
-        queryVector: queryEmbedding,
-        numCandidates: 100,
-        limit: 20,
-        filter: { companyId: companyFilter },
+  let relevantArticles = [];
+  try {
+    const vectorResults = await Article.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "contentEmbedding",
+          queryVector: queryEmbedding,
+          numCandidates: 100,
+          limit: 20,
+          filter: { companyId: companyFilter },
+        },
       },
-    },
-    { $match: postMatchFilter },
-    { $limit: 4 },
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        content: 1,
-        score: { $meta: "vectorSearchScore" },
+      { $match: postMatchFilter },
+      { $limit: 4 },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          content: 1,
+          score: { $meta: "vectorSearchScore" },
+        },
       },
-    },
-  ]);
+    ]);
 
-  // If no articles are found or relevance is too low, log the content gap and fallback
-  if (relevantArticles.length === 0 || relevantArticles[0].score < 0.6) {
+    if (vectorResults.length > 0 && vectorResults[0].score >= 0.6) {
+      relevantArticles = vectorResults;
+    }
+  } catch (vectorError) {
+    console.error("Vector search failed, falling back to text search:", vectorError);
+  }
+
+  // --- 2b. Text Search Fallback ---
+  // Used when vector search yields no results, low scores, or fails entirely
+  // (e.g., articles have no embeddings or the vector index is not available).
+  if (relevantArticles.length === 0) {
+    const textSearchFilter = {
+      companyId: selectedCompanyId
+        ? selectedCompanyId
+        : { $in: accessibleCompanyIds },
+      status: "Approved",
+      $text: { $search: question },
+    };
+    if (!isElevated) {
+      textSearchFilter.department = { $in: [req.user.department] };
+    }
+
+    relevantArticles = await Article.find(
+      textSearchFilter,
+      { score: { $meta: "textScore" } },
+    )
+      .sort({ score: { $meta: "textScore" } })
+      .limit(4)
+      .select("title content");
+  }
+
+  // If both searches returned nothing, log the content gap and fallback
+  if (relevantArticles.length === 0) {
     await logContentGap({
       companyId: selectedCompanyId || accessibleCompanyIds[0],
       question,
@@ -144,7 +178,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
   relevantArticles.forEach((article, index) => {
     // Strip HTML tags from the content so the LLM processes raw text cleanly
-    const cleanContent = article.content.replace(/<[^>]*>?/gm, "").trim();
+    const cleanContent = stripHtml(article.content);
 
     contextData += `[Source ${index + 1}] Title: ${article.title}\nContent: ${cleanContent}\n\n`;
 
