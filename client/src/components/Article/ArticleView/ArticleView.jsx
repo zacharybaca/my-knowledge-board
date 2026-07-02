@@ -17,13 +17,18 @@ import {
   Trash2,
   MessageSquare,
   History,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import ArticleFeedback from '../ArticleFeedback/ArticleFeedback.jsx';
+import RelatedArticles from '../RelatedArticles/RelatedArticles.jsx';
+import ArticleMetrics from '../ArticleMetrics/ArticleMetrics.jsx';
 import ProrationWidget from '../../Widgets/ProrationWidget/ProrationWidget.jsx';
 import './article-view.css';
 
 const templateVariableRegex = /\[([A-Za-z0-9_]+)\]/g;
 const widgetRegex = /\[Widget:([a-zA-Z0-9_]+)\]/g;
+const mentionRegex = /\B@(\w+)/g;
 const escapeHtml = (value = '') =>
   value
     .replaceAll('&', '&amp;')
@@ -31,6 +36,20 @@ const escapeHtml = (value = '') =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+
+const renderCommentMessage = (message = '') => {
+  const parts = message.split(mentionRegex);
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return (
+        <span key={index} className="mention-tag">
+          @{part}
+        </span>
+      );
+    }
+    return <React.Fragment key={index}>{part}</React.Fragment>;
+  });
+};
 
 const ArticleView = () => {
   const { id } = useParams();
@@ -48,6 +67,10 @@ const ArticleView = () => {
   const [revisions, setRevisions] = useState([]);
   const [showRevisions, setShowRevisions] = useState(false);
   const [diffRevision, setDiffRevision] = useState(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [mentionSuggestions, setMentionSuggestions] = useState([]);
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
 
   const templateVariables = useMemo(() => {
     if (!article?.content) return [];
@@ -218,7 +241,47 @@ const ArticleView = () => {
         comments: [...(prev.comments || []), response.data],
       }));
       setNewComment('');
+      setShowMentionDropdown(false);
     }
+  };
+
+  const handleToggleSubscribe = async () => {
+    setIsSubscribing(true);
+    const response = await fetcher(`/api/articles/${id}/subscribe`, {
+      method: 'POST',
+    });
+    if (response.success) {
+      setIsSubscribed(response.data.subscribed);
+    }
+    setIsSubscribing(false);
+  };
+
+  const handleCommentInputChange = async (e) => {
+    const { value } = e.target;
+    setNewComment(value);
+
+    const mentionMatch = value.match(/@(\w*)$/);
+    if (!mentionMatch) {
+      setShowMentionDropdown(false);
+      setMentionSuggestions([]);
+      return;
+    }
+
+    const query = mentionMatch[1];
+    const response = await fetcher('/api/users/directory');
+    if (response.success && Array.isArray(response.data)) {
+      const matches = response.data.filter((candidate) =>
+        candidate.firstName.toLowerCase().startsWith(query.toLowerCase())
+      );
+      setMentionSuggestions(matches.slice(0, 5));
+      setShowMentionDropdown(matches.length > 0);
+    }
+  };
+
+  const handleSelectMention = (candidate) => {
+    setNewComment((prev) => prev.replace(/@(\w*)$/, `@${candidate.firstName} `));
+    setShowMentionDropdown(false);
+    setMentionSuggestions([]);
   };
 
   const renderInteractiveContent = () => {
@@ -328,6 +391,21 @@ const ArticleView = () => {
               <History size={16} /> Revisions
             </button>
           )}
+          <button
+            onClick={handleToggleSubscribe}
+            className="btn-secondary-action"
+            disabled={isSubscribing}
+          >
+            {isSubscribed ? (
+              <>
+                <BellOff size={16} /> Unsubscribe
+              </>
+            ) : (
+              <>
+                <Bell size={16} /> Subscribe
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -397,6 +475,8 @@ const ArticleView = () => {
           )}
         </header>
 
+        <ArticleMetrics articleId={article._id} article={article} />
+
         {templateVariables.length > 0 && (
           <div className="template-controls">
             <h4>Template Variables</h4>
@@ -435,12 +515,26 @@ const ArticleView = () => {
             <MessageSquare size={18} /> Discussion
           </h3>
           <form onSubmit={handleAddComment} className="comment-form">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Ask a question or add context..."
-              rows={3}
-            />
+            <div className="comment-input-wrapper">
+              <textarea
+                value={newComment}
+                onChange={handleCommentInputChange}
+                placeholder="Ask a question or add context... use @Name to mention someone"
+                rows={3}
+              />
+              {showMentionDropdown && mentionSuggestions.length > 0 && (
+                <ul className="mention-dropdown">
+                  {mentionSuggestions.map((candidate) => (
+                    <li
+                      key={candidate._id}
+                      onMouseDown={() => handleSelectMention(candidate)}
+                    >
+                      {candidate.firstName} {candidate.lastName}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <button type="submit" className="btn-secondary-action">
               Post Comment
             </button>
@@ -451,7 +545,7 @@ const ArticleView = () => {
                 <strong>
                   {comment.userId?.firstName} {comment.userId?.lastName}
                 </strong>
-                <p>{comment.message}</p>
+                <p>{renderCommentMessage(comment.message)}</p>
                 <span>{new Date(comment.createdAt).toLocaleString()}</span>
               </div>
             ))}
@@ -459,6 +553,8 @@ const ArticleView = () => {
         </section>
 
         <ArticleFeedback articleId={article._id} />
+
+        <RelatedArticles articleId={article._id} />
       </article>
 
       {showRevisions && (

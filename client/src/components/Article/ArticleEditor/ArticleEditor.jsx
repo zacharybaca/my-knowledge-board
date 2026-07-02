@@ -4,33 +4,68 @@ import { Editor } from '@tinymce/tinymce-react';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import { useAuth } from '../../../hooks/useAuth.js';
 import Toast from '../../Layout/Toast/Toast.jsx';
-import { Wand2, Type, ListOrdered } from 'lucide-react';
+import { Wand2, Type, ListOrdered, FileText } from 'lucide-react';
 import './article-editor.css';
+
+const ARTICLE_TEMPLATES = [
+  {
+    key: 'policy',
+    name: 'Policy',
+    description: 'Formal policy structure with Purpose, Scope, Policy, and Procedures sections.',
+    content:
+      '<h2>Purpose</h2><p>Describe the purpose of this policy.</p>' +
+      '<h2>Scope</h2><p>Describe who and what this policy applies to.</p>' +
+      '<h2>Policy</h2><p>State the policy in clear terms.</p>' +
+      '<h2>Procedures</h2><p>Outline the procedures for complying with this policy.</p>',
+  },
+  {
+    key: 'sop',
+    name: 'SOP',
+    description: 'Standard Operating Procedure with numbered steps.',
+    content:
+      '<h2>Overview</h2><p>Briefly describe the objective of this procedure.</p>' +
+      '<h2>Steps</h2><ol><li>Step one.</li><li>Step two.</li><li>Step three.</li></ol>' +
+      '<h2>Notes</h2><p>Additional notes or exceptions.</p>',
+  },
+  {
+    key: 'faq',
+    name: 'FAQ',
+    description: 'Question and answer format for common inquiries.',
+    content:
+      '<h2>Frequently Asked Questions</h2>' +
+      '<p><strong>Q: Question one?</strong></p><p>A: Answer one.</p>' +
+      '<p><strong>Q: Question two?</strong></p><p>A: Answer two.</p>',
+  },
+];
+
+const DEFAULT_DEPARTMENTS = [
+  'Customer Service',
+  'Tech Support',
+  'Human Resources',
+  'Sales',
+  'Marketing',
+  'Engineering',
+  'Product',
+  'Finance',
+  'Legal',
+  'Operations',
+  'Other',
+];
 
 const ArticleEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { fetcher } = useFetcher();
-  const { isUserAdmin } = useAuth();
+  const { isUserAdmin, user } = useAuth();
   const editorRef = useRef(null);
 
   const isEditing = Boolean(id && id !== 'new');
   const draftStorageKey = `article_editor_draft_${id || 'new'}`;
 
-  // Available departments mapping
-  const availableDepartments = [
-    'Customer Service',
-    'Tech Support',
-    'Human Resources',
-    'Sales',
-    'Marketing',
-    'Engineering',
-    'Product',
-    'Finance',
-    'Legal',
-    'Operations',
-    'Other',
-  ];
+  const [availableDepartments, setAvailableDepartments] = useState(
+    DEFAULT_DEPARTMENTS
+  );
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -46,6 +81,27 @@ const ArticleEditor = () => {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [toastConfig, setToastConfig] = useState(null);
   const [didRestoreDraft, setDidRestoreDraft] = useState(false);
+
+  useEffect(() => {
+    const activeCompanyId = Array.isArray(user?.companyId)
+      ? user.companyId[0]?._id || user.companyId[0]
+      : user?.companyId;
+
+    if (!activeCompanyId) return;
+
+    const fetchCompanyDepartments = async () => {
+      const response = await fetcher(`/api/companies/${activeCompanyId}`);
+      if (
+        response.success &&
+        Array.isArray(response.data?.departments) &&
+        response.data.departments.length > 0
+      ) {
+        setAvailableDepartments(response.data.departments);
+      }
+    };
+
+    fetchCompanyDepartments();
+  }, [user, fetcher]);
 
   useEffect(() => {
     if (isEditing) {
@@ -115,6 +171,11 @@ const ArticleEditor = () => {
 
   const handleEditorChange = (content) => {
     setFormData((prev) => ({ ...prev, content }));
+  };
+
+  const handleSelectTemplate = (template) => {
+    setFormData((prev) => ({ ...prev, content: template.content }));
+    setShowTemplatePicker(false);
   };
 
   const handleDepartmentChange = (e) => {
@@ -352,7 +413,18 @@ const ArticleEditor = () => {
               marginBottom: '8px',
             }}
           >
-            <span>Content</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>Content</span>
+              {!isEditing && !formData.content && (
+                <button
+                  type="button"
+                  className="template-picker-btn"
+                  onClick={() => setShowTemplatePicker(true)}
+                >
+                  <FileText size={14} /> Start from template
+                </button>
+              )}
+            </div>
 
             {/* AI WRITING ASSISTANT TOOLBAR */}
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -564,6 +636,40 @@ const ArticleEditor = () => {
           </button>
         </div>
       </form>
+
+      {showTemplatePicker && (
+        <div
+          className="template-modal-overlay"
+          onClick={() => setShowTemplatePicker(false)}
+        >
+          <div
+            className="template-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Start from a template</h3>
+            <div className="template-card-grid">
+              {ARTICLE_TEMPLATES.map((template) => (
+                <button
+                  type="button"
+                  key={template.key}
+                  className="template-card"
+                  onClick={() => handleSelectTemplate(template)}
+                >
+                  <h4>{template.name}</h4>
+                  <p>{template.description}</p>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => setShowTemplatePicker(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

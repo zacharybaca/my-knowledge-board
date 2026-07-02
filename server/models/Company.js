@@ -41,6 +41,10 @@ const companySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    departments: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );

@@ -54,6 +54,12 @@ const createArticle = asyncHandler(async (req, res) => {
     status: "Pending", // Requires Manager/Admin approval
   });
 
+  if (req.user.onboarding && !req.user.onboarding.submittedArticle) {
+    await User.findByIdAndUpdate(req.user._id, {
+      "onboarding.submittedArticle": true,
+    });
+  }
+
   res.status(201).json(article);
 });
 
@@ -103,6 +109,29 @@ const checkDuplicateArticle = asyncHandler(async (req, res) => {
     isLikelyDuplicate: strongMatches.length > 0,
     similarArticles: strongMatches,
   });
+});
+
+// @desc    Get article title suggestions for autocomplete
+// @route   GET /api/articles/autocomplete
+// @access  Private
+const getArticleAutocomplete = asyncHandler(async (req, res) => {
+  const keyword = req.query.q?.trim();
+
+  if (!keyword) {
+    return res.json([]);
+  }
+
+  const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const articles = await Article.find({
+    companyId: { $in: req.user.companyId },
+    status: "Approved",
+    title: { $regex: escapedKeyword, $options: "i" },
+  })
+    .select("title")
+    .limit(8);
+
+  res.json(articles.map((article) => article.title));
 });
 
 // @desc    Get all articles for a company
@@ -211,6 +240,12 @@ const getArticleById = asyncHandler(async (req, res) => {
     await article.save();
   }
 
+  if (req.user.onboarding && !req.user.onboarding.readArticle) {
+    await User.findByIdAndUpdate(req.user._id, {
+      "onboarding.readArticle": true,
+    });
+  }
+
   res.json(article);
 });
 
@@ -282,12 +317,64 @@ const updateArticle = asyncHandler(async (req, res) => {
   }
 
   const updatedArticle = await article.save();
+
+  if (updatedArticle.subscribers && updatedArticle.subscribers.length > 0) {
+    const io = req.app.get("io");
+    const recipientIds = updatedArticle.subscribers.filter(
+      (subscriberId) => subscriberId.toString() !== req.user._id.toString(),
+    );
+
+    for (const recipientId of recipientIds) {
+      const notification = await Notification.create({
+        recipientId,
+        type: "Article_Updated",
+        message: `"${updatedArticle.title}" was updated.`,
+        referenceId: updatedArticle._id,
+      });
+
+      if (io) {
+        io.to(recipientId.toString()).emit("new_notification", notification);
+        io.to(recipientId.toString()).emit("refresh_notifications");
+      }
+    }
+  }
+
   res.json(updatedArticle);
 });
 
-// @desc    Approve or Reject an article
-// @route   PATCH /api/articles/:id/status
-// @access  Private (Manager/Admin Only)
+/**
+ * @desc    Toggle subscription to article change notifications
+ * @route   POST /api/articles/:id/subscribe
+ * @access  Private
+ */
+const subscribeToArticle = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id);
+
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
+    res.status(403);
+    throw new Error("Not authorized to subscribe to this article");
+  }
+
+  const userId = req.user._id;
+  const isSubscribed = article.subscribers.some(
+    (subscriberId) => subscriberId.toString() === userId.toString(),
+  );
+
+  if (isSubscribed) {
+    article.subscribers.pull(userId);
+  } else {
+    article.subscribers.push(userId);
+  }
+
+  await article.save();
+
+  res.json({ subscribed: !isSubscribed });
+});
 const approveRejectArticle = asyncHandler(async (req, res) => {
   const { status, rejectionReason } = req.body;
   const article = await Article.findById(req.params.id).select(
@@ -524,12 +611,19 @@ const getReviewQueue = asyncHandler(async (req, res) => {
   }
 
   const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const department = req.query.department?.trim();
 
-  const articles = await Article.find({
+  const filter = {
     companyId: { $in: req.user.companyId },
     status: "Approved",
     expiresAt: { $lte: thirtyDaysFromNow },
-  })
+  };
+
+  if (department) {
+    filter.department = { $in: [department] };
+  }
+
+  const articles = await Article.find(filter)
     .select("title expiresAt lastReviewedAt authorId")
     .populate("authorId", "firstName lastName")
     .sort({ expiresAt: 1 });
@@ -692,6 +786,40 @@ const addArticleComment = asyncHandler(async (req, res) => {
   await article.save();
   await article.populate("comments.userId", "firstName lastName avatar");
 
+  const mentionMatches = [...req.body.message.matchAll(/\B@(\w+)/g)];
+  const mentionedNames = [...new Set(mentionMatches.map((match) => match[1]))];
+
+  if (mentionedNames.length > 0) {
+    const mentionedUsers = await User.find({
+      companyId: { $in: req.user.companyId },
+      firstName: {
+        $in: mentionedNames.map(
+          (name) => new RegExp(`^${name}$`, "i"),
+        ),
+      },
+    }).select("_id");
+
+    const io = req.app.get("io");
+    for (const mentionedUser of mentionedUsers) {
+      if (mentionedUser._id.toString() === req.user._id.toString()) continue;
+
+      const notification = await Notification.create({
+        recipientId: mentionedUser._id,
+        type: "Mention",
+        message: `${req.user.firstName} mentioned you in a comment on "${article.title}".`,
+        referenceId: article._id,
+      });
+
+      if (io) {
+        io.to(mentionedUser._id.toString()).emit(
+          "new_notification",
+          notification,
+        );
+        io.to(mentionedUser._id.toString()).emit("refresh_notifications");
+      }
+    }
+  }
+
   res.status(201).json(article.comments[article.comments.length - 1]);
 });
 
@@ -822,12 +950,116 @@ const getArticleAnalytics = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Get semantically related articles
+ * @route   GET /api/articles/:id/related
+ * @access  Private
+ */
+const getRelatedArticles = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id).select(
+    "+contentEmbedding",
+  );
+
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
+    res.status(403);
+    throw new Error("Not authorized to view this article");
+  }
+
+  if (
+    !Array.isArray(article.contentEmbedding) ||
+    article.contentEmbedding.length === 0
+  ) {
+    return res.json([]);
+  }
+
+  let relatedArticles = [];
+  try {
+    relatedArticles = await Article.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "contentEmbedding",
+          queryVector: article.contentEmbedding,
+          numCandidates: 20,
+          limit: 5,
+          filter: {
+            companyId: article.companyId,
+            status: "Approved",
+          },
+        },
+      },
+      {
+        $match: { _id: { $ne: article._id } },
+      },
+      {
+        $limit: 4,
+      },
+      {
+        $project: {
+          title: 1,
+          summary: 1,
+          authorId: 1,
+        },
+      },
+    ]);
+  } catch (error) {
+    console.error("Failed to fetch related articles:", error);
+  }
+
+  res.json(relatedArticles);
+});
+
+/**
+ * @desc    Get engagement metrics for an article
+ * @route   GET /api/articles/:id/metrics
+ * @access  Private (Author or Manager/Admin)
+ */
+const getArticleMetrics = asyncHandler(async (req, res) => {
+  const article = await Article.findById(req.params.id);
+
+  if (!article) {
+    res.status(404);
+    throw new Error("Article not found");
+  }
+
+  if (!hasCompanyAccess(req.user, article.companyId)) {
+    res.status(403);
+    throw new Error("Not authorized to view metrics for this article");
+  }
+
+  const isAuthor = article.authorId.toString() === req.user._id.toString();
+  if (!isAuthor && !isElevatedUser(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized to view metrics for this article");
+  }
+
+  const helpfulCount = article.feedback.filter((f) => f.isHelpful).length;
+  const notHelpfulCount = article.feedback.filter((f) => !f.isHelpful).length;
+
+  res.json({
+    viewCount: article.viewCount,
+    upvoteCount: article.upvotes.length,
+    downvoteCount: article.downvotes.length,
+    helpfulCount,
+    notHelpfulCount,
+    feedbackCount: article.feedback.length,
+    commentCount: article.comments.length,
+  });
+});
+
 export {
   createArticle,
   checkDuplicateArticle,
   getArticles,
+  getArticleAutocomplete,
   getArticleById,
   updateArticle,
+  subscribeToArticle,
   approveRejectArticle,
   getUserArticles,
   getTopArticles,
@@ -843,4 +1075,6 @@ export {
   getArticleRevisions,
   rollbackArticleRevision,
   addArticleComment,
+  getRelatedArticles,
+  getArticleMetrics,
 };

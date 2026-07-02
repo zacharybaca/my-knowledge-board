@@ -379,6 +379,49 @@ const updateUserRole = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Get current user's onboarding checklist state
+ * @route   GET /api/users/me/onboarding
+ * @access  Private
+ */
+const getOnboardingStatus = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("onboarding");
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.json(user.onboarding);
+});
+
+/**
+ * @desc    Update a step of the current user's onboarding checklist
+ * @route   PATCH /api/users/me/onboarding
+ * @access  Private
+ */
+const updateOnboardingStatus = asyncHandler(async (req, res) => {
+  const { step } = req.body;
+  const validSteps = ["joinedWorkspace", "readArticle", "submittedArticle"];
+
+  if (!validSteps.includes(step)) {
+    res.status(400);
+    throw new Error("Invalid onboarding step");
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  user.onboarding[step] = true;
+  await user.save();
+
+  res.json(user.onboarding);
+});
+
 export {
   getUserProfile,
   updateUserProfile,
@@ -390,4 +433,6 @@ export {
   updateUserStatus,
   deleteUserById,
   updateUserRole,
+  getOnboardingStatus,
+  updateOnboardingStatus,
 };

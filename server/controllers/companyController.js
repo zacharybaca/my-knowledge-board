@@ -150,6 +150,57 @@ const getCompanies = asyncHandler(async (req, res) => {
   res.status(200).json(companies);
 });
 
+// @desc    Get a single company by ID
+// @route   GET /api/companies/:id
+// @access  Public
+const getCompanyById = asyncHandler(async (req, res) => {
+  const company = await Company.findById(req.params.id).select(
+    "name imageUrl departments emailDomain",
+  );
+
+  if (!company) {
+    res.status(404);
+    throw new Error("Workspace not found");
+  }
+
+  res.status(200).json(company);
+});
+
+// @desc    Update a company's custom department list
+// @route   PATCH /api/companies/:id/departments
+// @access  Private (Admin only)
+const updateCompanyDepartments = asyncHandler(async (req, res) => {
+  if (!req.user.role.includes("Admin")) {
+    res.status(403);
+    throw new Error("Not authorized to manage departments.");
+  }
+
+  if (
+    !req.user.companyId.some(
+      (id) => id.toString() === req.params.id.toString(),
+    )
+  ) {
+    res.status(403);
+    throw new Error("Not authorized to manage this workspace.");
+  }
+
+  const company = await Company.findById(req.params.id);
+
+  if (!company) {
+    res.status(404);
+    throw new Error("Workspace not found");
+  }
+
+  const departments = Array.isArray(req.body.departments)
+    ? req.body.departments.map((dept) => String(dept).trim()).filter(Boolean)
+    : [];
+
+  company.departments = departments;
+  await company.save();
+
+  res.status(200).json({ departments: company.departments });
+});
+
 // @desc    Delete a company workspace and all associated data
 // @route   DELETE /api/companies/:id
 // @access  Private/Admin
@@ -176,4 +227,10 @@ const deleteCompany = asyncHandler(async (req, res) => {
   });
 });
 
-export { registerCompany, getCompanies, deleteCompany };
+export {
+  registerCompany,
+  getCompanies,
+  getCompanyById,
+  updateCompanyDepartments,
+  deleteCompany,
+};

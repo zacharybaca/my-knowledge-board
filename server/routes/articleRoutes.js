@@ -2,8 +2,10 @@ import express from "express";
 import {
   createArticle,
   getArticles,
+  getArticleAutocomplete,
   getArticleById,
   updateArticle,
+  subscribeToArticle,
   approveRejectArticle,
   getUserArticles,
   getPendingArticles,
@@ -20,6 +22,8 @@ import {
   getArticleRevisions,
   rollbackArticleRevision,
   addArticleComment,
+  getRelatedArticles,
+  getArticleMetrics,
 } from "../controllers/articleController.js";
 import { protect } from "../middleware/authMiddleware.js"; // Ensure your auth middleware is imported
 import {
@@ -40,6 +44,7 @@ router
 router.get("/my-articles", protect, getUserArticles);
 router.get("/pending", protect, getPendingArticles);
 router.get("/top", protect, getTopArticles);
+router.get("/autocomplete", protect, getArticleAutocomplete);
 router.route("/review-queue").get(protect, getReviewQueue);
 router.route("/analytics").get(protect, getArticleAnalytics);
 router
@@ -61,6 +66,9 @@ router.route("/:id/certify").patch(protect, certifyArticle);
 router.route("/:id/comments").post(protect, validateComment, addArticleComment);
 router.route("/:id/revisions").get(protect, getArticleRevisions);
 router.route("/:id/rollback").patch(protect, rollbackArticleRevision);
+router.route("/:id/related").get(protect, getRelatedArticles);
+router.route("/:id/metrics").get(protect, getArticleMetrics);
+router.route("/:id/subscribe").post(protect, subscribeToArticle);
 
 router.patch(
   "/:id/status",

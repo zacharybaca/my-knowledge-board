@@ -7,6 +7,7 @@ import { Search, BookOpen, FileText, Pin } from 'lucide-react';
 import PinButton from '../../Article/PinButton/PinButton';
 import Toast from '../../Layout/Toast/Toast.jsx';
 import NotificationBell from '../../Notifications/NotificationBell';
+import OnboardingChecklist from '../OnboardingChecklist/OnboardingChecklist.jsx';
 import '../dashboards.css';
 
 const EmployeeDashboard = () => {
@@ -111,6 +112,8 @@ const EmployeeDashboard = () => {
           <NotificationBell />
         </div>
       </header>
+
+      <OnboardingChecklist />
 
       <div className="dashboard-search-section">
         <form onSubmit={handleSearch} className="dashboard-search-form">
