@@ -28,7 +28,8 @@ const createArticle = asyncHandler(async (req, res) => {
   const activeCompanyId = req.body.companyId || req.user.companyId[0];
 
   // 1. Generate the vector embedding for duplicate detection
-  const textToEmbed = `Title: ${title}\nContent: ${content}`;
+  const plainContent = content.replace(/<[^>]*>?/gm, "").trim();
+  const textToEmbed = `Title: ${title}\nContent: ${plainContent}`;
   let embedding = [];
   try {
     embedding = await generateEmbedding(textToEmbed);
@@ -270,7 +271,8 @@ const updateArticle = asyncHandler(async (req, res) => {
   // Re-generate embedding if title or content changed
   if (req.body.title || req.body.content) {
     try {
-      const textToEmbed = `Title: ${article.title}\nContent: ${article.content}`;
+      const updatedPlainContent = article.content.replace(/<[^>]*>?/gm, "").trim();
+      const textToEmbed = `Title: ${article.title}\nContent: ${updatedPlainContent}`;
       const newEmbedding = await generateEmbedding(textToEmbed);
       article.contentEmbedding = newEmbedding;
     } catch (error) {
