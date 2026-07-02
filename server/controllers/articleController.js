@@ -4,7 +4,7 @@ import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import { generateEmbedding } from "./aiController.js";
 import sendEmail from "../utils/sendEmail.js";
-import { sanitizeRichText } from "../utils/sanitizeHtml.js";
+import { sanitizeRichText, stripHtml } from "../utils/sanitizeHtml.js";
 
 const isElevatedUser = (user) =>
   user?.role?.includes("Admin") || user?.role?.includes("Manager");
@@ -28,7 +28,7 @@ const createArticle = asyncHandler(async (req, res) => {
   const activeCompanyId = req.body.companyId || req.user.companyId[0];
 
   // 1. Generate the vector embedding for duplicate detection
-  const plainContent = content.replace(/<[^>]*>?/gm, "").trim();
+  const plainContent = stripHtml(content);
   const textToEmbed = `Title: ${title}\nContent: ${plainContent}`;
   let embedding = [];
   try {
@@ -271,7 +271,7 @@ const updateArticle = asyncHandler(async (req, res) => {
   // Re-generate embedding if title or content changed
   if (req.body.title || req.body.content) {
     try {
-      const updatedPlainContent = article.content.replace(/<[^>]*>?/gm, "").trim();
+      const updatedPlainContent = stripHtml(article.content);
       const textToEmbed = `Title: ${article.title}\nContent: ${updatedPlainContent}`;
       const newEmbedding = await generateEmbedding(textToEmbed);
       article.contentEmbedding = newEmbedding;

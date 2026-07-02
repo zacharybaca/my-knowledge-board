@@ -4,6 +4,7 @@ import Article from "../models/Article.js";
 import ContentGapLog from "../models/ContentGapLog.js";
 import mongoose from "mongoose";
 import { generateEmbedding } from "./aiController.js";
+import { stripHtml } from "../utils/sanitizeHtml.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const FALLBACK_ANSWER =
@@ -177,7 +178,7 @@ export const generateChatResponse = asyncHandler(async (req, res) => {
 
   relevantArticles.forEach((article, index) => {
     // Strip HTML tags from the content so the LLM processes raw text cleanly
-    const cleanContent = article.content.replace(/<[^>]*>?/gm, "").trim();
+    const cleanContent = stripHtml(article.content);
 
     contextData += `[Source ${index + 1}] Title: ${article.title}\nContent: ${cleanContent}\n\n`;
 
