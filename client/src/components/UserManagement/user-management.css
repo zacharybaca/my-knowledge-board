@@ -108,6 +108,15 @@
   background-color: #dc2626;
 }
 
+.btn-role {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-role:hover {
+  background-color: #2563eb;
+}
+
 /* Modal Styling */
 .modal-overlay {
   position: fixed;
@@ -164,6 +173,18 @@
   border-color: #10b981;
 }
 
+.form-group select {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: inherit;
+  outline: none;
+}
+
+.form-group select:focus {
+  border-color: #10b981;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -195,6 +216,15 @@
 
 .btn-submit.suspend-confirm:hover {
   background-color: #dc2626;
+}
+
+.btn-submit.role-save {
+  background-color: #2563eb;
+  color: white;
+}
+
+.btn-submit.role-save:hover {
+  background-color: #1d4ed8;
 }
 
 .user-management-title {

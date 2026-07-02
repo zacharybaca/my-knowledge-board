@@ -6,16 +6,6 @@ vi.mock("../../models/User.js", () => ({
   default: { findById: vi.fn() },
 }));
 
-// articleController imports need to be mocked to avoid pulling in aiController
-// (which would require a real Google API key at import time)
-vi.mock("../../controllers/aiController.js", () => ({
-  generateEmbedding: vi.fn().mockResolvedValue([]),
-}));
-
-vi.mock("../../models/Article.js", () => ({
-  default: { findById: vi.fn() },
-}));
-
 vi.mock("cloudinary", () => ({
   v2: { uploader: { destroy: vi.fn() } },
 }));
@@ -27,6 +17,7 @@ import User from "../../models/User.js";
 import {
   toggleFavoriteArticle,
   updateUserStatus,
+  updateUserRole,
   createElevatedUser,
   deleteUserById,
 } from "../../controllers/userController.js";
@@ -373,5 +364,85 @@ describe("deleteUserById", () => {
 
     expect(target.deleteOne).toHaveBeenCalled();
     expect(res._body.message).toMatch(/permanently deleted/i);
+  });
+});
+
+// ── updateUserRole ──────────────────────────────────────────────────────────────
+
+describe("updateUserRole", () => {
+  const managerId = "manager1";
+  const targetId = "employee9";
+
+  beforeEach(() => vi.clearAllMocks());
+
+  const managerUser = {
+    _id: managerId,
+    role: ["Manager"],
+    companyId: [{ toString: () => "company1" }],
+  };
+
+  const targetUser = {
+    _id: targetId,
+    role: ["Employee"],
+    companyId: [{ toString: () => "company1" }],
+    isAdmin: false,
+    save: vi.fn().mockResolvedValue(true),
+  };
+
+  it("returns 403 when caller is not manager/admin", async () => {
+    const req = {
+      user: { ...managerUser, role: ["Employee"] },
+      params: { id: targetId },
+      body: { role: "Manager" },
+    };
+    const res = makeRes();
+
+    const { nextArgs } = await run(updateUserRole, req, res);
+    expect(res._code).toBe(403);
+    expect(nextArgs[0]).toBeInstanceOf(Error);
+  });
+
+  it("returns 400 when attempting to modify own role", async () => {
+    User.findById.mockResolvedValue({ ...targetUser, _id: managerId });
+    const req = {
+      user: managerUser,
+      params: { id: managerId },
+      body: { role: "Admin" },
+    };
+    const res = makeRes();
+
+    const { nextArgs } = await run(updateUserRole, req, res);
+    expect(res._code).toBe(400);
+    expect(nextArgs[0].message).toMatch(/own role/i);
+  });
+
+  it("returns 400 for invalid roles", async () => {
+    User.findById.mockResolvedValue(targetUser);
+    const req = {
+      user: managerUser,
+      params: { id: targetId },
+      body: { role: "SuperUser" },
+    };
+    const res = makeRes();
+
+    const { nextArgs } = await run(updateUserRole, req, res);
+    expect(res._code).toBe(400);
+    expect(nextArgs[0].message).toMatch(/invalid role/i);
+  });
+
+  it("updates role and admin flag successfully", async () => {
+    const mutableUser = { ...targetUser, save: vi.fn().mockResolvedValue(true) };
+    User.findById.mockResolvedValue(mutableUser);
+    const req = {
+      user: managerUser,
+      params: { id: targetId },
+      body: { role: "Admin" },
+    };
+    const res = makeRes();
+
+    await run(updateUserRole, req, res);
+    expect(mutableUser.role).toEqual(["Admin"]);
+    expect(mutableUser.isAdmin).toBe(true);
+    expect(res._body.message).toMatch(/updated successfully/i);
   });
 });

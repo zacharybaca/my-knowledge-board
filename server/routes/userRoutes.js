@@ -9,6 +9,7 @@ import {
   createElevatedUser,
   updateUserStatus,
   deleteUserById,
+  updateUserRole,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 // Inject Cloudinary multer middleware. Adjust path if your configuration file differs.
@@ -44,6 +45,7 @@ router.patch("/favorites/:articleId", protect, toggleFavoriteArticle);
  */
 router.post("/elevated", protect, createElevatedUser);
 router.route("/:id/status").patch(protect, updateUserStatus);
+router.route("/:id/role").patch(protect, updateUserRole);
 router.route("/:id").delete(protect, deleteUserById);
 
 export default router;
