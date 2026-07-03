@@ -4,9 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockFind, mockFindOneAndUpdate, mockUpdateMany, mockDeleteMany } =
   vi.hoisted(() => ({
-  mockFind: vi.fn(),
-  mockFindOneAndUpdate: vi.fn(),
-  mockUpdateMany: vi.fn(),
+    mockFind: vi.fn(),
+    mockFindOneAndUpdate: vi.fn(),
+    mockUpdateMany: vi.fn(),
     mockDeleteMany: vi.fn(),
   }));
 

@@ -137,7 +137,7 @@ const SideBar = ({ isCollapsed, onToggle, isMobileOpen, onMobileClose }) => {
   };
 
   const availableItems = ALL_NAV_ITEMS.filter(
-    (item) => !item.adminOnly || isUserAdmin,
+    (item) => !item.adminOnly || isUserAdmin
   );
 
   const visibleItems = availableItems.filter((item) => visiblePrefs[item.id]);
@@ -183,11 +183,7 @@ const SideBar = ({ isCollapsed, onToggle, isMobileOpen, onMobileClose }) => {
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? (
-            <ChevronRight size={16} />
-          ) : (
-            <ChevronLeft size={16} />
-          )}
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
 
         {/* Mobile close button */}

@@ -41,7 +41,9 @@
   cursor: pointer;
   z-index: 10;
   color: #64748b;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .sidebar-toggle:hover {
@@ -96,7 +98,9 @@
   cursor: pointer;
   width: 100%;
   text-align: left;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .sidebar-item:hover {
@@ -127,7 +131,9 @@
 .sidebar-item-label {
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: opacity 0.2s, width 0.25s;
+  transition:
+    opacity 0.2s,
+    width 0.25s;
 }
 
 /* Hide labels when collapsed */

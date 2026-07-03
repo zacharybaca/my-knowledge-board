@@ -84,7 +84,9 @@ const NotificationBell = () => {
       method: 'DELETE',
     });
     if (response.success) {
-      setNotifications((prev) => prev.filter((notification) => !notification.isRead));
+      setNotifications((prev) =>
+        prev.filter((notification) => !notification.isRead)
+      );
     }
   };
 

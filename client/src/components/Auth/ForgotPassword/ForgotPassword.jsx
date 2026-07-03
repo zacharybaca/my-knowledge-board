@@ -39,7 +39,9 @@ const ForgotPassword = () => {
         <h2>Reset Your Password</h2>
         <p>Enter your work email and we&apos;ll send you a reset link.</p>
 
-        {error && <div className="auth-feedback auth-feedback-error">{error}</div>}
+        {error && (
+          <div className="auth-feedback auth-feedback-error">{error}</div>
+        )}
         {successMessage && (
           <div className="auth-feedback auth-feedback-success">
             {successMessage}

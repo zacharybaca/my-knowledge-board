@@ -49,7 +49,11 @@ const Layout = () => {
         <main
           className={[
             'main-content',
-            user ? (sidebarCollapsed ? 'main-content--collapsed' : 'main-content--expanded') : '',
+            user
+              ? sidebarCollapsed
+                ? 'main-content--collapsed'
+                : 'main-content--expanded'
+              : '',
           ]
             .filter(Boolean)
             .join(' ')}

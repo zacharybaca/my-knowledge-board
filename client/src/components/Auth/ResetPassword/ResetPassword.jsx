@@ -30,7 +30,9 @@ const ResetPassword = () => {
 
     if (response.success) {
       navigate('/login', {
-        state: { message: response.data.message || 'Password reset successful.' },
+        state: {
+          message: response.data.message || 'Password reset successful.',
+        },
       });
       return;
     }
@@ -45,7 +47,9 @@ const ResetPassword = () => {
         <h2>Create a New Password</h2>
         <p>Enter and confirm a new password for your account.</p>
 
-        {error && <div className="auth-feedback auth-feedback-error">{error}</div>}
+        {error && (
+          <div className="auth-feedback auth-feedback-error">{error}</div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
