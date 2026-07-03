@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import { useAuth } from '../../../hooks/useAuth.js';
-import {
-  ChevronDown,
-  LogOut,
-  LayoutDashboard,
-  Search,
-  PenSquare,
-  User,
-  UserPlus,
-} from 'lucide-react';
+import { ChevronDown, LogOut, Menu } from 'lucide-react';
 import './nav-bar.css';
 
-const NavBar = () => {
-  const { user, logout, isUserAdmin } = useAuth();
+const NavBar = ({ onMobileMenuOpen }) => {
+  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -36,22 +28,31 @@ const NavBar = () => {
     navigate('/login');
   };
 
-  const closeDropdown = () => setDropdownOpen(false);
-
   return (
     <header className="navbar">
       <div className="navbar-container">
-        <Logo />
+        <div className="navbar-left">
+          {user && (
+            <button
+              className="navbar-mobile-menu"
+              onClick={onMobileMenuOpen}
+              aria-label="Open navigation"
+            >
+              <Menu size={22} />
+            </button>
+          )}
+          <Logo />
+        </div>
 
         <nav className="nav-links">
           {!user ? (
             <>
-              <Link to="/login" className="nav-link">
+              <a href="/login" className="nav-link">
                 Log In
-              </Link>
-              <Link to="/register-company" className="nav-cta">
+              </a>
+              <a href="/register-company" className="nav-cta">
                 Register Workspace
-              </Link>
+              </a>
             </>
           ) : (
             <div className="user-menu-container" ref={dropdownRef}>
@@ -87,58 +88,6 @@ const NavBar = () => {
                     <p className="dropdown-user-email">{user.email}</p>
                     <span className="dropdown-user-role">{user.role}</span>
                   </div>
-
-                  <div className="dropdown-divider"></div>
-
-                  <Link
-                    to={
-                      isUserAdmin ? '/manager-dashboard' : '/employee-dashboard'
-                    }
-                    className="dropdown-item"
-                    onClick={closeDropdown}
-                  >
-                    <LayoutDashboard size={16} />
-                    <span>Dashboard</span>
-                  </Link>
-
-                  <Link
-                    to="/search"
-                    className="dropdown-item"
-                    onClick={closeDropdown}
-                  >
-                    <Search size={16} />
-                    <span>Knowledge Base</span>
-                  </Link>
-
-                  <Link
-                    to="/articles/new"
-                    className="dropdown-item"
-                    onClick={closeDropdown}
-                  >
-                    <PenSquare size={16} />
-                    <span>Write Article</span>
-                  </Link>
-
-                  {/* NEW PROFILE SETTINGS LINK */}
-                  <Link
-                    to="/profile-settings"
-                    className="dropdown-item"
-                    onClick={closeDropdown}
-                  >
-                    <User size={16} />
-                    <span>Profile Settings</span>
-                  </Link>
-
-                  {isUserAdmin && (
-                    <Link
-                      to="/create-user"
-                      className="dropdown-item"
-                      onClick={closeDropdown}
-                    >
-                      <UserPlus size={16} />
-                      <span>Provision User</span>
-                    </Link>
-                  )}
 
                   <div className="dropdown-divider"></div>
 
