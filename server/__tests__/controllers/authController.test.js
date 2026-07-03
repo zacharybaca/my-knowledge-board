@@ -29,8 +29,11 @@ import {
   loginUser,
   registerUser,
   logoutUser,
+  forgotPassword,
+  resetPassword,
 } from "../../controllers/authController.js";
 import generateToken from "../../utils/generateToken.js";
+import sendEmail from "../../utils/sendEmail.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -220,5 +223,99 @@ describe("logoutUser", () => {
       expect.objectContaining({ httpOnly: true }),
     );
     expect(result._body.message).toMatch(/logged out/i);
+  });
+});
+
+// ── forgotPassword ─────────────────────────────────────────────────────────────
+
+describe("forgotPassword", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("stores a reset token and sends the reset email", async () => {
+    const save = vi.fn().mockResolvedValue(true);
+    const getResetPasswordToken = vi.fn().mockReturnValue("raw-reset-token");
+    const user = {
+      email: "jane@acme.com",
+      save,
+      getResetPasswordToken,
+    };
+    mockFindOne.mockResolvedValue(user);
+    sendEmail.mockResolvedValue(true);
+
+    const req = { body: { email: "jane@acme.com" } };
+    const { res } = await run(forgotPassword, req, makeRes());
+
+    expect(getResetPasswordToken).toHaveBeenCalled();
+    expect(save).toHaveBeenCalledWith({ validateBeforeSave: false });
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "jane@acme.com",
+        subject: "Password Reset Request",
+      }),
+    );
+    expect(res._body).toEqual({
+      success: true,
+      message: "Email sent successfully",
+    });
+  });
+
+  it("returns 404 when no user matches the email", async () => {
+    mockFindOne.mockResolvedValue(null);
+
+    const req = { body: { email: "missing@acme.com" } };
+    const { res, nextArgs } = await run(forgotPassword, req, makeRes());
+
+    expect(res.statusCode).toBe(404);
+    expect(nextArgs[0].message).toMatch(/no user registered/i);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+});
+
+// ── resetPassword ──────────────────────────────────────────────────────────────
+
+describe("resetPassword", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("updates the user's password when the reset token is valid", async () => {
+    const save = vi.fn().mockResolvedValue(true);
+    const user = {
+      password: "old-password",
+      resetPasswordToken: "hashed-token",
+      resetPasswordExpire: new Date(Date.now() + 60_000),
+      save,
+    };
+    mockFindOne.mockResolvedValue(user);
+
+    const req = {
+      params: { token: "raw-token" },
+      body: { password: "new-password-123" },
+    };
+    const { res } = await run(resetPassword, req, makeRes());
+
+    expect(mockFindOne).toHaveBeenCalledWith({
+      resetPasswordToken: expect.any(String),
+      resetPasswordExpire: { $gt: expect.any(Number) },
+    });
+    expect(user.password).toBe("new-password-123");
+    expect(user.resetPasswordToken).toBeUndefined();
+    expect(user.resetPasswordExpire).toBeUndefined();
+    expect(save).toHaveBeenCalled();
+    expect(res._body).toEqual({
+      success: true,
+      message: "Password reset successful. Please log in.",
+    });
+  });
+
+  it("returns 400 when the reset token is invalid or expired", async () => {
+    mockFindOne.mockResolvedValue(null);
+
+    const req = {
+      params: { token: "expired-token" },
+      body: { password: "new-password-123" },
+    };
+    const { res, nextArgs } = await run(resetPassword, req, makeRes());
+
+    expect(res.statusCode).toBe(400);
+    expect(nextArgs[0].message).toMatch(/invalid or expired/i);
   });
 });

@@ -62,6 +62,14 @@ const validateForgotPassword = [
   handleValidationErrors,
 ];
 
+const validateResetPassword = [
+  body("password")
+    .isString()
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters"),
+  handleValidationErrors,
+];
+
 const validateArticlePayload = [
   nonEmptyTrimmed("title", "Title"),
   nonEmptyTrimmed("content", "Content"),
@@ -136,6 +144,7 @@ export {
   validateLogin,
   validateRegistration,
   validateForgotPassword,
+  validateResetPassword,
   validateArticlePayload,
   validateArticleStatus,
   validateBulkArticleStatus,

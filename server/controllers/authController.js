@@ -174,6 +174,36 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Reset password with token
+// @route   PUT /api/auth/resetpassword/:token
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid or expired password reset token.");
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset successful. Please log in.",
+  });
+});
+
 // @desc    Verify user email and activate workspace
 // @route   GET /api/auth/verify/:token
 // @access  Public
@@ -229,4 +259,11 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
   });
 });
 
-export { registerUser, loginUser, logoutUser, forgotPassword, verifyWorkspace };
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  forgotPassword,
+  resetPassword,
+  verifyWorkspace,
+};

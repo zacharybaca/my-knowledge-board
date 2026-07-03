@@ -45,3 +45,13 @@ export const markAllNotificationsRead = asyncHandler(async (req, res) => {
   );
   res.json({ success: true });
 });
+
+/**
+ * @desc    Delete read notifications
+ * @route   DELETE /api/notifications/read
+ * @access  Private
+ */
+export const deleteReadNotifications = asyncHandler(async (req, res) => {
+  await Notification.deleteMany({ recipientId: req.user._id, isRead: true });
+  res.json({ success: true });
+});
