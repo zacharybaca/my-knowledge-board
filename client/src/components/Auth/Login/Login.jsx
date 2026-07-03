@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth.js';
 import { useFetcher } from '../../../hooks/useFetcher.js';
 import '../auth-forms.css';
+import Toast from '../../Layout/Toast/Toast.jsx';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [toastConfig, setToastConfig] = useState(null);
 
   const { setUser } = useAuth();
   const { fetcher } = useFetcher();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (location.state?.message) {
+      setToastConfig({ message: location.state.message, type: 'success' });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -66,6 +76,13 @@ const Login = () => {
 
   return (
     <div className="auth-container">
+      {toastConfig && (
+        <Toast
+          message={toastConfig.message}
+          type={toastConfig.type}
+          onClose={() => setToastConfig(null)}
+        />
+      )}
       <div className="auth-card">
         <h2>Welcome Back</h2>
         <p>Log in to access your knowledge board.</p>
@@ -85,7 +102,12 @@ const Login = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <div className="auth-label-row">
+              <label htmlFor="password">Password</label>
+              <Link to="/forgot-password" className="auth-secondary-link">
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               id="password"

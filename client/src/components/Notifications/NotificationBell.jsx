@@ -79,7 +79,17 @@ const NotificationBell = () => {
     }
   };
 
+  const handleClearRead = async () => {
+    const response = await fetcher('/api/notifications/read', {
+      method: 'DELETE',
+    });
+    if (response.success) {
+      setNotifications((prev) => prev.filter((notification) => !notification.isRead));
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const hasReadNotifications = notifications.some((n) => n.isRead);
 
   return (
     <div className="notification-wrapper" ref={dropdownRef}>
@@ -97,15 +107,26 @@ const NotificationBell = () => {
         <div className="notification-dropdown">
           <div className="notification-header">
             <h4>Notifications</h4>
-            {notifications.some((n) => !n.isRead) && (
-              <button
-                type="button"
-                className="mark-all-read-btn"
-                onClick={handleMarkAllRead}
-              >
-                Mark all as read
-              </button>
-            )}
+            <div className="notification-actions">
+              {notifications.some((n) => !n.isRead) && (
+                <button
+                  type="button"
+                  className="mark-all-read-btn"
+                  onClick={handleMarkAllRead}
+                >
+                  Mark all as read
+                </button>
+              )}
+              {hasReadNotifications && (
+                <button
+                  type="button"
+                  className="clear-read-btn"
+                  onClick={handleClearRead}
+                >
+                  Clear read
+                </button>
+              )}
+            </div>
           </div>
           <div className="notification-list">
             {notifications.length === 0 ? (

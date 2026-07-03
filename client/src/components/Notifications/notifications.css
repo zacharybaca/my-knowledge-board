@@ -68,10 +68,25 @@
   color: #0f172a;
 }
 
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .mark-all-read-btn {
   border: none;
   background: transparent;
   color: #0f766e;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.clear-read-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
   font-size: 0.8rem;
   cursor: pointer;
   font-weight: 600;

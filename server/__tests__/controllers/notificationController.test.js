@@ -2,17 +2,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-const { mockFind, mockFindOneAndUpdate, mockUpdateMany } = vi.hoisted(() => ({
+const { mockFind, mockFindOneAndUpdate, mockUpdateMany, mockDeleteMany } =
+  vi.hoisted(() => ({
   mockFind: vi.fn(),
   mockFindOneAndUpdate: vi.fn(),
   mockUpdateMany: vi.fn(),
-}));
+    mockDeleteMany: vi.fn(),
+  }));
 
 vi.mock("../../models/Notification.js", () => ({
   default: {
     find: mockFind,
     findOneAndUpdate: mockFindOneAndUpdate,
     updateMany: mockUpdateMany,
+    deleteMany: mockDeleteMany,
   },
 }));
 
@@ -22,6 +25,7 @@ import {
   getUserNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteReadNotifications,
 } from "../../controllers/notificationController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -147,6 +151,34 @@ describe("markAllNotificationsRead", () => {
       { recipientId: "user-no-unread", isRead: false },
       { $set: { isRead: true } },
     );
+    expect(res._body).toEqual({ success: true });
+  });
+});
+
+// ── deleteReadNotifications ────────────────────────────────────────────────────
+
+describe("deleteReadNotifications", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("deletes all read notifications for the authenticated user", async () => {
+    mockDeleteMany.mockResolvedValue({ deletedCount: 2 });
+
+    const req = { user: { _id: "user-1" } };
+    const { res } = await run(deleteReadNotifications, req, makeRes());
+
+    expect(mockDeleteMany).toHaveBeenCalledWith({
+      recipientId: "user-1",
+      isRead: true,
+    });
+    expect(res._body).toEqual({ success: true });
+  });
+
+  it("returns success even when there are no read notifications", async () => {
+    mockDeleteMany.mockResolvedValue({ deletedCount: 0 });
+
+    const req = { user: { _id: "user-2" } };
+    const { res } = await run(deleteReadNotifications, req, makeRes());
+
     expect(res._body).toEqual({ success: true });
   });
 });
