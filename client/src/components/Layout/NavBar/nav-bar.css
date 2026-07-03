@@ -19,6 +19,36 @@
   justify-content: space-between;
 }
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-mobile-menu {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #475569;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.navbar-mobile-menu:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .navbar-mobile-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* Brand Logo Layout */
 .brand-logo {
   display: flex;

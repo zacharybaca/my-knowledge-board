@@ -1,6 +1,8 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import NavBar from './components/Layout/NavBar/NavBar';
+import SideBar from './components/Layout/SideBar/SideBar';
 import Footer from './components/Layout/Footer/Footer';
 import Login from './components/Auth/Login/Login';
 import Register from './components/Auth/Register/Register';
@@ -29,12 +31,32 @@ import './App.css';
 
 const Layout = () => {
   const { user } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <div className="app-container">
-      <NavBar />
-      <main className="main-content">
-        <Outlet />
-      </main>
+      <NavBar onMobileMenuOpen={() => setMobileOpen(true)} />
+      <div className="app-body">
+        {user && (
+          <SideBar
+            isCollapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed((c) => !c)}
+            isMobileOpen={mobileOpen}
+            onMobileClose={() => setMobileOpen(false)}
+          />
+        )}
+        <main
+          className={[
+            'main-content',
+            user ? (sidebarCollapsed ? 'main-content--collapsed' : 'main-content--expanded') : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <Outlet />
+        </main>
+      </div>
       <Footer />
       {user && <Chatbot />}
     </div>
