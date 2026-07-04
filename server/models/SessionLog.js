@@ -24,4 +24,6 @@ const sessionLogSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+sessionLogSchema.index({ userId: 1, loginTime: -1 });
+
 export default mongoose.model("SessionLog", sessionLogSchema);

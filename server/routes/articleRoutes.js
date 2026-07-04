@@ -3,6 +3,7 @@ import {
   createArticle,
   getArticles,
   getArticleAutocomplete,
+  getArticleSearchMetadata,
   getArticleById,
   updateArticle,
   subscribeToArticle,
@@ -45,6 +46,7 @@ router.get("/my-articles", protect, getUserArticles);
 router.get("/pending", protect, getPendingArticles);
 router.get("/top", protect, getTopArticles);
 router.get("/autocomplete", protect, getArticleAutocomplete);
+router.get("/search-metadata", protect, getArticleSearchMetadata);
 router.route("/review-queue").get(protect, getReviewQueue);
 router.route("/analytics").get(protect, getArticleAnalytics);
 router

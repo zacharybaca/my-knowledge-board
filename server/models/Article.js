@@ -143,6 +143,10 @@ articleSchema.index(
   { title: "text", tags: "text", content: "text" },
   { weights: { title: 10, tags: 5, content: 1 } },
 );
+articleSchema.index({ companyId: 1, status: 1, createdAt: -1 });
+articleSchema.index({ companyId: 1, status: 1, expiresAt: 1 });
+articleSchema.index({ companyId: 1, status: 1, viewCount: -1 });
+articleSchema.index({ authorId: 1, updatedAt: -1 });
 
 const Article = mongoose.model("Article", articleSchema);
 

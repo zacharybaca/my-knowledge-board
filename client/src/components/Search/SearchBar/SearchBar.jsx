@@ -25,7 +25,7 @@ const saveRecentSearch = (term) => {
   );
 };
 
-const SearchBar = ({ setSearchTerm, articleTitles = [] }) => {
+const SearchBar = ({ setSearchTerm }) => {
   const [displayValue, setDisplayValue] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -49,27 +49,18 @@ const SearchBar = ({ setSearchTerm, articleTitles = [] }) => {
       setSuggestions([]);
       return;
     }
-    const lower = displayValue.toLowerCase();
-    const localMatches = articleTitles
-      .filter((t) => t.toLowerCase().includes(lower))
-      .slice(0, 6);
-    setSuggestions(localMatches);
 
     const handler = setTimeout(async () => {
       const response = await fetcher(
         `/api/articles/autocomplete?q=${encodeURIComponent(displayValue)}`
       );
       if (response.success && Array.isArray(response.data)) {
-        const merged = [
-          ...response.data,
-          ...localMatches.filter((t) => !response.data.includes(t)),
-        ];
-        setSuggestions(merged.slice(0, 8));
+        setSuggestions(response.data.slice(0, 8));
       }
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(handler);
-  }, [displayValue, articleTitles, fetcher]);
+  }, [displayValue, fetcher]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {

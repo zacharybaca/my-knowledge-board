@@ -24,13 +24,13 @@ const EmployeeDashboard = () => {
 
   const fetchDashboardData = useCallback(async () => {
     const [recentRes, personalRes, pinnedRes] = await Promise.all([
-      fetcher('/api/articles'),
-      fetcher('/api/articles/my-articles'),
+      fetcher('/api/articles?paginate=true&page=1&limit=5'),
+      fetcher('/api/articles/my-articles?limit=5'),
       fetcher('/api/articles/favorites'),
     ]);
 
-    if (recentRes.success) setRecentArticles(recentRes.data.slice(0, 5));
-    if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+    if (recentRes.success) setRecentArticles(recentRes.data.articles || []);
+    if (personalRes.success) setMyArticles(personalRes.data);
     if (pinnedRes.success) setPinnedArticles(pinnedRes.data);
 
     setIsLoading(false);

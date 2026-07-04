@@ -24,7 +24,6 @@ const DEFAULT_DEPARTMENTS = [
 const SearchResults = () => {
   const [articles, setArticles] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
-  const [articleTitles, setArticleTitles] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTag, setFilterTag] = useState('');
@@ -82,30 +81,33 @@ const SearchResults = () => {
           name: activeCompany.name,
           imageUrl: activeCompany.imageUrl,
         });
-      } else {
-        // Scenario B: We just have the ID string
-        try {
-          const response = await fetcher(`/api/companies/${idToFetch}`);
-          if (response.success && response.data) {
-            setCompanyDetails({
-              name: response.data.name,
-              imageUrl: response.data.imageUrl,
-            });
-          }
-        } catch (err) {
-          console.error('Could not fetch company details', err);
+        if (
+          Array.isArray(activeCompany.departments) &&
+          activeCompany.departments.length > 0
+        ) {
+          setDepartmentOptions(activeCompany.departments);
+          return;
         }
       }
 
-      if (idToFetch) {
-        const deptResponse = await fetcher(`/api/companies/${idToFetch}`);
-        if (
-          deptResponse.success &&
-          Array.isArray(deptResponse.data?.departments) &&
-          deptResponse.data.departments.length > 0
-        ) {
-          setDepartmentOptions(deptResponse.data.departments);
+      if (!idToFetch) return;
+
+      try {
+        const response = await fetcher(`/api/companies/${idToFetch}`);
+        if (response.success && response.data) {
+          setCompanyDetails({
+            name: response.data.name,
+            imageUrl: response.data.imageUrl,
+          });
+          if (
+            Array.isArray(response.data.departments) &&
+            response.data.departments.length > 0
+          ) {
+            setDepartmentOptions(response.data.departments);
+          }
         }
+      } catch (err) {
+        console.error('Could not fetch company details', err);
       }
     };
 
@@ -114,19 +116,9 @@ const SearchResults = () => {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      const response = await fetcher('/api/articles');
+      const response = await fetcher('/api/articles/search-metadata');
       if (response.success) {
-        const allArticles = Array.isArray(response.data)
-          ? response.data
-          : response.data.articles || [];
-        const tags = new Set();
-        const titles = [];
-        allArticles.forEach((article) => {
-          if (article.tags) article.tags.forEach((tag) => tags.add(tag));
-          if (article.title) titles.push(article.title);
-        });
-        setAvailableTags(Array.from(tags).sort());
-        setArticleTitles(titles);
+        setAvailableTags(response.data.tags || []);
       }
     };
     fetchInitialData();
@@ -210,12 +202,7 @@ const SearchResults = () => {
         </p>
       </div>
 
-      <SearchBar
-        setSearchTerm={setSearchTerm}
-        setFilterTag={setFilterTag}
-        availableTags={availableTags}
-        articleTitles={articleTitles}
-      />
+      <SearchBar setSearchTerm={setSearchTerm} />
 
       {/* Advanced filter toggle */}
       <div className="advanced-filter-row">

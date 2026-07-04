@@ -7,20 +7,26 @@ const {
   mockFind,
   mockCountDocuments,
   mockAggregate,
+  mockDistinct,
+  mockBulkWrite,
   mockGenerateEmbedding,
   mockNotificationCreate,
   mockSendEmail,
   mockUserFindById,
+  mockUserFind,
   mockResolveContentGaps,
 } = vi.hoisted(() => ({
   mockFindById: vi.fn(),
   mockFind: vi.fn(),
   mockCountDocuments: vi.fn(),
   mockAggregate: vi.fn(),
+  mockDistinct: vi.fn(),
+  mockBulkWrite: vi.fn(),
   mockGenerateEmbedding: vi.fn(),
   mockNotificationCreate: vi.fn(),
   mockSendEmail: vi.fn(),
   mockUserFindById: vi.fn(),
+  mockUserFind: vi.fn(),
   mockResolveContentGaps: vi.fn(),
 }));
 
@@ -30,11 +36,13 @@ vi.mock("../../models/Article.js", () => ({
     find: mockFind,
     countDocuments: mockCountDocuments,
     aggregate: mockAggregate,
+    distinct: mockDistinct,
+    bulkWrite: mockBulkWrite,
   },
 }));
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: mockUserFindById },
+  default: { findById: mockUserFindById, find: mockUserFind },
 }));
 
 vi.mock("../../models/Notification.js", () => ({
@@ -63,6 +71,7 @@ import {
   getArticles,
   getArticleById,
   checkDuplicateArticle,
+  getArticleSearchMetadata,
   voteArticle,
   approveRejectArticle,
   bulkUpdateArticleStatus,
@@ -318,6 +327,8 @@ describe("approveRejectArticle", () => {
   function fakeArticle() {
     return {
       _id: "article-1",
+      title: "Reviewed Article",
+      authorId: { toString: () => "author-1" },
       companyId: { toString: () => companyId },
       status: "Pending",
       contentEmbedding: [0.1, 0.2, 0.3],
@@ -334,6 +345,12 @@ describe("approveRejectArticle", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockResolveContentGaps.mockResolvedValue(undefined);
+    mockNotificationCreate.mockResolvedValue(true);
+    mockSendEmail.mockResolvedValue(true);
+    mockUserFind.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([{ _id: "author-1", email: "a@test.com" }]),
+    });
   });
 
   it("approves the article when the manager belongs to the same company", async () => {
@@ -454,12 +471,23 @@ describe("bulkUpdateArticleStatus", () => {
     };
   }
 
+  function mockBulkFindArticles(articles) {
+    mockFind.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(articles),
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockSendEmail.mockResolvedValue(true);
     mockNotificationCreate.mockResolvedValue(true);
-    mockUserFindById.mockReturnValue({
-      select: vi.fn().mockResolvedValue({ email: "author@example.com" }),
+    mockBulkWrite.mockResolvedValue({ modifiedCount: 1 });
+    mockUserFind.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi
+        .fn()
+        .mockResolvedValue([{ _id: "author-1", email: "author@example.com" }]),
     });
   });
 
@@ -481,7 +509,7 @@ describe("bulkUpdateArticleStatus", () => {
 
   it("updates all matching pending articles and returns the count", async () => {
     const articles = [fakeArticle(), fakeArticle({ _id: "article-2" })];
-    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue(articles) });
+    mockBulkFindArticles(articles);
     const req = {
       params: {},
       body: { articleIds: ["article-1", "article-2"], status: "Approved" },
@@ -493,11 +521,12 @@ describe("bulkUpdateArticleStatus", () => {
     expect(payload.count).toBe(2);
     expect(articles[0].status).toBe("Approved");
     expect(articles[1].status).toBe("Approved");
+    expect(mockBulkWrite).toHaveBeenCalledOnce();
   });
 
   it("sets rejectionReason when status is Rejected", async () => {
     const article = fakeArticle();
-    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
+    mockBulkFindArticles([article]);
     const req = {
       params: {},
       body: {
@@ -515,7 +544,7 @@ describe("bulkUpdateArticleStatus", () => {
 
   it("clears rejectionReason when status is Approved", async () => {
     const article = fakeArticle({ rejectionReason: "old reason" });
-    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
+    mockBulkFindArticles([article]);
     const req = {
       params: {},
       body: { articleIds: ["article-1"], status: "Approved" },
@@ -529,7 +558,7 @@ describe("bulkUpdateArticleStatus", () => {
   it("triggers content gap resolution for each approved article", async () => {
     const embedding = [0.5, 0.6];
     const article = fakeArticle({ contentEmbedding: embedding });
-    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
+    mockBulkFindArticles([article]);
     const req = {
       params: {},
       body: { articleIds: ["article-1"], status: "Approved" },
@@ -545,7 +574,7 @@ describe("bulkUpdateArticleStatus", () => {
 
   it("does not trigger content gap resolution when bulk status is Rejected", async () => {
     const article = fakeArticle();
-    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([article]) });
+    mockBulkFindArticles([article]);
     const req = {
       params: {},
       body: {
@@ -561,7 +590,7 @@ describe("bulkUpdateArticleStatus", () => {
   });
 
   it("returns count=0 when no articles match the query", async () => {
-    mockFind.mockReturnValue({ select: vi.fn().mockResolvedValue([]) });
+    mockBulkFindArticles([]);
     const req = {
       params: {},
       body: { articleIds: ["nonexistent"], status: "Approved" },
@@ -981,10 +1010,6 @@ describe("rollbackArticleRevision", () => {
 describe("getArticleAnalytics", () => {
   const companyId = "company-analytics";
 
-  function fakeArticle(title, viewCount, upvotes = [], downvotes = []) {
-    return { _id: title, title, viewCount, upvotes, downvotes };
-  }
-
   beforeEach(() => vi.clearAllMocks());
 
   it("returns 403 when an Employee accesses analytics", async () => {
@@ -999,17 +1024,24 @@ describe("getArticleAnalytics", () => {
   });
 
   it("returns totals, topViewed, and topVoted for a Manager", async () => {
-    const articles = [
-      fakeArticle("Article A", 100, ["u1", "u2"], []),
-      fakeArticle("Article B", 50, ["u1"], ["u2"]),
-    ];
-    mockCountDocuments.mockResolvedValue(2);
-    // Article.find is called twice (topViewed and votedCandidates)
-    mockFind.mockImplementation(() => ({
-      sort: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue(articles),
-    }));
+    mockAggregate.mockResolvedValue([
+      {
+        totals: [{ count: 2 }],
+        topViewed: [
+          { _id: "a1", title: "Article A", views: 100, upvotes: 2, downvotes: 0 },
+        ],
+        topVoted: [
+          {
+            _id: "a1",
+            title: "Article A",
+            views: 100,
+            upvotes: 2,
+            downvotes: 0,
+            score: 2,
+          },
+        ],
+      },
+    ]);
 
     const req = {
       params: {},
@@ -1029,16 +1061,30 @@ describe("getArticleAnalytics", () => {
   });
 
   it("ranks topVoted by upvotes minus downvotes", async () => {
-    const articles = [
-      fakeArticle("Low Score", 10, ["u1"], ["u2", "u3"]), // score = -1
-      fakeArticle("High Score", 5, ["u1", "u2", "u3"], []), // score = 3
-    ];
-    mockCountDocuments.mockResolvedValue(2);
-    mockFind.mockImplementation(() => ({
-      sort: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue(articles),
-    }));
+    mockAggregate.mockResolvedValue([
+      {
+        totals: [{ count: 2 }],
+        topViewed: [],
+        topVoted: [
+          {
+            _id: "high",
+            title: "High Score",
+            views: 5,
+            upvotes: 3,
+            downvotes: 0,
+            score: 3,
+          },
+          {
+            _id: "low",
+            title: "Low Score",
+            views: 10,
+            upvotes: 1,
+            downvotes: 2,
+            score: -1,
+          },
+        ],
+      },
+    ]);
 
     const req = {
       params: {},
@@ -1048,6 +1094,22 @@ describe("getArticleAnalytics", () => {
     const { res } = await run(getArticleAnalytics, req, makeRes());
     const { topVoted } = res.json.mock.calls[0][0];
     expect(topVoted[0].title).toBe("High Score");
+  });
+});
+
+describe("getArticleSearchMetadata", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns sorted non-empty tags", async () => {
+    mockDistinct.mockResolvedValue(["policy", "", "hr"]);
+    const req = {
+      user: { companyId: ["company-001"] },
+      query: {},
+    };
+
+    const { res } = await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith({ tags: ["hr", "policy"] });
   });
 });
 
@@ -1061,8 +1123,10 @@ describe("getArticles", () => {
     const mock = {
       populate: vi.fn().mockReturnThis(),
       sort: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
       skip: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(articles),
       then: (onFulfilled, onRejected) =>
         Promise.resolve(articles).then(onFulfilled, onRejected),
       catch: (onRejected) => Promise.resolve(articles).catch(onRejected),
