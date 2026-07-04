@@ -30,6 +30,8 @@ const contentGapLogSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+contentGapLogSchema.index({ companyId: 1, createdAt: -1 });
+
 const ContentGapLog = mongoose.model("ContentGapLog", contentGapLogSchema);
 
 export default ContentGapLog;

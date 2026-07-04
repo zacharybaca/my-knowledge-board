@@ -44,7 +44,7 @@ const normalizeStringArray = (value) => {
 const getUserProfile = asyncHandler(async (req, res) => {
   // Mongoose handles populating arrays of ObjectIds natively
   const user = await User.findById(req.user._id)
-    .populate("companyId", "name imageUrl emailDomain")
+    .populate("companyId", "name imageUrl emailDomain departments")
     .populate("managerId", "firstName lastName email")
     .select("-password");
 
@@ -106,13 +106,32 @@ const updateUserProfile = asyncHandler(async (req, res) => {
  */
 const getCompanyDirectory = asyncHandler(async (req, res) => {
   const activeCompanyId = req.query.companyId || req.user.companyId[0];
+  const keyword = req.query.q?.trim();
+  const limit = Math.min(
+    Number.parseInt(req.query.limit || "25", 10) || 25,
+    50,
+  );
 
   // Use $in to find users whose companyId array contains the active workspace
-  const users = await User.find({ companyId: { $in: [activeCompanyId] } })
+  const filter = { companyId: { $in: [activeCompanyId] } };
+
+  if (keyword) {
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.$or = [
+      { firstName: { $regex: `^${escapedKeyword}`, $options: "i" } },
+      { lastName: { $regex: `^${escapedKeyword}`, $options: "i" } },
+    ];
+  }
+
+  const query = User.find(filter)
     .select("firstName lastName email role avatar")
     .sort({ lastName: 1 });
 
-  res.json(users);
+  if (keyword) {
+    return res.json(await query.limit(limit).lean());
+  }
+
+  res.json(await query.lean());
 });
 
 /**

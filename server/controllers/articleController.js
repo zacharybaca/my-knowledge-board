@@ -19,6 +19,112 @@ const normalizeDepartments = (value) => {
   return [value];
 };
 
+const SEARCH_RESULT_FIELDS =
+  "title summary department tags status viewCount createdAt authorId";
+const DASHBOARD_ARTICLE_FIELDS =
+  "title department tags status createdAt authorId viewCount";
+const FAVORITE_ARTICLE_FIELDS =
+  "title department authorId createdAt status viewCount";
+
+const runDeferredTask = async (task, label) => {
+  const runner = async () => {
+    try {
+      await task();
+    } catch (error) {
+      console.error(`Deferred task failed (${label}):`, error);
+    }
+  };
+
+  if (process.env.NODE_ENV === "test") {
+    await runner();
+    return;
+  }
+
+  setImmediate(() => {
+    void runner();
+  });
+};
+
+const queueArticleStatusSideEffects = async ({
+  articles,
+  status,
+  rejectionReason,
+  io,
+}) => {
+  if (articles.length === 0) return;
+
+  await runDeferredTask(async () => {
+    const messageByArticleId = new Map(
+      articles.map((article) => [
+        article._id.toString(),
+        `Your article "${article.title}" was ${status.toLowerCase()}.`,
+      ]),
+    );
+
+    if (status === "Approved") {
+      await Promise.allSettled(
+        articles.map((article) =>
+          resolveContentGapsForArticle(
+            article.contentEmbedding,
+            article.companyId,
+          ),
+        ),
+      );
+    }
+
+    if (typeof Notification.create === "function") {
+      await Promise.allSettled(
+        articles.map((article) =>
+          Notification.create({
+            recipientId: article.authorId,
+            type: "Status_Update",
+            message: messageByArticleId.get(article._id.toString()),
+            referenceId: article._id,
+          }),
+        ),
+      );
+    }
+
+    if (io) {
+      articles.forEach((article) => {
+        const message = messageByArticleId.get(article._id.toString());
+        io.to(article.authorId.toString()).emit("article_status_update", {
+          status,
+          articleId: article._id,
+          message,
+        });
+        io.to(article.authorId.toString()).emit("refresh_notifications");
+      });
+    }
+
+    const authorIds = [
+      ...new Set(articles.map((article) => article.authorId.toString())),
+    ];
+    const authors = await User.find({ _id: { $in: authorIds } })
+      .select("_id email")
+      .lean();
+    const authorEmailById = new Map(
+      authors.map((author) => [author._id.toString(), author.email]),
+    );
+
+    await Promise.allSettled(
+      articles.map((article) => {
+        const email = authorEmailById.get(article.authorId.toString());
+        if (!email) return Promise.resolve();
+
+        return sendEmail({
+          email,
+          subject: `Article ${status}: ${article.title}`,
+          message:
+            status === "Rejected" && rejectionReason
+              ? `Your article "${article.title}" was rejected.\nReason: ${rejectionReason}`
+              : `Your article "${article.title}" was approved and published.`,
+        });
+      }),
+    );
+  }, "article status side effects");
+};
+
 // @desc    Create new article
 // @route   POST /api/articles
 // @access  Private
@@ -129,9 +235,27 @@ const getArticleAutocomplete = asyncHandler(async (req, res) => {
     title: { $regex: escapedKeyword, $options: "i" },
   })
     .select("title")
-    .limit(8);
+    .sort({ updatedAt: -1 })
+    .limit(8)
+    .lean();
 
   res.json(articles.map((article) => article.title));
+});
+
+// @desc    Get search metadata
+// @route   GET /api/articles/search-metadata
+// @access  Private
+const getArticleSearchMetadata = asyncHandler(async (req, res) => {
+  const tags = await Article.distinct("tags", {
+    companyId: { $in: req.user.companyId },
+    status: "Approved",
+  });
+
+  res.json({
+    tags: tags
+      .filter((tag) => typeof tag === "string" && tag.trim())
+      .sort((a, b) => a.localeCompare(b)),
+  });
 });
 
 // @desc    Get all articles for a company
@@ -185,13 +309,13 @@ const getArticles = asyncHandler(async (req, res) => {
     .sort("-createdAt");
 
   if (!shouldPaginate) {
-    const articles = await query;
+    const articles = await query.lean();
     return res.json(articles);
   }
 
   const skip = (page - 1) * limit;
   const [articles, total] = await Promise.all([
-    query.skip(skip).limit(limit),
+    query.select(SEARCH_RESULT_FIELDS).skip(skip).limit(limit).lean(),
     Article.countDocuments(filter),
   ]);
 
@@ -319,7 +443,7 @@ const updateArticle = asyncHandler(async (req, res) => {
   const updatedArticle = await article.save();
 
   if (updatedArticle.subscribers && updatedArticle.subscribers.length > 0) {
-    const io = req.app.get("io");
+    const io = req.app?.get?.("io");
     const recipientIds = updatedArticle.subscribers.filter(
       (subscriberId) => subscriberId.toString() !== req.user._id.toString(),
     );
@@ -402,45 +526,13 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
   }
 
   const reviewedArticle = await article.save();
-
-  if (status === "Approved") {
-    resolveContentGapsForArticle(article.contentEmbedding, article.companyId);
-  }
-
-  if (typeof Notification.create === "function") {
-    await Notification.create({
-      recipientId: article.authorId,
-      type: "Status_Update",
-      message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
-      referenceId: article._id,
-    });
-  }
-
-  const io = req.app.get("io");
-  if (io) {
-    io.to(article.authorId.toString()).emit("article_status_update", {
-      status,
-      articleId: article._id,
-      message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
-    });
-    io.to(article.authorId.toString()).emit("refresh_notifications");
-  }
-
-  try {
-    const author = await User.findById(article.authorId).select("email");
-    if (author?.email) {
-      await sendEmail({
-        email: author.email,
-        subject: `Article ${status}: ${article.title}`,
-        message:
-          status === "Rejected" && rejectionReason
-            ? `Your article "${article.title}" was rejected.\nReason: ${rejectionReason}`
-            : `Your article "${article.title}" was approved and published.`,
-      });
-    }
-  } catch (error) {
-    console.error("Failed to send article status email:", error);
-  }
+  const io = req.app?.get?.("io");
+  await queueArticleStatusSideEffects({
+    articles: [article],
+    status,
+    rejectionReason,
+    io,
+  });
 
   res.json(reviewedArticle);
 });
@@ -451,9 +543,20 @@ const approveRejectArticle = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getUserArticles = asyncHandler(async (req, res) => {
-  const articles = await Article.find({ authorId: req.user._id }).sort({
-    updatedAt: -1,
-  });
+  const limit = Number.parseInt(req.query.limit || "0", 10);
+
+  const query = Article.find({ authorId: req.user._id })
+    .sort({
+      updatedAt: -1,
+    })
+    .select(DASHBOARD_ARTICLE_FIELDS)
+    .lean();
+
+  if (limit > 0) {
+    query.limit(limit);
+  }
+
+  const articles = await query;
   res.json(articles);
 });
 
@@ -471,7 +574,10 @@ const getPendingArticles = asyncHandler(async (req, res) => {
     companyId: { $in: req.user.companyId },
     department: { $in: userDepartments },
     status: "Pending",
-  }).populate("authorId", "firstName lastName");
+  })
+    .populate("authorId", "firstName lastName")
+    .select(DASHBOARD_ARTICLE_FIELDS)
+    .lean();
 
   res.json(articles);
 });
@@ -491,7 +597,9 @@ const getFavoriteArticles = asyncHandler(async (req, res) => {
 
   const articles = await Article.find({ _id: { $in: user.favoriteArticles } })
     .populate("authorId", "firstName lastName")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .select(FAVORITE_ARTICLE_FIELDS)
+    .lean();
 
   res.json(articles);
 });
@@ -509,7 +617,8 @@ const getTopArticles = asyncHandler(async (req, res) => {
     .sort({ viewCount: -1 })
     .limit(5)
     .populate("authorId", "firstName lastName")
-    .select("title department viewCount status");
+    .select("title department viewCount status")
+    .lean();
 
   res.json(articles);
 });
@@ -626,7 +735,8 @@ const getReviewQueue = asyncHandler(async (req, res) => {
   const articles = await Article.find(filter)
     .select("title expiresAt lastReviewedAt authorId")
     .populate("authorId", "firstName lastName")
-    .sort({ expiresAt: 1 });
+    .sort({ expiresAt: 1 })
+    .lean();
 
   res.json(articles);
 });
@@ -708,53 +818,42 @@ const bulkUpdateArticleStatus = asyncHandler(async (req, res) => {
     _id: { $in: articleIds },
     companyId: { $in: req.user.companyId },
     status: "Pending",
-  }).select("+contentEmbedding");
+  })
+    .select("title authorId companyId +contentEmbedding")
+    .lean();
 
   for (const article of articles) {
     article.status = status;
     article.approverId = req.user._id;
     article.rejectionReason =
       status === "Rejected" ? rejectionReason || null : null;
-    await article.save();
-
-    if (status === "Approved") {
-      resolveContentGapsForArticle(article.contentEmbedding, article.companyId);
-    }
-    if (typeof Notification.create === "function") {
-      await Notification.create({
-        recipientId: article.authorId,
-        type: "Status_Update",
-        message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
-        referenceId: article._id,
-      });
-    }
-
-    const io = req.app.get("io");
-    if (io) {
-      io.to(article.authorId.toString()).emit("article_status_update", {
-        status,
-        articleId: article._id,
-        message: `Your article "${article.title}" was ${status.toLowerCase()}.`,
-      });
-      io.to(article.authorId.toString()).emit("refresh_notifications");
-    }
-
-    try {
-      const author = await User.findById(article.authorId).select("email");
-      if (author?.email) {
-        await sendEmail({
-          email: author.email,
-          subject: `Article ${status}: ${article.title}`,
-          message:
-            status === "Rejected" && rejectionReason
-              ? `Your article "${article.title}" was rejected.\nReason: ${rejectionReason}`
-              : `Your article "${article.title}" was approved and published.`,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to send bulk article status email:", error);
-    }
   }
+
+  if (articles.length > 0) {
+    await Article.bulkWrite(
+      articles.map((article) => ({
+        updateOne: {
+          filter: { _id: article._id },
+          update: {
+            $set: {
+              status,
+              approverId: req.user._id,
+              rejectionReason:
+                status === "Rejected" ? rejectionReason || null : null,
+            },
+          },
+        },
+      })),
+    );
+  }
+
+  const io = req.app?.get?.("io");
+  await queueArticleStatusSideEffects({
+    articles,
+    status,
+    rejectionReason,
+    io,
+  });
 
   res.json({
     message: `${articles.length} article(s) updated successfully`,
@@ -908,43 +1007,51 @@ const getArticleAnalytics = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to access analytics");
   }
 
-  const companyFilter = {
-    companyId: { $in: req.user.companyId },
-    status: "Approved",
-  };
-  const [totals, topViewed, votedCandidates] = await Promise.all([
-    Article.countDocuments(companyFilter),
-    Article.find(companyFilter)
-      .sort({ viewCount: -1 })
-      .limit(5)
-      .select("title viewCount upvotes downvotes"),
-    Article.find(companyFilter)
-      .limit(100)
-      .select("title upvotes downvotes viewCount"),
+  const [analytics] = await Article.aggregate([
+    {
+      $match: {
+        companyId: { $in: req.user.companyId },
+        status: "Approved",
+      },
+    },
+    {
+      $facet: {
+        totals: [{ $count: "count" }],
+        topViewed: [
+          { $sort: { viewCount: -1, createdAt: -1 } },
+          { $limit: 5 },
+          {
+            $project: {
+              title: 1,
+              views: "$viewCount",
+              upvotes: { $size: "$upvotes" },
+              downvotes: { $size: "$downvotes" },
+            },
+          },
+        ],
+        topVoted: [
+          {
+            $project: {
+              title: 1,
+              views: "$viewCount",
+              upvotes: { $size: "$upvotes" },
+              downvotes: { $size: "$downvotes" },
+              score: {
+                $subtract: [{ $size: "$upvotes" }, { $size: "$downvotes" }],
+              },
+            },
+          },
+          { $sort: { score: -1, views: -1, createdAt: -1 } },
+          { $limit: 5 },
+        ],
+      },
+    },
   ]);
 
-  const topVoted = votedCandidates
-    .map((article) => ({
-      _id: article._id,
-      title: article.title,
-      views: article.viewCount,
-      upvotes: article.upvotes.length,
-      downvotes: article.downvotes.length,
-      score: article.upvotes.length - article.downvotes.length,
-    }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-
   res.json({
-    totals,
-    topViewed: topViewed.map((article) => ({
-      _id: article._id,
-      title: article.title,
-      views: article.viewCount,
-      upvotes: article.upvotes.length,
-      downvotes: article.downvotes.length,
-    })),
-    topVoted,
+    totals: analytics?.totals?.[0]?.count || 0,
+    topViewed: analytics?.topViewed || [],
+    topVoted: analytics?.topVoted || [],
   });
 });
 
@@ -1055,6 +1162,7 @@ export {
   checkDuplicateArticle,
   getArticles,
   getArticleAutocomplete,
+  getArticleSearchMetadata,
   getArticleById,
   updateArticle,
   subscribeToArticle,

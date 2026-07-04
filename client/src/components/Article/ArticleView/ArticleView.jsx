@@ -71,6 +71,7 @@ const ArticleView = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [mentionSuggestions, setMentionSuggestions] = useState([]);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
 
   const templateVariables = useMemo(() => {
     if (!article?.content) return [];
@@ -132,6 +133,27 @@ const ArticleView = () => {
       socket.off('presence_update');
     };
   }, [socket, article, user]);
+
+  useEffect(() => {
+    if (!mentionQuery) {
+      setMentionSuggestions([]);
+      setShowMentionDropdown(false);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      const response = await fetcher(
+        `/api/users/directory?q=${encodeURIComponent(mentionQuery)}&limit=5`
+      );
+
+      if (response.success && Array.isArray(response.data)) {
+        setMentionSuggestions(response.data);
+        setShowMentionDropdown(response.data.length > 0);
+      }
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [mentionQuery, fetcher]);
 
   const handleTemplateInputChange = (e) => {
     const { name, value } = e.target;
@@ -241,6 +263,7 @@ const ArticleView = () => {
         comments: [...(prev.comments || []), response.data],
       }));
       setNewComment('');
+      setMentionQuery('');
       setShowMentionDropdown(false);
     }
   };
@@ -256,32 +279,26 @@ const ArticleView = () => {
     setIsSubscribing(false);
   };
 
-  const handleCommentInputChange = async (e) => {
+  const handleCommentInputChange = (e) => {
     const { value } = e.target;
     setNewComment(value);
 
     const mentionMatch = value.match(/@(\w*)$/);
     if (!mentionMatch) {
+      setMentionQuery('');
       setShowMentionDropdown(false);
       setMentionSuggestions([]);
       return;
     }
 
-    const query = mentionMatch[1];
-    const response = await fetcher('/api/users/directory');
-    if (response.success && Array.isArray(response.data)) {
-      const matches = response.data.filter((candidate) =>
-        candidate.firstName.toLowerCase().startsWith(query.toLowerCase())
-      );
-      setMentionSuggestions(matches.slice(0, 5));
-      setShowMentionDropdown(matches.length > 0);
-    }
+    setMentionQuery(mentionMatch[1]);
   };
 
   const handleSelectMention = (candidate) => {
     setNewComment((prev) =>
       prev.replace(/@(\w*)$/, `@${candidate.firstName} `)
     );
+    setMentionQuery('');
     setShowMentionDropdown(false);
     setMentionSuggestions([]);
   };

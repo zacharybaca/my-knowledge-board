@@ -30,19 +30,24 @@ const resolveContentGapsForArticle = async (articleEmbedding, companyId) => {
   if (!Array.isArray(articleEmbedding) || articleEmbedding.length === 0) return;
   try {
     const companyIds = Array.isArray(companyId) ? companyId : [companyId];
-    const logs = await ContentGapLog.find({
+    const cursor = ContentGapLog.find({
       companyId: { $in: companyIds },
-    }).select("+questionEmbedding");
+    })
+      .select("_id +questionEmbedding")
+      .lean()
+      .cursor();
 
-    const toDelete = logs
-      .filter(
-        (log) =>
-          Array.isArray(log.questionEmbedding) &&
-          log.questionEmbedding.length > 0 &&
-          cosineSimilarity(articleEmbedding, log.questionEmbedding) >=
-            GAP_RESOLUTION_THRESHOLD,
-      )
-      .map((log) => log._id);
+    const toDelete = [];
+    for await (const log of cursor) {
+      if (
+        Array.isArray(log.questionEmbedding) &&
+        log.questionEmbedding.length > 0 &&
+        cosineSimilarity(articleEmbedding, log.questionEmbedding) >=
+          GAP_RESOLUTION_THRESHOLD
+      ) {
+        toDelete.push(log._id);
+      }
+    }
 
     if (toDelete.length > 0) {
       await ContentGapLog.deleteMany({ _id: { $in: toDelete } });

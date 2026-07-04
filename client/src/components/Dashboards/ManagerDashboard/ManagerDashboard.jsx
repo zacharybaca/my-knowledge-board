@@ -30,12 +30,12 @@ const ManagerDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     const [pendingRes, personalRes, analyticsRes] = await Promise.all([
       fetcher('/api/articles/pending'),
-      fetcher('/api/articles/my-articles'),
+      fetcher('/api/articles/my-articles?limit=5'),
       fetcher('/api/articles/analytics'),
     ]);
 
     if (pendingRes.success) setPendingArticles(pendingRes.data);
-    if (personalRes.success) setMyArticles(personalRes.data.slice(0, 5));
+    if (personalRes.success) setMyArticles(personalRes.data);
     if (analyticsRes.success) setAnalytics(analyticsRes.data);
 
     setIsLoading(false);

@@ -114,6 +114,9 @@ userSchema.methods.getResetPasswordToken = function () {
   return resetToken;
 };
 
+userSchema.index({ companyId: 1, lastName: 1, firstName: 1 });
+userSchema.index({ companyId: 1, role: 1 });
+
 /**
  * PRE-DELETE MIDDLEWARE
  * Triggers on user.deleteOne()
