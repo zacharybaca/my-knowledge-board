@@ -18,7 +18,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: "avatar_uploads",
-    allowedFormats: ["jpeg", "png", "jpg", "mp4"],
+    allowedFormats: ["jpeg", "png", "jpg", "webp", "mp4"],
     resource_type: "auto",
   },
 });
