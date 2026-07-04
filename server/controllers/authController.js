@@ -84,7 +84,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // Chain populate to embed the company object
   const user = await User.findOne({ email }).populate(
     "companyId",
-    "name imageUrl",
+    "name imageUrl emailDomain",
   );
 
   if (user && (await user.matchPassword(password))) {
@@ -217,7 +217,7 @@ const verifyWorkspace = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     verificationToken: verifyTokenHash,
     verificationExpire: { $gt: Date.now() },
-  }).populate("companyId", "name imageUrl");
+  }).populate("companyId", "name imageUrl emailDomain");
 
   if (!user) {
     res.status(400);

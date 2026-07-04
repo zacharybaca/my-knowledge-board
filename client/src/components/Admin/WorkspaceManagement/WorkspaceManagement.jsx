@@ -35,6 +35,7 @@ const WorkspaceManagement = () => {
   const [departmentsDraft, setDepartmentsDraft] = useState([]);
   const [newDeptInput, setNewDeptInput] = useState('');
   const [isSavingDepartments, setIsSavingDepartments] = useState(false);
+  const [uploadingLogoFor, setUploadingLogoFor] = useState(null);
 
   // Fallback to empty array if not loaded yet
   const workspaces = Array.isArray(user?.companyId) ? user.companyId : [];
@@ -94,6 +95,35 @@ const WorkspaceManagement = () => {
       });
     }
     setIsSavingDepartments(false);
+  };
+
+  const handleLogoUpload = async (workspaceId, file) => {
+    if (!file) return;
+    setUploadingLogoFor(workspaceId);
+
+    const formData = new FormData();
+    formData.append('companyLogo', file);
+
+    const response = await fetcher(`/api/companies/${workspaceId}/logo`, {
+      method: 'PATCH',
+      body: formData,
+    });
+
+    if (response.success) {
+      setToastConfig({ type: 'success', message: 'Logo updated successfully.' });
+      const updatedWorkspaces = workspaces.map((w) =>
+        w._id === workspaceId
+          ? { ...w, imageUrl: response.data.imageUrl }
+          : w
+      );
+      setUser({ ...user, companyId: updatedWorkspaces });
+    } else {
+      setToastConfig({
+        type: 'error',
+        message: response.error || 'Failed to update logo.',
+      });
+    }
+    setUploadingLogoFor(null);
   };
 
   const handleDeleteWorkspace = async (workspaceId, workspaceName) => {
@@ -221,6 +251,33 @@ const WorkspaceManagement = () => {
                           <Building2 size={20} color="#94a3b8" />
                         </div>
                       )}
+                      <label
+                        title={workspace.imageUrl ? 'Change logo' : 'Upload logo'}
+                        style={{ cursor: 'pointer', lineHeight: 0 }}
+                      >
+                        <input
+                          type="file"
+                          accept="image/jpeg, image/png, image/webp"
+                          style={{ display: 'none' }}
+                          disabled={uploadingLogoFor === workspace._id}
+                          onChange={(e) =>
+                            handleLogoUpload(workspace._id, e.target.files[0])
+                          }
+                        />
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: '#4338ca',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {uploadingLogoFor === workspace._id
+                            ? 'Uploading…'
+                            : workspace.imageUrl
+                              ? 'Change'
+                              : 'Upload'}
+                        </span>
+                      </label>
                       <div>
                         <h3
                           style={{

@@ -1,5 +1,6 @@
 import Company from "../models/Company.js";
 import User from "../models/User.js";
+import { v2 as cloudinary } from "cloudinary";
 import asyncHandler from "express-async-handler";
 import sendEmail from "../utils/sendEmail.js";
 
@@ -201,9 +202,50 @@ const updateCompanyDepartments = asyncHandler(async (req, res) => {
   res.status(200).json({ departments: company.departments });
 });
 
-// @desc    Delete a company workspace and all associated data
-// @route   DELETE /api/companies/:id
-// @access  Private/Admin
+// @desc    Update a company's logo image
+// @route   PATCH /api/companies/:id/logo
+// @access  Private (Admin only)
+const updateCompanyLogo = asyncHandler(async (req, res) => {
+  if (!req.user.role.includes("Admin")) {
+    res.status(403);
+    throw new Error("Not authorized to update workspace logo.");
+  }
+
+  if (
+    !req.user.companyId.some((id) => id.toString() === req.params.id.toString())
+  ) {
+    res.status(403);
+    throw new Error("Not authorized to update this workspace.");
+  }
+
+  const company = await Company.findById(req.params.id);
+
+  if (!company) {
+    res.status(404);
+    throw new Error("Workspace not found");
+  }
+
+  if (!req.file) {
+    res.status(400);
+    throw new Error("No image file provided.");
+  }
+
+  // Remove the old image from Cloudinary if one exists
+  if (company.imagePublicId) {
+    await cloudinary.uploader.destroy(company.imagePublicId).catch(() => {}); // Non-fatal if cleanup fails
+  }
+
+  company.imageUrl = req.file.path;
+  company.imagePublicId = req.file.filename;
+  await company.save();
+
+  res.status(200).json({
+    imageUrl: company.imageUrl,
+    imagePublicId: company.imagePublicId,
+  });
+});
+
+
 const deleteCompany = asyncHandler(async (req, res) => {
   const company = await Company.findById(req.params.id);
 
@@ -232,5 +274,6 @@ export {
   getCompanies,
   getCompanyById,
   updateCompanyDepartments,
+  updateCompanyLogo,
   deleteCompany,
 };

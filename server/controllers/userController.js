@@ -44,7 +44,7 @@ const normalizeStringArray = (value) => {
 const getUserProfile = asyncHandler(async (req, res) => {
   // Mongoose handles populating arrays of ObjectIds natively
   const user = await User.findById(req.user._id)
-    .populate("companyId", "name imageUrl")
+    .populate("companyId", "name imageUrl emailDomain")
     .populate("managerId", "firstName lastName email")
     .select("-password");
 
