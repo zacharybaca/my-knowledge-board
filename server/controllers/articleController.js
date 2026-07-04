@@ -64,7 +64,10 @@ const queueArticleStatusSideEffects = async ({
     if (status === "Approved") {
       await Promise.allSettled(
         articles.map((article) =>
-          resolveContentGapsForArticle(article.contentEmbedding, article.companyId),
+          resolveContentGapsForArticle(
+            article.contentEmbedding,
+            article.companyId,
+          ),
         ),
       );
     }

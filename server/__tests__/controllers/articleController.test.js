@@ -349,7 +349,9 @@ describe("approveRejectArticle", () => {
     mockSendEmail.mockResolvedValue(true);
     mockUserFind.mockReturnValue({
       select: vi.fn().mockReturnThis(),
-      lean: vi.fn().mockResolvedValue([{ _id: "author-1", email: "a@test.com" }]),
+      lean: vi
+        .fn()
+        .mockResolvedValue([{ _id: "author-1", email: "a@test.com" }]),
     });
   });
 
@@ -1028,7 +1030,13 @@ describe("getArticleAnalytics", () => {
       {
         totals: [{ count: 2 }],
         topViewed: [
-          { _id: "a1", title: "Article A", views: 100, upvotes: 2, downvotes: 0 },
+          {
+            _id: "a1",
+            title: "Article A",
+            views: 100,
+            upvotes: 2,
+            downvotes: 0,
+          },
         ],
         topVoted: [
           {
