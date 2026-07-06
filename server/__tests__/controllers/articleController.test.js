@@ -1119,6 +1119,45 @@ describe("getArticleSearchMetadata", () => {
 
     expect(res.json).toHaveBeenCalledWith({ tags: ["hr", "policy"] });
   });
+
+  it("returns an empty array when there are no approved tags", async () => {
+    mockDistinct.mockResolvedValue([]);
+    const req = {
+      user: { companyId: ["company-001"] },
+      query: {},
+    };
+
+    const { res } = await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith({ tags: [] });
+  });
+
+  it("filters out non-string and whitespace-only tags", async () => {
+    mockDistinct.mockResolvedValue(["  ", 42, null, "valid-tag"]);
+    const req = {
+      user: { companyId: ["company-001"] },
+      query: {},
+    };
+
+    const { res } = await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith({ tags: ["valid-tag"] });
+  });
+
+  it("queries only approved articles for the caller's companies", async () => {
+    mockDistinct.mockResolvedValue([]);
+    const req = {
+      user: { companyId: ["company-a", "company-b"] },
+      query: {},
+    };
+
+    await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(mockDistinct).toHaveBeenCalledWith("tags", {
+      companyId: { $in: ["company-a", "company-b"] },
+      status: "Approved",
+    });
+  });
 });
 
 // ── getArticles – filtering and pagination ────────────────────────────────────

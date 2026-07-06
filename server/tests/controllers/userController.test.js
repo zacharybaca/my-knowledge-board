@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn(), find: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -20,6 +20,7 @@ import {
   updateUserRole,
   createElevatedUser,
   deleteUserById,
+  getCompanyDirectory,
 } from "../../controllers/userController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -502,5 +503,136 @@ describe("updateUserRole", () => {
     expect(mutableUser.role).toEqual(["Admin"]);
     expect(mutableUser.isAdmin).toBe(true);
     expect(res._body.message).toMatch(/updated successfully/i);
+  });
+});
+
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  const companyId = "company-dir";
+
+  function fakeUsers(n = 2) {
+    return Array.from({ length: n }, (_, i) => ({
+      _id: `user-${i}`,
+      firstName: `First${i}`,
+      lastName: `Last${i}`,
+      email: `user${i}@example.com`,
+      role: ["Employee"],
+      avatar: null,
+    }));
+  }
+
+  function mockQuery(users) {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(users),
+    };
+    User.find.mockReturnValue(chain);
+    return chain;
+  }
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns all directory members when no q param is provided", async () => {
+    const users = fakeUsers(3);
+    const chain = mockQuery(users);
+
+    const req = {
+      user: { companyId: [companyId] },
+      query: {},
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      companyId: { $in: [companyId] },
+    });
+    // No limit applied for unfiltered queries
+    expect(chain.limit).not.toHaveBeenCalled();
+    expect(res._body).toEqual(users);
+  });
+
+  it("applies prefix filter and limit when q is provided", async () => {
+    const matched = fakeUsers(1);
+    const chain = mockQuery(matched);
+
+    const req = {
+      user: { companyId: [companyId] },
+      query: { q: "Al", limit: "5" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    const filterArg = User.find.mock.calls[0][0];
+    expect(filterArg.$or).toBeDefined();
+    expect(filterArg.$or[0].firstName.$regex).toMatch(/^\^Al/i);
+    expect(chain.limit).toHaveBeenCalledWith(5);
+    expect(res._body).toEqual(matched);
+  });
+
+  it("caps the limit at 50 regardless of what is requested", async () => {
+    const chain = mockQuery(fakeUsers(1));
+
+    const req = {
+      user: { companyId: [companyId] },
+      query: { q: "Bo", limit: "200" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(chain.limit).toHaveBeenCalledWith(50);
+  });
+
+  it("defaults limit to 25 when q is provided but no limit is given", async () => {
+    const chain = mockQuery(fakeUsers(1));
+
+    const req = {
+      user: { companyId: [companyId] },
+      query: { q: "Ca" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(chain.limit).toHaveBeenCalledWith(25);
+  });
+
+  it("uses companyId from query param when provided", async () => {
+    const altCompany = "alt-company";
+    const chain = mockQuery([]);
+
+    const req = {
+      user: { companyId: [companyId] },
+      query: { companyId: altCompany },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      companyId: { $in: [altCompany] },
+    });
+    expect(chain.limit).not.toHaveBeenCalled();
+  });
+
+  it("escapes regex metacharacters in the keyword", async () => {
+    const chain = mockQuery([]);
+
+    const req = {
+      user: { companyId: [companyId] },
+      query: { q: "O'Brien.Jr" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    const filterArg = User.find.mock.calls[0][0];
+    // Metacharacters must be escaped so they are treated as literals
+    expect(filterArg.$or[0].firstName.$regex).not.toMatch(/[^\\]\./);
   });
 });
