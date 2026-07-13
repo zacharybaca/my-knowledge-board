@@ -80,6 +80,9 @@ import {
   certifyArticle,
   rollbackArticleRevision,
   getArticleAnalytics,
+  getUserArticles,
+  getArticleAutocomplete,
+  getReviewQueue,
 } from "../../controllers/articleController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1244,5 +1247,222 @@ describe("getArticles", () => {
     expect(pagination.hasNextPage).toBe(false);
     expect(pagination.hasPrevPage).toBe(false);
     expect(pagination.totalPages).toBe(1);
+  });
+});
+
+// ── getUserArticles – server-side limit ───────────────────────────────────────
+
+describe("getUserArticles", () => {
+  function makeQueryMock(articles) {
+    const mock = {
+      sort: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      then: (onFulfilled, onRejected) =>
+        Promise.resolve(articles).then(onFulfilled, onRejected),
+      catch: (onRejected) => Promise.resolve(articles).catch(onRejected),
+      finally: (onFinally) => Promise.resolve(articles).finally(onFinally),
+    };
+    return mock;
+  }
+
+  const fakeArticles = [
+    { _id: "a1", title: "First", status: "Approved" },
+    { _id: "a2", title: "Second", status: "Pending" },
+  ];
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns all user articles when no limit is specified", async () => {
+    const queryMock = makeQueryMock(fakeArticles);
+    mockFind.mockReturnValue(queryMock);
+
+    const req = {
+      query: {},
+      user: { _id: "user-1" },
+    };
+    const { res } = await run(getUserArticles, req, makeRes());
+
+    expect(mockFind).toHaveBeenCalledWith({ authorId: "user-1" });
+    // .limit() should NOT be called when limit is 0
+    expect(queryMock.limit).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(fakeArticles);
+  });
+
+  it("applies .limit() when a positive limit is provided", async () => {
+    const queryMock = makeQueryMock([fakeArticles[0]]);
+    mockFind.mockReturnValue(queryMock);
+
+    const req = {
+      query: { limit: "1" },
+      user: { _id: "user-1" },
+    };
+    await run(getUserArticles, req, makeRes());
+
+    expect(queryMock.limit).toHaveBeenCalledWith(1);
+  });
+
+  it("does not apply .limit() when limit is 0 (fetch all)", async () => {
+    const queryMock = makeQueryMock(fakeArticles);
+    mockFind.mockReturnValue(queryMock);
+
+    const req = {
+      query: { limit: "0" },
+      user: { _id: "user-1" },
+    };
+    await run(getUserArticles, req, makeRes());
+
+    expect(queryMock.limit).not.toHaveBeenCalled();
+  });
+});
+
+// ── getArticleAutocomplete ────────────────────────────────────────────────────
+
+describe("getArticleAutocomplete", () => {
+  function makeQueryChain(articles) {
+    return {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(articles),
+    };
+  }
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns an empty array immediately when q is absent", async () => {
+    const req = {
+      query: {},
+      user: { companyId: [fakeCompanyId] },
+    };
+    const { res } = await run(getArticleAutocomplete, req, makeRes());
+    expect(res.json).toHaveBeenCalledWith([]);
+    expect(mockFind).not.toHaveBeenCalled();
+  });
+
+  it("returns an empty array immediately when q is whitespace only", async () => {
+    const req = {
+      query: { q: "   " },
+      user: { companyId: [fakeCompanyId] },
+    };
+    const { res } = await run(getArticleAutocomplete, req, makeRes());
+    expect(res.json).toHaveBeenCalledWith([]);
+  });
+
+  it("returns matching article titles as a flat string array", async () => {
+    const articles = [
+      { _id: "a1", title: "Onboarding Guide" },
+      { _id: "a2", title: "Onboarding FAQ" },
+    ];
+    mockFind.mockReturnValue(makeQueryChain(articles));
+
+    const req = {
+      query: { q: "onboard" },
+      user: { companyId: [fakeCompanyId] },
+    };
+    const { res } = await run(getArticleAutocomplete, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith(["Onboarding Guide", "Onboarding FAQ"]);
+  });
+
+  it("escapes regex special characters in q to prevent ReDoS", async () => {
+    mockFind.mockReturnValue(makeQueryChain([]));
+
+    const req = {
+      query: { q: "policy.*" },
+      user: { companyId: [fakeCompanyId] },
+    };
+    await run(getArticleAutocomplete, req, makeRes());
+
+    const filterArg = mockFind.mock.calls[0][0];
+    const regex = filterArg.title.$regex;
+    expect(regex).toContain("\\.");
+    expect(regex).toContain("\\*");
+  });
+
+  it("queries only Approved articles scoped to the user's companies", async () => {
+    mockFind.mockReturnValue(makeQueryChain([]));
+
+    const req = {
+      query: { q: "hr" },
+      user: { companyId: [fakeCompanyId] },
+    };
+    await run(getArticleAutocomplete, req, makeRes());
+
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg.status).toBe("Approved");
+    expect(filterArg.companyId.$in).toContain(fakeCompanyId);
+  });
+});
+
+// ── getReviewQueue ────────────────────────────────────────────────────────────
+
+describe("getReviewQueue", () => {
+  function makeQueryChain(articles) {
+    return {
+      select: vi.fn().mockReturnThis(),
+      populate: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(articles),
+    };
+  }
+
+  const expiringArticles = [
+    { _id: "a1", title: "Soon to expire", expiresAt: new Date() },
+  ];
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 403 when an Employee calls the endpoint", async () => {
+    const req = {
+      query: {},
+      user: { _id: "emp-1", role: ["Employee"], companyId: [fakeCompanyId] },
+    };
+    const { res, nextArgs } = await run(getReviewQueue, req, makeRes());
+    expect(res.statusCode).toBe(403);
+    expect(nextArgs[0]).toBeInstanceOf(Error);
+  });
+
+  it("returns articles expiring within 30 days for a Manager", async () => {
+    mockFind.mockReturnValue(makeQueryChain(expiringArticles));
+
+    const req = {
+      query: {},
+      user: { _id: "manager-1", role: ["Manager"], companyId: [fakeCompanyId] },
+    };
+    const { res } = await run(getReviewQueue, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith(expiringArticles);
+
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg.status).toBe("Approved");
+    expect(filterArg.expiresAt).toHaveProperty("$lte");
+  });
+
+  it("applies department filter when query param is provided", async () => {
+    mockFind.mockReturnValue(makeQueryChain([]));
+
+    const req = {
+      query: { department: "Engineering" },
+      user: { _id: "admin-1", role: ["Admin"], companyId: [fakeCompanyId] },
+    };
+    await run(getReviewQueue, req, makeRes());
+
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg.department).toEqual({ $in: ["Engineering"] });
+  });
+
+  it("does not add department filter when query param is absent", async () => {
+    mockFind.mockReturnValue(makeQueryChain([]));
+
+    const req = {
+      query: {},
+      user: { _id: "manager-1", role: ["Manager"], companyId: [fakeCompanyId] },
+    };
+    await run(getReviewQueue, req, makeRes());
+
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg).not.toHaveProperty("department");
   });
 });

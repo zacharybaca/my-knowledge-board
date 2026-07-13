@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn(), find: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -20,6 +20,7 @@ import {
   updateUserRole,
   createElevatedUser,
   deleteUserById,
+  getCompanyDirectory,
 } from "../../controllers/userController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -502,5 +503,113 @@ describe("updateUserRole", () => {
     expect(mutableUser.role).toEqual(["Admin"]);
     expect(mutableUser.isAdmin).toBe(true);
     expect(res._body.message).toMatch(/updated successfully/i);
+  });
+});
+
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  const companyId = "company1";
+
+  function makeQueryChain(users) {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(users),
+    };
+    return chain;
+  }
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns all company users when no keyword is supplied (no limit applied)", async () => {
+    const users = [
+      { _id: "u1", firstName: "Alice", lastName: "Smith" },
+      { _id: "u2", firstName: "Bob", lastName: "Jones" },
+    ];
+    User.find.mockReturnValue(makeQueryChain(users));
+
+    const req = {
+      query: {},
+      user: { companyId: [companyId] },
+    };
+    const { res } = await run(getCompanyDirectory, req, makeRes());
+
+    expect(User.find).toHaveBeenCalledWith({
+      companyId: { $in: [companyId] },
+    });
+    expect(res._body).toEqual(users);
+  });
+
+  it("applies $or prefix regex filter when keyword is provided", async () => {
+    User.find.mockReturnValue(makeQueryChain([]));
+
+    const req = {
+      query: { q: "ali" },
+      user: { companyId: [companyId] },
+    };
+    await run(getCompanyDirectory, req, makeRes());
+
+    const filterArg = User.find.mock.calls[0][0];
+    expect(filterArg).toHaveProperty("$or");
+    expect(filterArg.$or).toHaveLength(2);
+    expect(filterArg.$or[0].firstName.$regex).toBe("^ali");
+    expect(filterArg.$or[1].lastName.$regex).toBe("^ali");
+  });
+
+  it("escapes regex special characters in the keyword", async () => {
+    User.find.mockReturnValue(makeQueryChain([]));
+
+    const req = {
+      query: { q: "o'b.*rien" },
+      user: { companyId: [companyId] },
+    };
+    await run(getCompanyDirectory, req, makeRes());
+
+    const filterArg = User.find.mock.calls[0][0];
+    const regex = filterArg.$or[0].firstName.$regex;
+    // dots and asterisks must be escaped
+    expect(regex).toContain("\\.");
+    expect(regex).toContain("\\*");
+  });
+
+  it("caps the result limit at 50 even if a larger value is requested", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+
+    const req = {
+      query: { q: "joe", limit: "200" },
+      user: { companyId: [companyId] },
+    };
+    await run(getCompanyDirectory, req, makeRes());
+
+    expect(chain.limit).toHaveBeenCalledWith(50);
+  });
+
+  it("uses 25 as the default limit when keyword is present but limit is not specified", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+
+    const req = {
+      query: { q: "alice" },
+      user: { companyId: [companyId] },
+    };
+    await run(getCompanyDirectory, req, makeRes());
+
+    expect(chain.limit).toHaveBeenCalledWith(25);
+  });
+
+  it("does not call .limit() when no keyword is provided", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+
+    const req = {
+      query: {},
+      user: { companyId: [companyId] },
+    };
+    await run(getCompanyDirectory, req, makeRes());
+
+    expect(chain.limit).not.toHaveBeenCalled();
   });
 });
