@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), find: vi.fn(), create: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -15,6 +15,7 @@ vi.mock("cloudinary", () => ({
 import User from "../../models/User.js";
 
 import {
+  getCompanyDirectory,
   toggleFavoriteArticle,
   updateUserStatus,
   updateUserRole,
@@ -155,6 +156,72 @@ describe("updateUserStatus", () => {
 
     expect(res._code).toBe(403);
     expect(nextArgs[0]).toBeInstanceOf(Error);
+  });
+
+  // ── getCompanyDirectory ────────────────────────────────────────────────────────
+
+  describe("getCompanyDirectory", () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    function mockDirectoryQuery(results) {
+      const query = {
+        select: vi.fn().mockReturnThis(),
+        sort: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        lean: vi.fn().mockResolvedValue(results),
+      };
+      User.find.mockReturnValue(query);
+      return query;
+    }
+
+    it("returns users scoped to the active workspace without keyword search", async () => {
+      const users = [{ _id: "u1", firstName: "Alex" }];
+      const query = mockDirectoryQuery(users);
+      const req = {
+        query: {},
+        user: { companyId: ["company1"] },
+      };
+      const res = makeRes();
+
+      await run(getCompanyDirectory, req, res);
+
+      expect(User.find).toHaveBeenCalledWith({ companyId: { $in: ["company1"] } });
+      expect(query.limit).not.toHaveBeenCalled();
+      expect(res._body).toEqual(users);
+    });
+
+    it("applies escaped prefix filtering and default limit when q is provided", async () => {
+      mockDirectoryQuery([]);
+      const req = {
+        query: { companyId: "company2", q: "  a+b  " },
+        user: { companyId: ["company1"] },
+      };
+      const res = makeRes();
+
+      await run(getCompanyDirectory, req, res);
+
+      expect(User.find).toHaveBeenCalledWith({
+        companyId: { $in: ["company2"] },
+        $or: [
+          { firstName: { $regex: "^a\\+b", $options: "i" } },
+          { lastName: { $regex: "^a\\+b", $options: "i" } },
+        ],
+      });
+      expect(User.find.mock.results[0].value.limit).toHaveBeenCalledWith(25);
+    });
+
+    it("caps keyword search limit at 50", async () => {
+      mockDirectoryQuery([]);
+      const req = {
+        query: { q: "Al", limit: "999" },
+        user: { companyId: ["company1"] },
+      };
+      const res = makeRes();
+
+      await run(getCompanyDirectory, req, res);
+
+      expect(User.find.mock.results[0].value.limit).toHaveBeenCalledWith(50);
+    });
   });
 
   it("returns 400 when manager tries to suspend their own account", async () => {
