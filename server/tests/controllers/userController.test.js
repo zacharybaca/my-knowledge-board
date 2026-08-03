@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { find: vi.fn(), findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -15,6 +15,7 @@ vi.mock("cloudinary", () => ({
 import User from "../../models/User.js";
 
 import {
+  getCompanyDirectory,
   toggleFavoriteArticle,
   updateUserStatus,
   updateUserRole,
@@ -54,6 +55,64 @@ function run(controller, req, res) {
     controller(req, res, next);
   });
 }
+
+// ── getCompanyDirectory ────────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("applies escaped prefix search and caps mention lookups at 50 results", async () => {
+    const users = [{ _id: "u1", firstName: "Jo.*", lastName: "Smith" }];
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(users),
+    };
+    User.find.mockReturnValue(chain);
+
+    const req = {
+      query: { companyId: "company2", q: " Jo.* ", limit: "99" },
+      user: { companyId: ["company1"] },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      companyId: { $in: ["company2"] },
+      $or: [
+        { firstName: { $regex: "^Jo\\.\\*", $options: "i" } },
+        { lastName: { $regex: "^Jo\\.\\*", $options: "i" } },
+      ],
+    });
+    expect(chain.limit).toHaveBeenCalledWith(50);
+    expect(res._body).toEqual(users);
+  });
+
+  it("returns the full workspace directory when no prefix query is provided", async () => {
+    const users = [{ _id: "u1", firstName: "Jane", lastName: "Doe" }];
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(users),
+    };
+    User.find.mockReturnValue(chain);
+
+    const req = {
+      query: {},
+      user: { companyId: ["company1"] },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      companyId: { $in: ["company1"] },
+    });
+    expect(res._body).toEqual(users);
+  });
+});
 
 // ── toggleFavoriteArticle ─────────────────────────────────────────────────────
 
