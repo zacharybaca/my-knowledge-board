@@ -3,7 +3,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { find: vi.fn(), findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: {
+    find: vi.fn(),
+    findById: vi.fn(),
+    findOne: vi.fn(),
+    create: vi.fn(),
+  },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -56,7 +61,7 @@ function run(controller, req, res) {
   });
 }
 
-// ── getCompanyDirectory ────────────────────────────────────────────────────────
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
 
 describe("getCompanyDirectory", () => {
   beforeEach(() => vi.clearAllMocks());

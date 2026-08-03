@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockFind,
@@ -100,7 +100,7 @@ describe("getContentGaps", () => {
     expect(mockAggregate).toHaveBeenCalledWith([
       {
         $match: {
-          companyId: expect.any(Array),
+          companyId: { $in: expect.any(Array) },
           department: "HR",
         },
       },
@@ -115,8 +115,8 @@ describe("getContentGaps", () => {
       { $limit: 20 },
     ]);
     const [{ $match }] = mockAggregate.mock.calls[0][0];
-    expect($match.companyId).toHaveLength(1);
-    expect(String($match.companyId[0])).toBe(companyId);
+    expect($match.companyId.$in).toHaveLength(1);
+    expect(String($match.companyId.$in[0])).toBe(companyId);
   });
 });
 
