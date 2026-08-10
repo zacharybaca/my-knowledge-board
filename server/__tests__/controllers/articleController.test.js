@@ -72,6 +72,7 @@ import {
   getArticleById,
   checkDuplicateArticle,
   getArticleSearchMetadata,
+  getArticleAutocomplete,
   voteArticle,
   approveRejectArticle,
   bulkUpdateArticleStatus,
@@ -1244,5 +1245,69 @@ describe("getArticles", () => {
     expect(pagination.hasNextPage).toBe(false);
     expect(pagination.hasPrevPage).toBe(false);
     expect(pagination.totalPages).toBe(1);
+  });
+});
+
+// ── getArticleAutocomplete ────────────────────────────────────────────────────
+
+describe("getArticleAutocomplete", () => {
+  function makeQueryMock(articles) {
+    return {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(articles),
+    };
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns empty array when no keyword is provided", async () => {
+    const req = { query: {}, user: { companyId: ["company-001"] } };
+    const { res } = await run(getArticleAutocomplete, req, makeRes());
+    expect(res.json).toHaveBeenCalledWith([]);
+    expect(mockFind).not.toHaveBeenCalled();
+  });
+
+  it("returns empty array when keyword is only whitespace", async () => {
+    const req = { query: { q: "   " }, user: { companyId: ["company-001"] } };
+    const { res } = await run(getArticleAutocomplete, req, makeRes());
+    expect(res.json).toHaveBeenCalledWith([]);
+    expect(mockFind).not.toHaveBeenCalled();
+  });
+
+  it("returns matching article titles for a valid keyword", async () => {
+    const articles = [{ title: "Onboarding Guide" }, { title: "Onboarding FAQ" }];
+    mockFind.mockReturnValue(makeQueryMock(articles));
+    const req = { query: { q: "Onboard" }, user: { companyId: ["company-001"] } };
+    const { res } = await run(getArticleAutocomplete, req, makeRes());
+    expect(res.json).toHaveBeenCalledWith(["Onboarding Guide", "Onboarding FAQ"]);
+  });
+
+  it("scopes the query to the user's companyId array", async () => {
+    mockFind.mockReturnValue(makeQueryMock([]));
+    const req = { query: { q: "policy" }, user: { companyId: ["c1", "c2"] } };
+    await run(getArticleAutocomplete, req, makeRes());
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg.companyId).toEqual({ $in: ["c1", "c2"] });
+  });
+
+  it("only surfaces Approved articles", async () => {
+    mockFind.mockReturnValue(makeQueryMock([]));
+    const req = { query: { q: "policy" }, user: { companyId: ["company-001"] } };
+    await run(getArticleAutocomplete, req, makeRes());
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg.status).toBe("Approved");
+  });
+
+  it("escapes regex special characters in the keyword to prevent ReDoS", async () => {
+    mockFind.mockReturnValue(makeQueryMock([]));
+    const req = { query: { q: "policy.*" }, user: { companyId: ["company-001"] } };
+    await run(getArticleAutocomplete, req, makeRes());
+    const filterArg = mockFind.mock.calls[0][0];
+    expect(filterArg.title.$regex).toContain("\\.");
+    expect(filterArg.title.$regex).toContain("\\*");
   });
 });

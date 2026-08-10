@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), find: vi.fn(), create: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -20,6 +20,7 @@ import {
   updateUserRole,
   createElevatedUser,
   deleteUserById,
+  getCompanyDirectory,
 } from "../../controllers/userController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -502,5 +503,89 @@ describe("updateUserRole", () => {
     expect(mutableUser.role).toEqual(["Admin"]);
     expect(mutableUser.isAdmin).toBe(true);
     expect(res._body.message).toMatch(/updated successfully/i);
+  });
+});
+
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  function makeQueryChain(result) {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(result),
+      then: (onFulfilled, onRejected) =>
+        Promise.resolve(result).then(onFulfilled, onRejected),
+      catch: (onRejected) => Promise.resolve(result).catch(onRejected),
+      finally: (onFinally) => Promise.resolve(result).finally(onFinally),
+    };
+    return chain;
+  }
+
+  const fakeUser = { companyId: ["c1"] };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns all members when no keyword is supplied", async () => {
+    const members = [
+      { firstName: "Alice", lastName: "Smith", email: "a@c.com", role: ["Employee"] },
+    ];
+    User.find.mockReturnValue(makeQueryChain(members));
+    const req = { query: {}, user: fakeUser };
+    const res = makeRes();
+    await run(getCompanyDirectory, req, res);
+    expect(res._body).toEqual(members);
+    // No $or filter when no keyword
+    const filterArg = User.find.mock.calls[0][0];
+    expect(filterArg.$or).toBeUndefined();
+  });
+
+  it("adds a prefix regex $or filter when a keyword is supplied", async () => {
+    User.find.mockReturnValue(makeQueryChain([]));
+    const req = { query: { q: "Ali" }, user: fakeUser };
+    await run(getCompanyDirectory, req, makeRes());
+    const filterArg = User.find.mock.calls[0][0];
+    expect(filterArg.$or).toBeDefined();
+    expect(filterArg.$or).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ firstName: expect.anything() }),
+        expect.objectContaining({ lastName: expect.anything() }),
+      ]),
+    );
+  });
+
+  it("escapes regex special characters in the keyword", async () => {
+    User.find.mockReturnValue(makeQueryChain([]));
+    const req = { query: { q: "user.*" }, user: fakeUser };
+    await run(getCompanyDirectory, req, makeRes());
+    const filterArg = User.find.mock.calls[0][0];
+    const firstNameRegex = filterArg.$or[0].firstName.$regex;
+    expect(firstNameRegex).toContain("\\.");
+    expect(firstNameRegex).toContain("\\*");
+  });
+
+  it("caps the result limit at 50 regardless of client input", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+    const req = { query: { q: "a", limit: "999" }, user: fakeUser };
+    await run(getCompanyDirectory, req, makeRes());
+    expect(chain.limit).toHaveBeenCalledWith(50);
+  });
+
+  it("defaults the limit to 25 when none is provided", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+    const req = { query: { q: "a" }, user: fakeUser };
+    await run(getCompanyDirectory, req, makeRes());
+    expect(chain.limit).toHaveBeenCalledWith(25);
+  });
+
+  it("uses the provided companyId query param over the user default", async () => {
+    User.find.mockReturnValue(makeQueryChain([]));
+    const req = { query: { companyId: "override-co" }, user: fakeUser };
+    await run(getCompanyDirectory, req, makeRes());
+    const filterArg = User.find.mock.calls[0][0];
+    expect(filterArg.companyId).toEqual({ $in: ["override-co"] });
   });
 });
