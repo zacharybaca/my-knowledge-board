@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn(), find: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -15,6 +15,7 @@ vi.mock("cloudinary", () => ({
 import User from "../../models/User.js";
 
 import {
+  getCompanyDirectory,
   toggleFavoriteArticle,
   updateUserStatus,
   updateUserRole,
@@ -54,6 +55,57 @@ function run(controller, req, res) {
     controller(req, res, next);
   });
 }
+
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns full directory when no keyword is provided", async () => {
+    const users = [{ _id: "u1" }];
+    const lean = vi.fn().mockResolvedValue(users);
+    const sort = vi.fn().mockReturnValue({ lean });
+    const select = vi.fn().mockReturnValue({ sort });
+
+    User.find.mockReturnValue({ select });
+
+    const req = { user: { companyId: ["company1"] }, query: {} };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({ companyId: { $in: ["company1"] } });
+    expect(res._body).toEqual(users);
+  });
+
+  it("applies escaped prefix search and result cap for keyword lookups", async () => {
+    const users = [{ _id: "u2" }];
+    const lean = vi.fn().mockResolvedValue(users);
+    const limit = vi.fn().mockReturnValue({ lean });
+    const sort = vi.fn().mockReturnValue({ limit });
+    const select = vi.fn().mockReturnValue({ sort });
+
+    User.find.mockReturnValue({ select });
+
+    const req = {
+      user: { companyId: ["company1"] },
+      query: { q: "a+b", limit: "999" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      companyId: { $in: ["company1"] },
+      $or: [
+        { firstName: { $regex: "^a\\+b", $options: "i" } },
+        { lastName: { $regex: "^a\\+b", $options: "i" } },
+      ],
+    });
+    expect(limit).toHaveBeenCalledWith(50);
+    expect(res._body).toEqual(users);
+  });
+});
 
 // ── toggleFavoriteArticle ─────────────────────────────────────────────────────
 
