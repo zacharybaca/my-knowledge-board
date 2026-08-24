@@ -1119,6 +1119,47 @@ describe("getArticleSearchMetadata", () => {
 
     expect(res.json).toHaveBeenCalledWith({ tags: ["hr", "policy"] });
   });
+
+  it("returns empty array when there are no approved tags", async () => {
+    mockDistinct.mockResolvedValue([]);
+    const req = { user: { companyId: ["company-001"] }, query: {} };
+
+    const { res } = await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith({ tags: [] });
+  });
+
+  it("filters out whitespace-only tags", async () => {
+    mockDistinct.mockResolvedValue(["  ", "\t", "valid-tag"]);
+    const req = { user: { companyId: ["company-001"] }, query: {} };
+
+    const { res } = await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith({ tags: ["valid-tag"] });
+  });
+
+  it("filters out non-string values returned by distinct", async () => {
+    mockDistinct.mockResolvedValue([42, null, "real-tag"]);
+    const req = { user: { companyId: ["company-001"] }, query: {} };
+
+    const { res } = await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(res.json).toHaveBeenCalledWith({ tags: ["real-tag"] });
+  });
+
+  it("queries only Approved articles for the caller's companies", async () => {
+    mockDistinct.mockResolvedValue([]);
+    const req = { user: { companyId: ["c1", "c2"] }, query: {} };
+
+    await run(getArticleSearchMetadata, req, makeRes());
+
+    expect(mockDistinct).toHaveBeenCalledWith(
+      "tags",
+      expect.objectContaining({ status: "Approved" }),
+    );
+    const filterArg = mockDistinct.mock.calls[0][1];
+    expect(filterArg.companyId.$in).toEqual(["c1", "c2"]);
+  });
 });
 
 // ── getArticles – filtering and pagination ────────────────────────────────────

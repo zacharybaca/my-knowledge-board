@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn(), find: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -20,6 +20,7 @@ import {
   updateUserRole,
   createElevatedUser,
   deleteUserById,
+  getCompanyDirectory,
 } from "../../controllers/userController.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -502,5 +503,98 @@ describe("updateUserRole", () => {
     expect(mutableUser.role).toEqual(["Admin"]);
     expect(mutableUser.isAdmin).toBe(true);
     expect(res._body.message).toMatch(/updated successfully/i);
+  });
+});
+
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  /** Build a minimal Mongoose query chain ending in lean(). */
+  function makeQueryChain(result) {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(result),
+    };
+    return chain;
+  }
+
+  const baseUser = {
+    companyId: ["company-001"],
+    role: ["Employee"],
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns all users without applying a limit when no keyword is given", async () => {
+    const fakeUsers = [
+      { _id: "u1", firstName: "Alice", lastName: "Smith" },
+      { _id: "u2", firstName: "Bob", lastName: "Jones" },
+    ];
+    const chain = makeQueryChain(fakeUsers);
+    User.find.mockReturnValue(chain);
+
+    const req = { user: baseUser, query: {} };
+    const { res } = await run(getCompanyDirectory, req, makeRes());
+
+    // No keyword → lean() path, no extra limit call
+    expect(chain.lean).toHaveBeenCalled();
+    expect(res._body).toEqual(fakeUsers);
+  });
+
+  it("applies prefix regex filter and limit when keyword is supplied", async () => {
+    const fakeUsers = [{ _id: "u3", firstName: "Anna", lastName: "Baker" }];
+    const chain = makeQueryChain(fakeUsers);
+    User.find.mockReturnValue(chain);
+
+    const req = { user: baseUser, query: { q: "An", limit: "5" } };
+    const { res } = await run(getCompanyDirectory, req, makeRes());
+
+    const filterArg = User.find.mock.calls[0][0];
+    // Should have $or with firstName/lastName prefix regexes
+    expect(filterArg.$or).toBeDefined();
+    expect(filterArg.$or[0].firstName.$regex).toBe("^An");
+    expect(filterArg.$or[0].firstName.$options).toBe("i");
+
+    // limit() should have been called (keyword path)
+    expect(chain.limit).toHaveBeenCalledWith(5);
+    expect(res._body).toEqual(fakeUsers);
+  });
+
+  it("caps the limit at 50 even when caller requests more", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+
+    const req = { user: baseUser, query: { q: "z", limit: "200" } };
+    await run(getCompanyDirectory, req, makeRes());
+
+    expect(chain.limit).toHaveBeenCalledWith(50);
+  });
+
+  it("escapes regex special characters in the keyword", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+
+    const req = { user: baseUser, query: { q: "O'Brien+" } };
+    await run(getCompanyDirectory, req, makeRes());
+
+    const filterArg = User.find.mock.calls[0][0];
+    // The + should be escaped to \+
+    expect(filterArg.$or[0].firstName.$regex).toContain("\\+");
+  });
+
+  it("uses the provided companyId query param when present", async () => {
+    const chain = makeQueryChain([]);
+    User.find.mockReturnValue(chain);
+
+    const req = {
+      user: baseUser,
+      query: { companyId: "company-999" },
+    };
+    await run(getCompanyDirectory, req, makeRes());
+
+    const filterArg = User.find.mock.calls[0][0];
+    expect(filterArg.companyId.$in).toContain("company-999");
   });
 });
