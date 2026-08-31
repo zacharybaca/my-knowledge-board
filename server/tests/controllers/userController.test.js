@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock("../../models/User.js", () => ({
-  default: { findById: vi.fn(), findOne: vi.fn(), create: vi.fn() },
+  default: { findById: vi.fn(), find: vi.fn(), findOne: vi.fn(), create: vi.fn() },
 }));
 
 vi.mock("cloudinary", () => ({
@@ -15,6 +15,7 @@ vi.mock("cloudinary", () => ({
 import User from "../../models/User.js";
 
 import {
+  getCompanyDirectory,
   toggleFavoriteArticle,
   updateUserStatus,
   updateUserRole,
@@ -112,6 +113,72 @@ describe("toggleFavoriteArticle", () => {
 
     expect(res._code).toBe(404);
     expect(nextArgs[0]).toBeInstanceOf(Error);
+  });
+});
+
+// ── getCompanyDirectory ───────────────────────────────────────────────────────
+
+describe("getCompanyDirectory", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function makeDirectoryQuery(users = []) {
+    return {
+      select: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(users),
+    };
+  }
+
+  it("returns the full company directory without applying limit when q is blank", async () => {
+    const users = [{ firstName: "Amy" }];
+    const query = makeDirectoryQuery(users);
+    User.find.mockReturnValue(query);
+
+    const req = {
+      user: { companyId: ["company1"] },
+      query: { q: "   " },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(User.find).toHaveBeenCalledWith({ companyId: { $in: ["company1"] } });
+    expect(query.limit).not.toHaveBeenCalled();
+    expect(res._body).toEqual(users);
+  });
+
+  it("escapes keyword regex and caps limit at 50 for mention search", async () => {
+    const query = makeDirectoryQuery([]);
+    User.find.mockReturnValue(query);
+
+    const req = {
+      user: { companyId: ["company1"] },
+      query: { q: "jo.*", limit: "200" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    const filter = User.find.mock.calls[0][0];
+    expect(filter.$or[0].firstName.$regex).toBe("^jo\\.\\*");
+    expect(filter.$or[1].lastName.$regex).toBe("^jo\\.\\*");
+    expect(query.limit).toHaveBeenCalledWith(50);
+  });
+
+  it("uses default keyword limit of 25 when limit is invalid", async () => {
+    const query = makeDirectoryQuery([]);
+    User.find.mockReturnValue(query);
+
+    const req = {
+      user: { companyId: ["company1"] },
+      query: { q: "jo", limit: "invalid" },
+    };
+    const res = makeRes();
+
+    await run(getCompanyDirectory, req, res);
+
+    expect(query.limit).toHaveBeenCalledWith(25);
   });
 });
 
