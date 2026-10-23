@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Logo from './Logo';
 import { useAuth } from '../../../hooks/useAuth.js';
 import { ChevronDown, LogOut, Menu } from 'lucide-react';
@@ -47,12 +47,12 @@ const NavBar = ({ onMobileMenuOpen }) => {
         <nav className="nav-links">
           {!user ? (
             <>
-              <a href="/login" className="nav-link">
+              <Link to="/login" className="nav-link">
                 Log In
-              </a>
-              <a href="/register-company" className="nav-cta">
+              </Link>
+              <Link to="/register-company" className="nav-cta">
                 Register Workspace
-              </a>
+              </Link>
             </>
           ) : (
             <div className="user-menu-container" ref={dropdownRef}>
