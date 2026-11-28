@@ -1,6 +1,7 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
+import SplashScreen from './components/Layout/SplashScreen/SplashScreen';
 import NavBar from './components/Layout/NavBar/NavBar';
 import SideBar from './components/Layout/SideBar/SideBar';
 import Footer from './components/Layout/Footer/Footer';
@@ -68,6 +69,28 @@ const Layout = () => {
 };
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashFinish = () => {
+    sessionStorage.setItem('mkb_splash_shown', 'true');
+    setShowSplash(false);
+  };
+
+  useEffect(() => {
+    if (!showSplash) return;
+
+    // Fallback timer in case SplashScreen doesn't trigger onFinish itself
+    const timer = setTimeout(() => {
+      handleSplashFinish();
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [showSplash]);
+
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Layout />}>

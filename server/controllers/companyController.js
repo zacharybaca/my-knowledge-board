@@ -245,7 +245,6 @@ const updateCompanyLogo = asyncHandler(async (req, res) => {
   });
 });
 
-
 const deleteCompany = asyncHandler(async (req, res) => {
   const company = await Company.findById(req.params.id);
 

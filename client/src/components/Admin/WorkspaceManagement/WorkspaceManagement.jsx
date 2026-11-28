@@ -110,11 +110,12 @@ const WorkspaceManagement = () => {
     });
 
     if (response.success) {
-      setToastConfig({ type: 'success', message: 'Logo updated successfully.' });
+      setToastConfig({
+        type: 'success',
+        message: 'Logo updated successfully.',
+      });
       const updatedWorkspaces = workspaces.map((w) =>
-        w._id === workspaceId
-          ? { ...w, imageUrl: response.data.imageUrl }
-          : w
+        w._id === workspaceId ? { ...w, imageUrl: response.data.imageUrl } : w
       );
       setUser({ ...user, companyId: updatedWorkspaces });
     } else {
@@ -252,7 +253,9 @@ const WorkspaceManagement = () => {
                         </div>
                       )}
                       <label
-                        title={workspace.imageUrl ? 'Change logo' : 'Upload logo'}
+                        title={
+                          workspace.imageUrl ? 'Change logo' : 'Upload logo'
+                        }
                         style={{ cursor: 'pointer', lineHeight: 0 }}
                       >
                         <input
